@@ -1,0 +1,351 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
+<script
+    src="https://code.jquery.com/jquery-3.2.1.min.js"
+    integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+crossorigin="anonymous"></script>
+
+<style>
+    label[for="outbreak-range"] {
+        /*display:flex;*/
+
+    }
+    input[type=range] {
+        /*display: flex;*/
+        flex: 1;
+    }
+    .range-container{
+        display: flex;
+        align-items: center;
+        /*flex-direction: row ;*/
+
+    }
+    .range-container label {
+        width: 100px;
+    }
+    .range-container div {
+        flex: 1;
+    }
+</style>
+
+
+<div class="alert alert-info">
+  <strong>Another covid-19 dashboard</strong>
+</div>
+
+<div class="range-container">
+    <label for="outbreak-range">Outbreak</label>
+    <div>
+        <input type="range" id="outbreak-range">
+    </div>
+</div>
+
+<div class="range-container">
+    <label for="day-range">Show days since outbreak:</label>
+    <div>
+        <input type="range" id="day-range" />
+    </div>
+</div>
+
+<div>
+    <input class="refresh" type="checkbox"  id="log-swich">
+    <label for="log-swich">Log scale</label>
+</div>
+
+
+<canvas id="chart"></canvas>
+
+
+<script>
+    $(function () {
+
+
+        // definitions
+        var source = {};
+        var days_from = 0;
+        var days_to = 25; // XXX load accordingly;
+        var chart = null; // chart instance
+        let url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv';
+
+        let european_countries = [
+            "Austria",
+            "Belgium",
+            "Bulgaria",
+            "Croatia",
+            "Cyprus",
+            "Czechia",
+            "Denmark",
+            "Estonia",
+            "Finland",
+            "France",
+            "Germany",
+            "Greece",
+            "Hungary",
+            "Ireland",
+            "Italy",
+            "Latvia",
+            "Lithuania",
+            "Luxembourg",
+            "Malta",
+            "Netherlands",
+            "Poland",
+            "Portugal",
+            "Romania",
+            "Slovakia",
+            "Slovenia",
+            "Spain",
+            "Sweden",
+            "United Kingdom"];
+
+        var outbreak_threshold = 20;
+
+
+// helper functions
+
+        /**
+         * thanks to https://stackoverflow.com/a/3426956/2036148
+         */
+        function hashCode(str) { // java String#hashCode
+            var hash = 0;
+            for (var i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return hash;
+        }
+
+        /**
+         * thanks to https://stackoverflow.com/a/3426956/2036148
+         */
+        function intToRGB(i) {
+            var c = (i & 0x00FFFFFF)
+                    .toString(16)
+                    .toUpperCase();
+
+            return "00000".substring(0, 6 - c.length) + c;
+        }
+
+        /**
+         * Python range function thanks to https://stackoverflow.com/a/8273091/2036148
+         * @param {type} start
+         * @param {type} stop
+         * @param {type} step
+         * @returns {Array}
+         */
+        function range(start, stop, step) {
+            if (typeof stop == 'undefined') {
+                // one param defined
+                stop = start;
+                start = 0;
+            }
+
+            if (typeof step == 'undefined') {
+                step = 1;
+            }
+
+            if ((step > 0 && start >= stop) || (step < 0 && start <= stop)) {
+                return [];
+            }
+
+            var result = [];
+            for (var i = start; step > 0 ? i < stop : i > stop; i += step) {
+                result.push(i);
+            }
+
+            return result;
+        }
+        ;
+
+
+        /**
+         *
+         * @param {type} data Raw data from github
+         * @returns {Array} Sorted by chosen countries.
+         */
+        function filterCountries(csv) {
+            let country_data = {};   // countries with outbreak
+            let lines = csv.split("\n");
+            let headers = lines[0].split(",");
+            for (let i = 1; i < lines.length; i++) {
+                let line = lines[i].split(",");
+
+
+//                if (line[0] === line[1]) {
+//                    line[0] = ""; // province = United Kingdom, country = United Kingdom
+//                }
+//                let name = [line[0], line[1]].join(" ").trim();
+                let name = line[0] || line[1];
+
+                if (european_countries.indexOf(name) < 0) { // include only specific countries
+                    continue;
+                }
+
+                let outbreak_data = [];
+                let ignore = true;
+                for (let j = 4; j < headers.length; j++) {
+                    if (line[j] >= outbreak_threshold) { // append the data starting with threshold
+                        ignore = false;
+                    }
+                    if (!ignore) {
+                        outbreak_data.push(line[j]);
+                    }
+//                obj[headers[j]] = line[j];
+                }
+
+                //country = {}
+                //datas= pandas.DataFrame.from_dict(country, orient='index').transpose()
+
+
+                country_data[name] = outbreak_data;
+
+            }
+            return country_data;
+        }
+
+        let ready_to_refresh = false;
+        function refresh(set_ready = false) {
+            // pass only when ready
+            if (set_ready) {
+                ready_to_refresh = true;
+            }
+            if (!ready_to_refresh) {
+                return false;
+            }
+            if (chart) {
+                chart.destroy();
+            }
+
+
+            // build chart data
+            let ctx = $("#chart");
+            let chart_data = {datasets: []};
+            let xAxes = [];
+
+            // process each country
+            let longest_data = 0;
+            let countries = filterCountries(source);
+            for (let country in countries) {
+                let xAxisID = country;
+
+                // choose only some days in range
+                let chosen_data = [];
+                for (let i = days_from; i < countries[country].length && i < days_to; i++) {
+                    chosen_data.push(countries[country][i]);
+                }
+
+                longest_data = Math.max(longest_data, chosen_data.length);
+
+                // push new dataset
+                chart_data.datasets.push({
+                    type: 'line',
+                    borderColor: "#" + intToRGB(hashCode(country)), //"#5793DB",
+                    label: country,
+                    data: chosen_data,
+                    borderWidth: 3,
+                    fill: false,
+                    backgroundColor: "#" + intToRGB(hashCode(country)), //"#5793DB",
+                    xAxisID: xAxisID
+                });
+
+                xAxes.push({
+                    display: false,
+                    id: xAxisID
+                });
+            }
+            chart_data.labels = range(days_from, Math.min(longest_data, days_to)).map(String);
+
+// XXX
+// make work with hashtag
+// at je osa x nezávislá na linii (aby když skryju Itálii, aby ty dny tam nebyly) – nebo proste pridel xAxe nejdelší
+// vic možností výpočtů: closed cases, closed cases/confirmed, derivation
+// víc regionů
+// double click to check only that country
+// un/check all
+// hightlight country (přidej hvězdičky k CZ)
+//
+// label: highlight current line (najedu na zemi a vidim i ostatní, víc zřetelné, která)
+// hightlight hovered line
+//
+// nice to have:
+// github open source
+// hezčí barvičky zemí (vlaječky)
+// on hover, label each date for country (not only reported value, but also state its date)
+// legend: sort
+
+            // add xAxe
+            xAxes[0].display = true;
+            xAxes[0].scaleLabel = {
+                display: true,
+                labelString: `Days count since >= ${outbreak_threshold} confirmed cases`
+            };
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: chart_data,
+                options: {
+                    legend: {
+                        //display: false
+                    },
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        xAxes: xAxes,
+                        yAxes: [{
+                                display: true,
+                                type: $("#log-swich").prop("checked") ? 'logarithmic' : 'linear',
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Total confirmed cases'
+                                },
+                                ticks: {
+                                    callback: function (value, index, values) {
+                                        return Number(value.toString());
+                                    }
+                                }
+                            }]
+                    }
+                }
+            });
+        }
+
+        // HTML
+        $("#outbreak-range").ionRangeSlider({
+            skin: "big",
+            //type: "double",
+            grid: true,
+            min: 0,
+            max: 50,
+            from: outbreak_threshold,
+            onChange: (r) => {
+                outbreak_threshold = r.from;
+                refresh();
+            }
+        });
+
+        $("#day-range").ionRangeSlider({
+            skin: "big",
+            type: "double",
+            grid: true,
+            min: 0,
+            max: days_to,
+            from: 0,
+            to: days_to,
+            onChange: (r) => {
+                days_from = r.from;
+                days_to = r.to;
+                refresh();
+            }
+        });
+
+        $(".refresh").change(refresh);
+// runtime
+        $.get(url, (data) => {
+            source = data;
+            refresh(true);
+        });
+        //return;
+
+    });
+</script>
+
+Source: <a href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data">Johns Hopkins CSSE</a> (data updated once a day)
