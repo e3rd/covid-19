@@ -5,6 +5,9 @@
 crossorigin="anonymous"></script>
 
 <style>
+    main {
+        min-width: 800px;
+    }
     label[for="outbreak-threshold"] {
         /*display:flex;*/
 
@@ -24,6 +27,12 @@ crossorigin="anonymous"></script>
     }
     .range-container div {
         flex: 1;
+    }
+    canvas {
+        width : 800px;
+        height : 500px;
+/*        min-height: 500px;
+        min-width: 500px;*/
     }
 </style>
 
@@ -315,6 +324,7 @@ crossorigin="anonymous"></script>
             type: 'line',
             data: {},
             options: {
+                // XXX responsive: false,
                 tooltips: {
                     mode: 'index',
                     intersect: false

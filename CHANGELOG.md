@@ -3,6 +3,8 @@
 * main functionality working
 * window hash changed accordingly
 * smooth chart updating
+* mobile view
+* PNG export (via right button)
 
 
 # TBD XXX
@@ -12,7 +14,6 @@
 * double click to check only that country
 * un/check all
 * hightlight country (přidej hvězdičky k CZ)
-* mobile debug
 * label: highlight current line (najedu na zemi a vidim i ostatní, víc zřetelné, která)
 * hightlight hovered line
 
