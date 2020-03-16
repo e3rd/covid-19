@@ -1,33 +1,3 @@
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
-<script
-    src="https://code.jquery.com/jquery-3.2.1.min.js"
-    integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-crossorigin="anonymous"></script>
-
-<style>
-    label[for="outbreak-threshold"] {
-        /*display:flex;*/
-
-    }
-    input[type=range] {
-        /*display: flex;*/
-        flex: 1;
-    }
-    .range-container{
-        display: flex;
-        align-items: center;
-        /*flex-direction: row ;*/
-
-    }
-    .range-container label {
-        width: 100px;
-    }
-    .range-container div {
-        flex: 1;
-    }
-</style>
-
-
 <div class="alert alert-info">
     <strong>Another covid-19 dashboard</strong>
 </div>
@@ -309,6 +279,41 @@ crossorigin="anonymous"></script>
     }
     }
 
+    function init_chart() {
+        let ctx = $("#chart");
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {},
+            options: {
+                // XXX responsive: false,
+                tooltips: {
+                    mode: 'index',
+                    intersect: false
+                },
+                scales: {
+                    xAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true
+                            }
+                        }],
+                    yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Total confirmed cases'
+                            },
+                            ticks: {
+                                callback: function (value, index, values) {
+                                    return Number(value.toString());
+                                }
+                            }
+                        }]
+                }
+            }
+        });
+    }
+
 
     /**
      *
@@ -327,12 +332,12 @@ crossorigin="anonymous"></script>
         refresh_setup(false, event !== false);
 
         // build chart data
-        let ctx = $("#chart");
         let chart_data = {datasets: []};
 
         // process each country
         let longest_data = 0;
         let countries = filterCountries(source);
+        let datasets = {};
         for (let country in countries) {
             // choose only some days in range
             let chosen_data = [];
@@ -343,7 +348,7 @@ crossorigin="anonymous"></script>
             longest_data = Math.max(longest_data, chosen_data.length);
 
             // push new dataset
-            chart_data.datasets.push({
+            let dataset = {
                 type: 'line',
                 borderColor: "#" + intToRGB(hashCode(country)), //"#5793DB",
                 label: country,
@@ -351,45 +356,36 @@ crossorigin="anonymous"></script>
                 borderWidth: 3,
                 fill: false,
                 backgroundColor: "#" + intToRGB(hashCode(country)), //"#5793DB",
-            });
+            };
+            datasets[country] = dataset;
+            chart_data.datasets.push(dataset);
 
 
         }
         chart_data.labels = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1])).map(String);
 
+        // update chart data
         if (!chart) {
-            chart = new Chart(ctx, {
-                type: 'line',
-                data: {},
-                options: {
-                    tooltips: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    scales: {
-                        xAxes: [{
-                                display: true,
-                                scaleLabel: {
-                                    display: true
-                                }
-                            }],
-                        yAxes: [{
-                                display: true,
-                                scaleLabel: {
-                                    display: true,
-                                    labelString: 'Total confirmed cases'
-                                },
-                                ticks: {
-                                    callback: function (value, index, values) {
-                                        return Number(value.toString());
-                                    }
-                                }
-                            }]
-                    }
+            init_chart();
+            chart.data = chart_data;
+        } else {
+            // update just some datasets, do not replace them entirely (smooth movement)
+            chart.data.labels = chart_data.labels;
+            let removable = [];
+            // update changed
+            for (let o of chart.data.datasets) {
+                if (o.label in datasets) {
+                    o.data = datasets[o.label].data;
+                    delete datasets[o.label];
+                } else {
+                    removable.push(o);
                 }
-            });
+            }
+            // remove unused
+            chart.data.datasets.filter((el) => !removable.includes(el));
+            // insert new
+            Object.values(datasets).map(chart.data.datasets.push);
         }
-        chart.data = chart_data;
         chart.options.scales.xAxes[0].scaleLabel.labelString = `Days count since >= ${setup["outbreak-threshold"]} confirmed cases`;
         chart.options.scales.yAxes[0].type = setup["log-switch"] ? "logarithmic" : "linear";
         chart.update();
