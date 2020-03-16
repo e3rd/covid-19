@@ -2,6 +2,7 @@
 
 * main functionality working
 * window hash changed accordingly
+* smooth chart updating
 
 
 # TBD XXX
@@ -12,10 +13,8 @@
 * un/check all
 * hightlight country (přidej hvězdičky k CZ)
 * mobile debug
-
 * label: highlight current line (najedu na zemi a vidim i ostatní, víc zřetelné, která)
 * hightlight hovered line
-* do not destroy chart but update
 
 ## nice to have:
 * github open source
