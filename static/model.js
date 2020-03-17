@@ -11,6 +11,7 @@ class Territory {
         this.toggled = false;
         this.shown = false;
         this.id = "t" + (++counter);
+        this.data = {"confirmed": []};
 
         /** @type {Territory[]} */
         this.parents = [];
@@ -19,6 +20,16 @@ class Territory {
 
         Territory.id_list.push(this);
         Territory[type][name] = this; // store to ex: Territory.states
+    }
+
+    add_data(data, type = "confirmed") {
+        if (!this.data[type]) {
+            this.data[type] = data;
+        } else {
+            this.data[type] = this.data[type].map((num, idx) => {
+                return num + data[idx];
+            });
+    }
     }
 
     /**

@@ -80,7 +80,7 @@
         $.get(url, (data) => {
             // we need to build Territory objects from CSV first
             source = data;
-            filterCountries(source);
+            buildTerritories(source);
 
             // draw territories
             let $territories = $("#territories tbody");
@@ -121,35 +121,53 @@
 
     /**
      * @param {type} csv Raw data from github
-     * @returns {Array} Sorted by chosen countries.
      */
-    function filterCountries(csv) {
-        let country_data = {};   // countries with outbreak
+    function buildTerritories(csv) {
         let lines = csv.split("\n");
 
-        let headers = lines[0].split(",");
+        let headers = lines[0].split(","); // add dates or something
         for (let i = 1; i < lines.length; i++) {
             let line = lines[i].split(",");
 
             line = splitCsv(lines[i]);
-            let name = line[0] || line[1];
+//            let name = line[0] || line[1];
 
             let t = Territory.get(line[1], Territory.COUNTRY);
             if (line[0]) {
                 t.add_child(line[0], Territory.STATE);
             }
 
-            if (!plot) { // this is just the initial load, we need to build Territory objects
-                continue;
-            }
+            t.add_data(line.slice(4)); // XXX all data? nestripnul jsem první?
+        }
+    }
+
+    /**
+     * @param {type} csv Raw data from github
+     * @returns {Array} Sorted by chosen countries.
+     */
+    function filterCountries() { // Xcsv
+        let country_data = {};   // countries with outbreak
+        //let lines = csv.split("\n");
+
+        //let headers = lines[0].split(",");
+        //for (let i = 1; i < lines.length; i++) {
+        for (let t of plot.checked) {
+            // XXXXX
+            let line = t.data["confirmed"];
+
+//            if (!plot) { // this is just the initial load, we need to build Territory objects
+//                continue;
+//            }
+
+
 // XXXXX bere to i province UK, když chci jenom UK
-            if (plot.checked.indexOf(t) < 0) { // include only specific countries
-                continue;
-            }
+//            if (plot.checked.indexOf(t) < 0) { // include only specific countries
+//                continue;
+//            }
 
             let outbreak_data = [];
             let ignore = true;
-            for (let j = 4; j < headers.length; j++) {
+            for (let j = 0; j < line.length; j++) {
                 if (line[j] >= setup["outbreak-threshold"]) { // append the data starting with threshold
                     ignore = false;
                 }
@@ -158,8 +176,8 @@
                 }
             }
 
-
-            country_data[name] = outbreak_data;
+            // let name = line[0] || line[1];
+            country_data[t.name] = outbreak_data;
 
         }
         return country_data;
