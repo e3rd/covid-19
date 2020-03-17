@@ -23,12 +23,21 @@ class Territory {
     }
 
     add_data(data, type = "confirmed") {
+        if (this.name === "United Kingdom" || (this.parents.some(p => p.name === "United Kingdom"))) {
+            console.log("Sčítám", this.name, this.data[type], data);
+        }
+
         if (!this.data[type].length) {
             this.data[type] = data;
         } else {
+
             this.data[type] = this.data[type].map((num, idx) => {
-                return num + data[idx];
+                return parseInt(num) + parseInt(data[idx]);
             });
+        }
+
+        if (this.name === "United Kingdom" || (this.parents.some(p => p.name === "United Kingdom"))) {
+            console.log("End", this.data[type]);
     }
     }
 
@@ -39,6 +48,9 @@ class Territory {
         let s = this.name;
         if (s.substring && s.substring(0, 1) === '"' && s.substring(-1, 1) === '"') {
             s = s.substr(1, s.length - 2);
+        }
+        if(this.type === Territory.COUNTRY && this.children.length && this.children.some((ch) => ch.name === s)) {
+            s += " (Region)";
         }
         return s;
     }
@@ -104,8 +116,10 @@ class Territory {
         return s;
     }
 
-    add_child(name, type) {
-        this.children.push(Territory.get(name, type));
+    add_child(t) {
+        //let t = Territory.get(name, type);
+        this.children.push(t);
+        t.parents.push(this);
         return this;
     }
 
@@ -161,17 +175,17 @@ class Territory {
 
         let headers = lines[0].split(","); // XX add dates or something
         for (let i = 1; i < lines.length; i++) {
-            let line = lines[i].split(",");
-
-            line = splitCsv(lines[i]);
-            //let name = line[0] || line[1];
+            let line = splitCsv(lines[i]);
+            let data = line.slice(4);
 
             let t = Territory.get(line[1], Territory.COUNTRY);
             if (line[0]) {
-                t.add_child(line[0], Territory.STATE);
+                let ch = Territory.get(line[0], Territory.STATE);
+                t.add_child(ch);
+                ch.add_data(data);
             }
-
-            t.add_data(line.slice(4)); // XXX all data? nestripnul jsem první?
+            t.add_data(data);
+            t.parents.forEach(p => p.add_data(data));
         }
     }
 

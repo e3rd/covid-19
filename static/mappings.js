@@ -74,9 +74,9 @@ let territories = [
             "Turkey",
             "Kazakhstan",
             "Uzbekistan",
-            "Korea, South",
+            "Korea, South", // XXX wrongly identified, quote problem
             "Taiwan*",
-            "occupied Palestinian territory",
+            "occupied Palestinian territory"
         ]
     },
     {
@@ -197,6 +197,6 @@ let territories = [
 territories.forEach((cont) => {
     let t = Territory.get(cont.continent, Territory.CONTINENT);
     cont.countries.forEach((country) => {
-        t.add_child(country, Territory.COUNTRY);
+        t.add_child(Territory.get(country, Territory.COUNTRY));
     });
 });

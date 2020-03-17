@@ -52,8 +52,8 @@
             type: "double",
             grid: true,
             min: 0,
-            max: 25, //XX setup["day-range"][1],
-            to: 25, //XXsetup["day-range"][1],
+            max: 50, //XX setup["day-range"][1],
+            to: 50, //XXsetup["day-range"][1],
             from: 0
         });
 
@@ -122,24 +122,10 @@
      * @param {type} csv Raw data from github
      * @returns {Array} Sorted by chosen countries.
      */
-    function filterCountries() { // Xcsv
+    function prepare_plot_data() { // Xcsv
         let country_data = {};   // countries with outbreak
-        //let lines = csv.split("\n");
-
-        //let headers = lines[0].split(",");
-        //for (let i = 1; i < lines.length; i++) {
         for (let t of plot.checked) {
-            // XXXXX
             let line = t.data["confirmed"];
-//            if (!plot) { // this is just the initial load, we need to build Territory objects
-//                continue;
-//            }
-
-
-// XXXXX bere to i province UK, když chci jenom UK
-//            if (plot.checked.indexOf(t) < 0) { // include only specific countries
-//                continue;
-//            }
 
             let outbreak_data = [];
             let ignore = true;
@@ -151,11 +137,9 @@
                     outbreak_data.push(line[j]);
                 }
             }
-
-            // let name = line[0] || line[1];
-            country_data[t.name] = outbreak_data;
-
+            country_data[t.get_name()] = outbreak_data;
         }
+        console.log(country_data);
         return country_data;
     }
 
@@ -270,7 +254,7 @@
         // build chart data
         // process each country
         let longest_data = 0;
-        let countries = filterCountries();
+        let countries = prepare_plot_data();
         let datasets = {};
         for (let country in countries) {
             // choose only some days in range
