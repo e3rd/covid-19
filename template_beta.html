@@ -96,10 +96,15 @@
                     t.toggle_children_visibility();
                 } else if (event.target === $("span:eq(1)", $(this))[0]) { // un/check all
                     t.toggle_children_checked();
-                } else { // toggle clicked territory
-
+                } else if (event.target.type !== "checkbox") { // toggle clicked territory
+                    $("input:checkbox", $(this)).click();
+                } else if ($(event.target).prop("checked")) {
+                    t.check();
+                } else {
+                    t.uncheck();
                 }
             });
+
         });
         //return;
 
@@ -329,6 +334,8 @@
 </script>
 
 Source: <a href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data">Johns Hopkins CSSE</a> (data updated once a day)
+<br>
+Help development at <a href="https://github.com/e3rd/covid-19/tree/master/static">github</a>.
 
 
 <table id="territories">

@@ -32,9 +32,12 @@ class Territory {
         return s;
     }
 
+    get checked() {
+        return this.plot.chosen.indexOf(this) > -1;
+    }
 
     uncheck() {
-        this.plot.chosen.filter(e => e !== this); // remove from chosens
+        this.plot.chosen = this.plot.chosen.filter(e => e !== this); // remove from chosens
         this.$element.find("input").prop("checked", false);
     }
 
@@ -45,10 +48,12 @@ class Territory {
 
     hide() {
         this.shown = false;
+        this.$element.hide(1000);
     }
 
     show() {
         this.shown = true;
+        this.$element.show(1000);
     }
 
     get $element() {
@@ -89,8 +94,17 @@ class Territory {
         }
     }
 
+    /**
+     * If there any checked children, uncheck them all, else check all.
+     * @returns {undefined}
+     */
     toggle_children_checked() {
-        this.children.forEach(child => child.toggle());
+        console.log(this.children);
+        if (this.children.some((child) => child.checked)) {
+            this.children.forEach((child) => child.uncheck());
+        } else {
+            this.children.forEach((child) => child.check());
+        }
     }
 
     static get(name, type) {
@@ -134,9 +148,9 @@ Territory.current_plot = null;
 class Plot {
     constructor() {
         /**
-         * @property {Territory[]} chosen
+         * @property {Territory[]} chosen territories to be processed
          */
-        this.chosen = [];
+        this.checked = [];
         /**
          * @property {Territory[]} chosen
          */
@@ -147,8 +161,8 @@ class Plot {
         Territory.current_plot = this;
     }
 }
-let func = new Plot();
-func.focus();
+var plot = new Plot(); // current plot
+plot.focus();
 
 
 
