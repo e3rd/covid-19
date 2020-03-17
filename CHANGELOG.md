@@ -22,3 +22,4 @@
 * hezčí barvičky zemí (vlaječky)
 * on hover, label each date for country (not only reported value, but also state its date)
 * legend: sort
+* disable territories with zero data

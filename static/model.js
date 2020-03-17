@@ -39,11 +39,17 @@ class Territory {
     uncheck() {
         this.plot.checked = this.plot.checked.filter(e => e !== this); // remove from chosens
         this.$element.find("input").prop("checked", false);
+        if (!Territory.refresh_freeze) {
+            refresh();
+        }
     }
 
     check() {
-        Territory.current_plot.checked.push(this);
+        this.plot.checked.push(this);
         this.$element.find("input").prop("checked", true);
+        if (!Territory.refresh_freeze) {
+            refresh();
+        }
     }
 
     hide() {
@@ -61,7 +67,7 @@ class Territory {
     }
 
     get plot() {
-        return Territory.current_plot;
+        return Plot.current_plot;
     }
 
     get_html() {
@@ -99,12 +105,14 @@ class Territory {
      * @returns {undefined}
      */
     toggle_children_checked() {
-        console.log(this.children);
+        Territory.refresh_freeze = true;
         if (this.children.some((child) => child.checked)) {
             this.children.forEach((child) => child.uncheck());
         } else {
             this.children.forEach((child) => child.check());
         }
+        Territory.refresh_freeze = false;
+        refresh();
     }
 
     static get(name, type) {
@@ -137,12 +145,7 @@ Territory.id_list = []; // sorted by id
 Territory.states = {}; // ex:Czechia, Texas
 Territory.countries = {}; // ex: USA, China
 Territory.continents = {};
-/**
- *
- * @type Plot
- */
-Territory.current_plot = null;
-
+Territory.refresh_freeze = false;
 
 
 class Plot {
@@ -158,14 +161,15 @@ class Plot {
     }
 
     focus() {
-        Territory.current_plot = this;
+        return Plot.current_plot = this;
     }
 }
-var plot = new Plot(); // current plot
-plot.focus();
 
-
-
+/**
+ *
+ * @type Plot
+ */
+Plot.current_plot = null;
 
 
 // Country categorising
