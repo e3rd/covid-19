@@ -28,7 +28,6 @@
 <script>
     // definitions
     var setup = {};
-    var source = {};
     var plot = null;
     var chart = null; // chart instance
     let url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv';
@@ -79,21 +78,21 @@
 
         $.get(url, (data) => {
             // we need to build Territory objects from CSV first
-            source = data;
-            buildTerritories(source);
+            Territory.build(data);
 
             // draw territories
-            let $territories = $("#territories tbody");
+            let $territories = $("#territories");
             let td = (col_id, storage) => {
                 let text = [];
                 for (let o of Object.values(storage)) {
                     text.push(o.get_html());
                 }
-                $("td:eq(" + col_id + ")", $territories).html(text.join(""));
+                $("> div:eq(" + col_id + ")", $territories).append(text.join(""));
             };
             td(0, Territory.states);
             td(1, Territory.countries);
-            $("td", $territories).on("click", "> div", function (event) {
+            td(2, Territory.continents);
+            $("> div", $territories).on("click", "> div", function (event) {
                 let t = Territory.get_id($(this).attr("id"));
                 if (event.target === $("span:eq(1)", $(this))[0]) { // hide/show all
                     t.toggle_children_visibility();
@@ -121,28 +120,6 @@
 
     /**
      * @param {type} csv Raw data from github
-     */
-    function buildTerritories(csv) {
-        let lines = csv.split("\n");
-
-        let headers = lines[0].split(","); // add dates or something
-        for (let i = 1; i < lines.length; i++) {
-            let line = lines[i].split(",");
-
-            line = splitCsv(lines[i]);
-//            let name = line[0] || line[1];
-
-            let t = Territory.get(line[1], Territory.COUNTRY);
-            if (line[0]) {
-                t.add_child(line[0], Territory.STATE);
-            }
-
-            t.add_data(line.slice(4)); // XXX all data? nestripnul jsem první?
-        }
-    }
-
-    /**
-     * @param {type} csv Raw data from github
      * @returns {Array} Sorted by chosen countries.
      */
     function filterCountries() { // Xcsv
@@ -154,7 +131,6 @@
         for (let t of plot.checked) {
             // XXXXX
             let line = t.data["confirmed"];
-
 //            if (!plot) { // this is just the initial load, we need to build Territory objects
 //                continue;
 //            }
@@ -294,7 +270,7 @@
         // build chart data
         // process each country
         let longest_data = 0;
-        let countries = filterCountries(source);
+        let countries = filterCountries();
         let datasets = {};
         for (let country in countries) {
             // choose only some days in range
@@ -337,7 +313,7 @@
                 }
             }
             // remove unused
-            chart.data.datasets.filter((el) => !removable.includes(el));
+            chart.data.datasets = chart.data.datasets.filter((el) => !removable.includes(el));
             // insert new
             Object.values(datasets).forEach(el => chart.data.datasets.push(el));
         }
@@ -354,7 +330,19 @@ Source: <a href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_cov
 Help development at <a href="https://github.com/e3rd/covid-19/tree/master/static">github</a>.
 
 
-<table id="territories">
+<div id="territories" class="row">
+    <div class="col-md">
+        <h1>State</h1>
+    </div>
+    <div class="col-md">
+        <h1>Country</h1>
+    </div>
+    <div class="col-md">
+        <h1>Continent</h1>
+    </div>
+
+</div>
+<!--<table id="territories">
     <thead>
         <tr><th>State</th><th>Region</th><th>Continent</th></tr>
     </thead>
@@ -365,4 +353,4 @@ Help development at <a href="https://github.com/e3rd/covid-19/tree/master/static
             <td></td>
         </tr>
     </tbody>
-</table>
+</table>-->

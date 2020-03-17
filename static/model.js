@@ -23,7 +23,7 @@ class Territory {
     }
 
     add_data(data, type = "confirmed") {
-        if (!this.data[type]) {
+        if (!this.data[type].length) {
             this.data[type] = data;
         } else {
             this.data[type] = this.data[type].map((num, idx) => {
@@ -63,14 +63,24 @@ class Territory {
         }
     }
 
+    /**
+     * Hide the territory and its children
+     * @returns {undefined}
+     */
     hide() {
         this.shown = false;
         this.$element.hide(1000);
+        this.children.forEach(ch => ch.hide());
     }
 
+    /**
+     * Show the territory and its children
+     * @returns {undefined}
+     */
     show() {
         this.shown = true;
         this.$element.show(1000);
+        this.children.forEach(ch => ch.show());
     }
 
     get $element() {
@@ -104,7 +114,7 @@ class Territory {
      * @returns {undefined}
      */
     toggle_children_visibility() {
-        if (this.children.some((child) => child.shown)) { // is there any visible children
+        if (this.children.some((child) => child.shown || child.children.some((grand_ch) => grand_ch.shown))) { // is there any visible children
             this.children.forEach((child) => child.hide());
         } else {
             this.children.forEach((child) => child.show());
@@ -141,6 +151,28 @@ class Territory {
      */
     static get_id(id) {
         return Territory.id_list[parseInt(id.substr(1)) - 1];
+    }
+
+    /**
+     * @param {type} csv Raw data from github
+     */
+    static build(csv) {
+        let lines = csv.split("\n");
+
+        let headers = lines[0].split(","); // XX add dates or something
+        for (let i = 1; i < lines.length; i++) {
+            let line = lines[i].split(",");
+
+            line = splitCsv(lines[i]);
+            //let name = line[0] || line[1];
+
+            let t = Territory.get(line[1], Territory.COUNTRY);
+            if (line[0]) {
+                t.add_child(line[0], Territory.STATE);
+            }
+
+            t.add_data(line.slice(4)); // XXX all data? nestripnul jsem první?
+        }
     }
 
 }
