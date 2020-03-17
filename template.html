@@ -63,7 +63,25 @@
         "Sweden",
         "United Kingdom"];
 
-    //var outbreak-threshold = 20;
+
+    class Territory {
+        static territories = {};
+
+        constructor(height, width) {
+            this.parents = [];
+            this.children = [];
+            this.toggled = false;
+            this.shown = false;
+        }
+        static get(name){
+            if (name in Territory.territories) {
+                return name;
+            } else {
+                return Territory.territories[name] = new Territory();
+            }
+        }
+    }
+    Territory.get("newone");
 
 
 
@@ -196,6 +214,7 @@
 //                let name = [line[0], line[1]].join(" ").trim();
             let name = line[0] || line[1];
 
+            
             if (european_countries.indexOf(name) < 0) { // include only specific countries
                 continue;
             }

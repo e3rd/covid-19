@@ -13,9 +13,12 @@
 * víc regionů
 * double click to check only that country
 * un/check all
-* hightlight country (přidej hvězdičky k CZ)
+* hightlight country (přidej hvězdičky k CZ); (star, double star)
 * label: highlight current line (najedu na zemi a vidim i ostatní, víc zřetelné, která)
 * hightlight hovered line
+* nefacha ve FF
+
+XXrename Region to Countries
 
 ## nice to have:
 * github open source
