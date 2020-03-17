@@ -16,9 +16,6 @@
 * hightlight country (přidej hvězdičky k CZ); (star, double star)
 * label: highlight current line (najedu na zemi a vidim i ostatní, víc zřetelné, která)
 * hightlight hovered line
-* nefacha ve FF
-
-XXrename Region to Countries
 
 ## nice to have:
 * github open source

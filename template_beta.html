@@ -92,9 +92,9 @@
             td(1, Territory.countries);
             $("td", $territories).on("click", "> div", function (event) {
                 let t = Territory.get_id($(this).attr("id"));
-                if (event.target === $("span:eq(0)", $(this))[0]) { // hide/show all
+                if (event.target === $("span:eq(1)", $(this))[0]) { // hide/show all
                     t.toggle_children_visibility();
-                } else if (event.target === $("span:eq(1)", $(this))[0]) { // un/check all
+                } else if (event.target === $("span:eq(2)", $(this))[0]) { // un/check all
                     t.toggle_children_checked();
                 } else if (event.target.type !== "checkbox") { // toggle clicked territory
                     $("input:checkbox", $(this)).click();

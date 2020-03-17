@@ -33,16 +33,16 @@ class Territory {
     }
 
     get checked() {
-        return this.plot.chosen.indexOf(this) > -1;
+        return this.plot.checked.indexOf(this) > -1;
     }
 
     uncheck() {
-        this.plot.chosen = this.plot.chosen.filter(e => e !== this); // remove from chosens
+        this.plot.checked = this.plot.checked.filter(e => e !== this); // remove from chosens
         this.$element.find("input").prop("checked", false);
     }
 
     check() {
-        Territory.current_plot.chosen.push(this);
+        Territory.current_plot.checked.push(this);
         this.$element.find("input").prop("checked", true);
     }
 
@@ -68,11 +68,11 @@ class Territory {
         let s = "<div id='" + this.id + "'>";
         s += "<input type=checkbox />";
         //s += "<span>unicode star</span>"; // XXX
-        if (this.type !== Territory.states) {
+        s += "<span>" + this.get_name() + "</span>";
+        if (this.children.length) {
             s += "<span>👁</span>"; // XXX
             s += " <span>✓</span> ";
         }
-        s += "<span>" + this.get_name() + "</span>";
         s += "</div>";
         return s;
     }
