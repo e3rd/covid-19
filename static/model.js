@@ -23,21 +23,16 @@ class Territory {
     }
 
     add_data(data, type = "confirmed") {
-        if (this.name === "United Kingdom" || (this.parents.some(p => p.name === "United Kingdom"))) {
-            console.log("Sčítám", this.name, this.data[type], data);
-        }
+//        if (this.name === "United Kingdom" || (this.parents.some(p => p.name === "United Kingdom"))) {
+//            console.log("Sčítám", this.name, this.data[type], data);
+//        }
 
         if (!this.data[type].length) {
             this.data[type] = data;
         } else {
-
             this.data[type] = this.data[type].map((num, idx) => {
                 return parseInt(num) + parseInt(data[idx]);
             });
-        }
-
-        if (this.name === "United Kingdom" || (this.parents.some(p => p.name === "United Kingdom"))) {
-            console.log("End", this.data[type]);
     }
     }
 
@@ -49,7 +44,7 @@ class Territory {
         if (s.substring && s.substring(0, 1) === '"' && s.substring(-1, 1) === '"') {
             s = s.substr(1, s.length - 2);
         }
-        if(this.type === Territory.COUNTRY && this.children.length && this.children.some((ch) => ch.name === s)) {
+        if (this.type === Territory.COUNTRY && this.children.length && this.children.some((ch) => ch.name === s)) {
             s += " (Region)";
         }
         return s;
@@ -158,6 +153,14 @@ class Territory {
         return Territory.territories[key];
     }
 
+    static get_by_name(name) {
+        for (let o of Territory.territories) {
+            if (o.get_name() === name) {
+                return o;
+            }
+        }
+    }
+
     /**
      *
      * @param {String} id (Territory.id), ex: t15 -> will return 15th territory
@@ -206,19 +209,33 @@ Territory.refresh_freeze = false;
 
 
 class Plot {
-    constructor() {
+    constructor(checked_names = [], starred_names = []) {
         /**
          * @property {Territory[]} chosen territories to be processed
          */
-        this.checked = [];
+        this.checked = checked_names.map(name => Territory.get_by_name(name));
         /**
          * @property {Territory[]} chosen
          */
-        this.starred = [];
+        this.starred = starred_names.map(name => Territory.get_by_name(name));
+        
+        Plot.plots.push(this);
+
     }
 
     focus() {
         return Plot.current_plot = this;
+    }
+
+    static deserialize(data) {
+        Plot.plots = [];
+        data.forEach((d) => new Plot(d[0], d[1]));
+    }
+
+    static serialize() {
+        return Plot.plots.map(p => {
+            return [p.checked.map(t => t.get_name()), p.starred.map(t => t.get_name())]
+        });
     }
 }
 
@@ -227,6 +244,7 @@ class Plot {
  * @type Plot
  */
 Plot.current_plot = null;
+Plot.plots = [];
 
 
 // Country categorising

@@ -5,6 +5,7 @@
 * smooth chart updating
 * mobile view
 * PNG export (via right button)
+* possible to display provinces, countries and continents
 
 
 # TBD XXX
@@ -16,6 +17,7 @@
 * hightlight country (přidej hvězdičky k CZ); (star, double star)
 * label: highlight current line (najedu na zemi a vidim i ostatní, víc zřetelné, která)
 * hightlight hovered line
+* hide territories with no data XXX when no data given, mark as disabled
 
 ## nice to have:
 * github open source

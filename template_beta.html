@@ -2,25 +2,26 @@
     <strong>Another covid-19 dashboard</strong>
 </div>
 
-<div class="range-container">
-    <label for="outbreak-threshold">Outbreak</label>
-    <div>
-        <input type="range" id="outbreak-threshold" value="20">
+<form id="setup">
+    <div class="range-container">
+        <label for="outbreak-threshold">Outbreak</label>
+        <div>
+            <input type="range" id="outbreak-threshold" value="20">
+        </div>
     </div>
-</div>
 
-<div class="range-container">
-    <label for="day-range">Show days since outbreak:</label>
-    <div>
-        <input type="range" id="day-range"  max="25"/>
+    <div class="range-container">
+        <label for="day-range">Show days since outbreak:</label>
+        <div>
+            <input type="range" id="day-range"  max="25"/>
+        </div>
     </div>
-</div>
 
-<div>
-    <input class="refresh" type="checkbox"  id="log-switch" value="off">
-    <label for="log-switch">Log scale</label>
-</div>
-
+    <div>
+        <input class="refresh" type="checkbox"  id="log-switch" value="off">
+        <label for="log-switch">Log scale</label>
+    </div>
+</form>
 
 <canvas id="chart"></canvas>
 
@@ -58,8 +59,8 @@
         });
 
         // refresh on input change
-        $("input:not(.irs-hidden-input)").change(refresh); // every normal input change
-        $("input.irs-hidden-input").each(function () { // sliders
+        $("#setup input:not(.irs-hidden-input)").change(refresh); // every normal input change
+        $("#setup input.irs-hidden-input").each(function () { // sliders
             let opt = $(this).data("ionRangeSlider").options;
             opt.onFinish = refresh;
             // do not change window hash when moving input slider
@@ -126,7 +127,6 @@
         let country_data = {};   // countries with outbreak
         for (let t of plot.checked) {
             let line = t.data["confirmed"];
-
             let outbreak_data = [];
             let ignore = true;
             for (let j = 0; j < line.length; j++) {
@@ -145,17 +145,22 @@
 
 
     function load_hash() {
+        console.log("LOAD- HASH");
         try {
             setup = JSON.parse(decodeURI(window.location.hash.substr(1)));
         } catch (e) {
             return;
         }
         for (let key in setup) {
+            let val = setup[key];
+            if (key === "plots") {
+                Plot.deserialize(val);
+                continue;
+            }
             let $el = $("#" + key);
             if (!key in setup) {
                 continue;
             }
-            let val = setup[key];
             if ((r = $el.data("ionRangeSlider"))) {
                 if (r.options.type === "double") {
                     r.update({from: val[0], to: val[1]});
@@ -173,7 +178,7 @@
 
 
     function refresh_setup(load_from_hash = false, allow_window_hash_change = true) {
-        $("input").each(function () {
+        $("#setup input").each(function () {
             // Load value from the $el to setup.
             $el = $(this);
             let key = $el.attr("id");
@@ -196,6 +201,9 @@
             load_hash();
 
         } else if (allow_window_hash_change) {
+            // save to hash
+            console.log("SAVE HASH");
+            setup["plots"] = Plot.serialize();
             window.location.hash = JSON.stringify(setup);
     }
     }
