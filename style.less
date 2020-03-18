@@ -1,5 +1,8 @@
-main {
-    min-width: 800px;  // important for mobile view
+body {
+    > main { // we need to override rebot scss, hence the inheritance
+             min-width: 800px;  // important for mobile view
+      // XXX loading effect       display:none;
+    }
 }
 
 form {
@@ -15,6 +18,7 @@ form {
 
 #canvas-container {
     width: 33%;
+    display: flex;
     &.big{
         width: 100%;
     }
@@ -90,9 +94,6 @@ form {
 
 
 #plot-options {
-    #chart-id {
-        width: 50px;
-    }
     #plot-hint {
         color: darkgray;
         font-size: 90%;
@@ -138,6 +139,11 @@ form {
                 color:white;
                 padding: 2px 25px 2px 25px;
             }
+        }
+
+        .plot-figure {
+            width: 30px;
+            margin-right: 8px;
         }
     }
 }

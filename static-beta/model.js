@@ -279,8 +279,8 @@ class Territory {
 
         let headers = lines[0].split(",").slice(4); // XX add dates or something
         if (headers.length && headers[headers.length - 1] === "") {
-                headers.slice(0, -1); // strip last empty field
-            }
+            headers.slice(0, -1); // strip last empty field
+        }
         Territory.header = headers;
 
         for (let i = 1; i < lines.length; i++) {
@@ -340,7 +340,7 @@ class Plot {
 
         // we need to implement this method because of sum-territories that may return Plot to refresh function (that want id)
         this.id = Plot.plots.length;
-        this.figure = 1; // figure number
+        this.figure = "1"; // figure number, type: string
 
         this.build_html();
         if (add_to_stack) {
@@ -363,19 +363,12 @@ class Plot {
         let cp = Plot.current_plot;
         if (cp && cp !== this) { // kick out the old plot
             //XXX jestli stojconsole.log("V POHODE", Plot.current_plot.expression, Plot.current_plot.checked.length);
-            console.log("REMOVING OLD");
             if (cp.checked && cp.expression) { // show only if it is worthy
-                console.log("SHOOOOOOW");
                 cp.$element.removeClass("edited");
                 cp.$element.show();
             } else {
-                console.log("ERMOVAL");
                 cp.remove();
             }
-//            Plot.current_plot.assure_stack().$element.removeClass("edited");
-//            if((Plot.current_plot.$element) {
-//
-//            }
         }
         Territory.plot = Plot.current_plot = this;
         $plot.val(this.expression);
@@ -396,7 +389,8 @@ class Plot {
      * Assure the plot is in the plot stack
      */
     build_html() {
-        this.$element = $("<div><span class=name></span><span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
+        let s = '<input type="number" class="plot-figure" value="1" title="If you change the number, you place the plot on a different figure."/>';
+        this.$element = $("<div><span class=name></span>" + s + "<span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
                 .data("plot", this)
                 .hide()
                 .prependTo($("#plot-stack"));
@@ -418,7 +412,11 @@ class Plot {
         }
         if (this.valid === false) {
             this.$element.addClass("invalid");
-    }
+        }
+
+        // allow multiple figures
+        console.log("SHOW PLOT FIGURE?", setup["plot-figure"]);
+        $(".plot-figure", this.$element).toggle(Boolean(parseInt(setup["plot-figure"])));
     }
 
     static deserialize(data) {
@@ -470,16 +468,16 @@ class Plot {
     /**
      * @returns {Array} Sorted by chosen countries.
      */
-    static get_data() {
-        let result = [];   // countries with outbreak
+    static get_data(figure_id = null) {
+        let result = [];
         let outbreak_threshold = setup["outbreak-on"] ? parseInt(setup["outbreak-threshold"]) : 0;
         let boundaries = [Number.POSITIVE_INFINITY, 0];
-        for (let p of Plot.plots.filter(p => p.active)) {
+        for (let p of Plot.plots.filter(p => p.active && (figure_id === null || p.figure === figure_id))) {
             p.valid = null;
             let aggregated = [];
-            if (p === Plot.current_plot) {
-                Plot.expression = setup["plot"];
-            }
+//            if (p === Plot.current_plot) { // I think this may be ignored
+//                Plot.expression = setup["plot"];
+//            }
             for (let t of p.checked) {
                 let C = t.data["confirmed"];
                 let R = t.data["recovered"];
@@ -530,7 +528,7 @@ class Plot {
                         $("#plot-alert").hide();
                         if (typeof (result) === "string") { // error encountered
                             if (p.expression.trim()) {
-                                $("#plot-alert").show().html("<b>" + result + "</b> Use one of the following variables: <i>C R D NC NR ND dC dNC dNR dND P</i>");
+                                $("#plot-alert").show().html("<b>Use one of the following variables: <code>C R D NC NR ND dC dNC dNR dND P</code></b> (" + result + ")");
                             }
                             //console.log("PLOT INVALID", p.expression, p);
                             p.valid = false;
@@ -560,7 +558,7 @@ class Plot {
             }
             //console.log("PLOT END");
         }
-        //console.log("Plot data: ", result);
+        console.log("Plot data: ", result);
         return [result, boundaries];
     }
 }

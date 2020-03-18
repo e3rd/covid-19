@@ -13,6 +13,8 @@
 * arbitrary arithmetic plot function expression, evaluating territory data
 * range sliders custom value, changing boundaries according to current data
 * zooming
+* UI regrouping
+* multiple figures possible
 
 # TBD XXX
 * double click to check only that country
@@ -26,6 +28,13 @@
 * the data are now rounded – round them on label only
 * outbreak – disable range slider
 * Axe Y name ID – když fce nesdílí škálu, zobrazí se do též velikosti grafu, neroztáhne ho
+
+* číslo figury do malého tagu grafů – neukládá se ještě do hashe. Axy se mají stát parametrem Figure.
+    * nefunguje moc dobře přepínání, jestli jsou zaplé
+* lepší popis graf title – a vyměnit tam C/R/D
+* když měním days range, nemizí legend
+* ion opposite outbreak škála (intuitivnější z druhé strany)
+* outbreak skrývání moc nejde
 
 
 ## nice to have:
