@@ -186,7 +186,6 @@ class Territory {
     add_child(t) {
         //let t = Territory.get(name, type);
         this.children.push(t);
-        this.population += t.population;
         t.parents.push(this);
         return this;
     }
@@ -222,12 +221,11 @@ class Territory {
         Territory.parent_freeze = false;
     }
 
-    static get(name, type, population = null) {
+    static get(name, type) {
         let key = name + "_" + type;
         if (!(key in Territory.territories)) {
             Territory.territories[key] = new Territory(name, type);
         }
-        Territory.territories[key].population += population;
         return Territory.territories[key];
     }
 

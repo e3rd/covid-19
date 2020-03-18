@@ -44,7 +44,7 @@ $(function () {
     $plot.keyup(function () {
         let v = $(this).val();
         if ($(this).data("last") !== v) {
-            Plot.current_plot.expression = v;
+            Plot.current_plot.refresh_stack(v);
             refresh();
             $(this).data("last", v);
         }
@@ -56,7 +56,8 @@ $(function () {
             alert("This plot expression is invalid");
             return;
         }
-        Plot.current_plot.assure_stack();
+        //Plot.current_plot.assure_stack();
+        console.log("Resets $plot.val");
         $plot.val("");
         (new Plot()).focus();
     });
@@ -69,10 +70,7 @@ $(function () {
 // XXX
         } else {
             if (event.target === $("span.remove", $(this))[0]) {
-                Plot.plots = Plot.plots.filter(p => p !== $(this).data("plot"));
-                $(this).hide(500, function () {
-                    $(this).remove();
-                });
+                $(this).data("plot").remove();
             } else if (event.target === $("span.shown", $(this))[0]) {
                 // toggle hide
                 $(this).toggleClass("active", plot.active = !plot.active);
@@ -129,7 +127,7 @@ $(function () {
 
         // start plotting
         if (!Plot.plots.length) {
-            console.log("CREATING NEW");
+            console.log("CREATING NEW", setup["plot"], setup);
             (new Plot(setup["plot"])).focus(); // current plot
             for (let country of european_countries) { // X ["Czechia", "United Kingdom"]
                 Territory.get(country, Territory.COUNTRY).set_active();
@@ -145,24 +143,22 @@ $(function () {
 
 
 function load_hash() {
-    console.log("Load hash trying");
+    console.log("Load hash trying ...");
     try {
-        let hash = "{" + decodeURI(window.location.hash.substr(1)) + "}";
-        //console.log("Hash", hash, just_stored_hash);
-        if (hash === just_stored_hash) {
+        let hash = "{" +decodeURI(window.location.hash.substr(1))+ "}";
+        //console.log("Hash", hash, just_stored_hash, " (having plot: ", setup["plot"]);
+        if (hash === just_stored_hash || hash === "{}") {
             return;
         }
-        setup = JSON.parse(hash);
+        setup = JSON.parse( hash );
     } catch (e) {
         return;
     }
-    console.log("LOAD HASH NOW *******");
+    console.log("... LOAD HASH NOW!", setup);
     for (let key in setup) {
         let val = setup[key];
         if (key === "plots") {
             Plot.deserialize(val);
-            //plot = Plot.current_plot;
-            console.log("NOVY PLOT", Plot.current_plot);
             continue;
         }
         let $el = $("#" + key);
@@ -188,32 +184,33 @@ function load_hash() {
 function refresh_setup(load_from_hash = false, allow_window_hash_change = true) {
     $("#setup input").each(function () {
         // Load value from the $el to setup.
-        plot.$element = $(this);
-        let key = plot.$element.attr("id");
+        $el = $(this);
+        let key = $el.attr("id");
         let val;
-        if ((r = plot.$element.data("ionRangeSlider"))) {
+        if ((r = $el.data("ionRangeSlider"))) {
             if (r.options.type === "double") {
                 val = [r.result.from, r.result.to];
             } else {
                 val = r.result.from;
             }
-        } else if (plot.$element.attr("type") === "checkbox") {
-            val = plot.$element.prop("checked") ? 1 : 0;
+        } else if ($el.attr("type") === "checkbox") {
+            val = $el.prop("checked") ? 1 : 0;
         } else {
-            val = plot.$element.val();
+            val = $el.val();
         }
+        //console.log("Refresh setup", key, "from", setup[key], " to ", $el.val());
         setup[key] = val;
     });
 
     if (load_from_hash) {
-        console.log("HASH load");
+        //console.log("Call load_hash from refresh_setup");
         load_hash();
     } else if (allow_window_hash_change) {
         // save to hash
         setup["plots"] = Plot.serialize();
         let s = just_stored_hash = JSON.stringify(setup);
-        //console.log("JSUT stored", just_stored_hash);
         window.location.hash = s.substring(1, s.length - 1);
+        //console.log("Hash stored with plot: ", setup["plot"]);
 }
 }
 
@@ -291,7 +288,7 @@ function refresh(event = null) {
         let chosen_data = [];
         let [name, label, starred, id] = plot.territory_info(territory);
         let color = "#" + intToRGB(hashCode(name));
-        console.log("ZDEE", label, starred, id);
+        //console.log("Dataset", label, starred, id);
         for (let i = setup["day-range"][0]; i < data.length && i < setup["day-range"][1]; i++) {
             chosen_data.push(data[i]);
         }
@@ -339,7 +336,7 @@ function refresh(event = null) {
         Object.values(datasets).forEach(el => chart.data.datasets.push(el));
     }
     if (!chart.data.datasets.length) {
-        console.log(Object.values(datasets), "daTATSGFSDGJKH");
+        console.log(Object.values(datasets), "No data");
         chart.options.title.text = "No data";
         chart.options.title.display = true;
     } else {

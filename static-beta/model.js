@@ -64,10 +64,6 @@ class Territory {
     set_active(check = true) {
         this.$activate_button.prop("checked", check);
         if (!Territory.loading_freeze) {
-            if (!Territory.parent_freeze) {
-                console.log("CHILDREN CHECK!!!");
-                this.parents.forEach(p => p.some_children_active(check));
-            }
             if (check) {
                 this.plot.checked.push(this);
 //                if (!Territory.parent_freeze) {
@@ -78,6 +74,11 @@ class Territory {
 //                if (!Territory.parent_freeze) {
 //                    refresh();
 //                }
+            }
+            if (!Territory.parent_freeze) {
+                console.log("CHILDREN CHECK!!!");
+                this.parents.forEach(p => p.some_children_active(check));
+                Plot.current_plot.refresh_stack();
             }
     }
     }
@@ -165,6 +166,7 @@ class Territory {
 
     static set plot(plot) {
         Territory.loading_freeze = true;
+        console.log("DAVAM STATY", plot.checked);
         Territory.id_list.forEach(t => t.set_active(plot.checked.indexOf(t) > -1));
         Territory.id_list.forEach(t => t.set_star(plot.starred.indexOf(t) > -1));
         Territory.loading_freeze = false;
@@ -185,14 +187,14 @@ class Territory {
             let n = String(this.population);
             let len = n;
             let postfix;
-            if(len > 6) {
-                n = n.slice(0,-6);
+            if (len > 6) {
+                n = n.slice(0, -6);
                 postfix = " M";
             } else if (len > 3) {
-                n = n.slice(0,-3);
+                n = n.slice(0, -3);
                 postfix = " k";
             }
-            s += " <i>(" + n.replace(/(.)(?=(\d{3})+$)/g,'$1 ')+postfix + ")</i>";
+            s += " <i>(" + n.replace(/(.)(?=(\d{3})+$)/g, '$1 ') + postfix + ")</i>";
         }
         s += "</div>";
         return s;
@@ -201,6 +203,7 @@ class Territory {
     add_child(t) {
         //let t = Territory.get(name, type);
         this.children.push(t);
+        this.population += t.population;
         t.parents.push(this);
         return this;
     }
@@ -313,7 +316,7 @@ Territory.loading_freeze = false;
 
 
 class Plot {
-    constructor(expression = "", checked_names = [], starred_names = [], add_to_stack = false) {
+    constructor(expression = "", active = true, checked_names = [], starred_names = [], add_to_stack = false) {
         /**
          * @property {Territory[]} chosen territories to be processed
          */
@@ -323,8 +326,8 @@ class Plot {
          */
         this.starred = starred_names.map(name => Territory.get_by_name(name));
         this.expression = expression;
-        this._valid = false; // check if this expression is valid
-        this.active = true;
+        this._valid = null; // check if this expression is valid
+        this.active = active;
         this.$element = null;
 
         Plot.plots.push(this);
@@ -332,8 +335,10 @@ class Plot {
         // we need to implement this method because of sum-territories that may return Plot to refresh function (that want id)
         this.id = Plot.plots.length;
 
+        this.assure_stack();
         if (add_to_stack) {
-            this.assure_stack();
+            this.$element.show();
+            //this.assure_stack();
     }
     }
 
@@ -344,51 +349,90 @@ class Plot {
         if (this.$element) {
             this.$element.toggleClass("invalid", val === false);
         }
+        this._valid = val;
     }
 
     focus() {
-        if (Plot.current_plot) { // kick out the old plot
-            Plot.current_plot.assure_stack();
+        let cp = Plot.current_plot;
+        if (cp && cp !== this) { // kick out the old plot
+            //XXX jestli stojconsole.log("V POHODE", Plot.current_plot.expression, Plot.current_plot.checked.length);
+            console.log("REMOVING OLD");
+            if (cp.checked && cp.expression) { // show only if it is worthy
+                console.log("SHOOOOOOW");
+                cp.$element.removeClass("edited");
+                cp.$element.show();
+            } else {
+                console.log("ERMOVAL");
+                cp.remove();
+            }
+//            Plot.current_plot.assure_stack().$element.removeClass("edited");
+//            if((Plot.current_plot.$element) {
+//
+//            }
         }
         Territory.plot = Plot.current_plot = this;
         $plot.val(this.expression);
+        if (this.$element) {
+            this.$element.addClass("edited");
+        }
         return this;
+    }
+
+    remove() {
+        Plot.plots = Plot.plots.filter(p => p !== this);
+        this.$element.hide(500, function () {
+            $(this).remove();
+        });
     }
 
     /**
      * Assure the plot is in the plot stack
      */
     assure_stack() {
-        if (this.$element) {
+//        if (this.$element) {
+//            return this;
+//        }
+//
+//        let in_stack = false;
+//        $("#plot-stack div").each(function () {
+//            if (this === $(this).data("plot")) {
+//                this.$element = $(this);
+//                in_stack = true;
+//            }
+//        });
+//
+//        if (!in_stack) {
+        this.$element = $("<div><span class=name></span><span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
+                .data("plot", this)
+                .hide()
+                .prependTo($("#plot-stack"));
+        this.refresh_stack();
+//        }
+//        return this;
+    }
+
+    refresh_stack(expression = null) {
+        if (expression !== null) {
+            this.expression = expression;
+        }
+        if (!this.$element) {
             return;
         }
 
-        let in_stack = false;
-        $("#plot-stack div").each(function () {
-            if (this === $(this).data("plot")) {
-                this.$element = $(this);
-                in_stack = true;
-            }
-        });
-
-        if (!in_stack) {
-            this.$element = $("<div><span class=name>" + this.expression + "</span><span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
-                    .data("plot", this)
-                    .prependTo($("#plot-stack"));
-            if (this.active) {
-                this.$element.addClass("active");
-            }
-            if (!this.valid) {
-                this.$element.addClass("invalid");
-            }
+        let name = this.expression + " (" + this.checked.length + " countries)"
+        $("> span[class=name]", this.$element).html(name);
+        if (this.active) {
+            this.$element.addClass("active");
         }
-
+        if (this.valid === false) {
+            this.$element.addClass("invalid");
+    }
     }
 
     static deserialize(data) {
-        console.log("ZDEEEEEEEEEEE5", Plot.current_plot);
+        //console.log("ZDEEEEEEEEEEE5", Plot.current_plot);
         Plot.plots = [];
-        data.forEach((d) => new Plot(d[0], d[1], d[2], true));
+        data.forEach((d) => new Plot(d[0], d[1], d[2], d[3], data.length > 1));
         if (Plot.plots.length) {
             Plot.plots[0].focus();
         }
@@ -398,6 +442,7 @@ class Plot {
     static serialize() {
         return Plot.plots.map(p => {
             return [p.expression,
+                p.active,
                 p.checked.map(t => t.get_name()),
                 p.starred.map(t => t.get_name())];
         });
@@ -423,7 +468,7 @@ class Plot {
      * @type type
      */
     territory_info(territory = null) {
-        console.log("COMING HERE");
+        //console.log("COMING HERE");
         if (territory) {
             return [territory.get_name(), territory.get_name(true), territory.is_starred, territory.id];
         } else {
@@ -438,7 +483,9 @@ class Plot {
         let result = [];   // countries with outbreak
         let outbreak_threshold = parseInt(setup["outbreak-threshold"]);
         for (let p of Plot.plots.filter(p => p.active)) {
+            console.log("Plot valid null", p.valid);
             p.valid = null;
+            console.log("Plot valid null", p.valid);
             let aggregated = [];
             if (p === Plot.current_plot) {
                 Plot.expression = setup["plot"];
@@ -462,9 +509,9 @@ class Plot {
                         let vars = {
                             "R": R[j],
                             "D": D[j],
-                            "C": C[j]
+                            "C": C[j],
+                            "P": t.population
                         };
-                        vars["P"] = t.population;
 
                         if (last_vars) {
                             vars["NR"] = R[j] - last_vars["R"]; // == dR
@@ -495,11 +542,11 @@ class Plot {
                             if (p.expression.trim()) {
                                 $("#plot-alert").show().html("<b>" + result + "</b> Use one of the following variables: <i>C R D NC NR ND dC dNC dNR dND P</i>");
                             }
-                            console.log("PLOT INVALID", p);
+                            //console.log("PLOT INVALID", p.expression, p);
                             p.valid = false;
                             break;
                         } else {
-                            outbreak_data.push(Math.round(result * 100) / 100);
+                            outbreak_data.push(Math.round(result * 10000) / 10000);
                         }
 
                     }
@@ -507,19 +554,22 @@ class Plot {
                 if (setup["sum-territories"]) {
                     aggregated = sumArrays(aggregated, outbreak_data);
                 } else {
-                    result.push([this, t, outbreak_data]);
+                    result.push([p, t, outbreak_data]);
                 }
             }
+            console.log("INVALID???", p.valid);
             if (p.valid === false) {
                 break;
+            } else {
+                console.log("PLOT DATA VALID", p);
+                p.valid = true;
             }
             if (setup["sum-territories"]) {
-                result.push([this, null, aggregated]);
+                result.push([p, null, aggregated]);
             }
-            console.log("PLOT DATA VALID", p);
-            p.valid = true;
+            console.log("PLOT END");
         }
-        console.log("Plot data", result);
+        console.log("Plot data: ", result);
         return result;
     }
 }

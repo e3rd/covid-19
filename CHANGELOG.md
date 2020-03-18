@@ -20,6 +20,8 @@
 * hashovat hidden očka
 * south korea duplication bug
 * mobily, at to neni v jednom sloupci
+* ui change chart size
+* the data are now rounded – round them on label only
 
 
 ## nice to have:

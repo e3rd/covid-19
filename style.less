@@ -77,13 +77,28 @@ canvas {
     display: inline-flex;
     > div {
         cursor:pointer;
-        background-color: gray;
+        margin-right: 10px;
+        //background-color: gray;
         border: 1px solid gray;
         border-radius: 2px;
         font-size: 75%;
         float:left;
+        background-color: green;
+
+        opacity: 0.3;
+/*        > .shown {
+            background-color: darkgray;
+        }*/
+
         &.active {
-            background-color: green;
+            opacity: 1;
+/*            > .shown {
+                background-color: gray;
+            }*/
+        }
+        &.edited{
+            //background-color: #005;
+            font-weight: bold;
         }
         &.invalid{
             background-color: darkred;
