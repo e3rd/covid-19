@@ -1,5 +1,5 @@
 <div class="alert alert-info">
-    <strong>Another covid-19 dashboard</strong>
+    <strong>Dynamic correlation searching covid-19 dashboard</strong>
 </div>
 
 <form id="setup">
@@ -29,8 +29,8 @@
 <script>
     // definitions
     var setup = {};
-    var plot = null;
     var chart = null; // chart instance
+    var just_stored_hash = ""; // determine if hash change is in progress
     let url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv';
     let ready_to_refresh = false;
 
@@ -70,9 +70,6 @@
         });
 
 
-        // document events
-        window.addEventListener('hashchange', load_hash, false);
-        refresh_setup(true);
 
 
 // runtime
@@ -95,25 +92,40 @@
             td(2, Territory.continents);
             $("> div", $territories).on("click", "> div", function (event) {
                 let t = Territory.get_id($(this).attr("id"));
-                if (event.target === $("span:eq(1)", $(this))[0]) { // hide/show all
+                if (event.target === $("span:eq(1)", $(this))[0]) { // un/star all
+                    if (t.star() && !t.is_checked) {
+                        t.check();
+                    }
+                } else if (event.target === $("span:eq(2)", $(this))[0]) { // hide/show all
                     t.toggle_children_visibility();
-                } else if (event.target === $("span:eq(2)", $(this))[0]) { // un/check all
+                } else if (event.target === $("span:eq(3)", $(this))[0]) { // un/check all
                     t.toggle_children_checked();
                 } else if (event.target.type !== "checkbox") { // toggle clicked territory
                     $("input:checkbox", $(this)).click();
-                } else if ($(event.target).prop("checked")) {
-                    t.check();
                 } else {
-                    t.uncheck();
+                    t.check($(event.target).prop("checked"));
                 }
+                refresh();
             });
 
+            // document events
+            window.addEventListener('hashchange', () => {
+                console.log("HASH change event");
+                load_hash();
+            }, false);
+            refresh_setup(true, false);
 
             // start plotting
-            plot = (new Plot()).focus(); // current plot
-            // XXXXX european_countries
-            for (let country of ["Czechia", "United Kingdom"]) {
-                Territory.get(country, Territory.COUNTRY).check();
+            if (!Plot.plots.length) {
+                console.log("CREATING NEW");
+                (new Plot()).focus(); // current plot
+                // XXXXX european_countries
+                for (let country of ["Czechia", "United Kingdom"]) {
+                    Territory.get(country, Territory.COUNTRY).check();
+                }
+            } else {
+                console.log("USING OLD");
+                Plot.plots[0].focus();
             }
             refresh(set_ready = true);
         });
@@ -123,9 +135,9 @@
      * @param {type} csv Raw data from github
      * @returns {Array} Sorted by chosen countries.
      */
-    function prepare_plot_data() { // Xcsv
-        let country_data = {};   // countries with outbreak
-        for (let t of plot.checked) {
+    function prepare_plot_data() {
+        let result = [];   // countries with outbreak
+        for (let t of Plot.current_plot.checked) {
             let line = t.data["confirmed"];
             let outbreak_data = [];
             let ignore = true;
@@ -137,24 +149,32 @@
                     outbreak_data.push(line[j]);
                 }
             }
-            country_data[t.get_name()] = outbreak_data;
+            result.push([t, outbreak_data]);
         }
-        console.log(country_data);
-        return country_data;
+        //console.log("Plot data", result);
+        return result;
     }
 
 
     function load_hash() {
-        console.log("LOAD- HASH");
+        console.log("Load hash trying");
         try {
-            setup = JSON.parse(decodeURI(window.location.hash.substr(1)));
+            let hash = "{" + decodeURI(window.location.hash.substr(1)) + "}";
+            //console.log("Hash", hash, just_stored_hash);
+            if (hash === just_stored_hash) {
+                return;
+            }
+            setup = JSON.parse(hash);
         } catch (e) {
             return;
         }
+        console.log("LOAD HASH NOW *******");
         for (let key in setup) {
             let val = setup[key];
             if (key === "plots") {
                 Plot.deserialize(val);
+                //plot = Plot.current_plot;
+                console.log("NOVY PLOT", Plot.current_plot);
                 continue;
             }
             let $el = $("#" + key);
@@ -198,13 +218,14 @@
         });
 
         if (load_from_hash) {
+            console.log("HASH load");
             load_hash();
-
         } else if (allow_window_hash_change) {
             // save to hash
-            console.log("SAVE HASH");
             setup["plots"] = Plot.serialize();
-            window.location.hash = JSON.stringify(setup);
+            let s = just_stored_hash = JSON.stringify(setup);
+            //console.log("JSUT stored", just_stored_hash);
+            window.location.hash = s.substring(1, s.length - 1);
     }
     }
 
@@ -252,38 +273,42 @@
         // pass only when ready
         if (event === true) {
             ready_to_refresh = true;
-        }
-        if (!ready_to_refresh) {
+        } else if (!ready_to_refresh) {
             return false;
+        } else {
+            // XXX dej to sem.
+            //refresh_setup(false, event !== false);
         }
-
         refresh_setup(false, event !== false);
 
         // build chart data
         // process each country
         let longest_data = 0;
-        let countries = prepare_plot_data();
         let datasets = {};
-        for (let country in countries) {
+        for (let [territory, data] of prepare_plot_data()) {
             // choose only some days in range
+            if(!data.length) {
+                continue;
+            }
             let chosen_data = [];
-            for (let i = setup["day-range"][0]; i < countries[country].length && i < setup["day-range"][1]; i++) {
-                chosen_data.push(countries[country][i]);
+            for (let i = setup["day-range"][0]; i < data.length && i < setup["day-range"][1]; i++) {
+                chosen_data.push(data[i]);
             }
 
             longest_data = Math.max(longest_data, chosen_data.length);
-
+            //console.log("Territory", territory.name, territory.is_starred);
             // push new dataset
             let dataset = {
                 type: 'line',
-                borderColor: "#" + intToRGB(hashCode(country)), //"#5793DB",
-                label: country,
+                borderColor: "#" + intToRGB(hashCode(territory.get_name())), //"#5793DB",
+                label: territory.get_name(true),
                 data: chosen_data,
-                borderWidth: 3,
+                borderWidth: territory.is_starred ? 6 : 3,
                 fill: false,
-                backgroundColor: "#" + intToRGB(hashCode(country)), //"#5793DB",
+                backgroundColor: "#" + intToRGB(hashCode(territory.get_name())), //"#5793DB",
+                id: territory.id
             };
-            datasets[country] = dataset;
+            datasets[territory.id] = dataset;
         }
         let labels = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1])).map(String);
 
@@ -297,9 +322,12 @@
             let removable = [];
             // update changed
             for (let o of chart.data.datasets) {
-                if (o.label in datasets) {
-                    o.data = datasets[o.label].data;
-                    delete datasets[o.label];
+                if (o.id in datasets) { // update changes
+                    let d = datasets[o.id];
+                    o.data = d.data;
+                    o.borderWidth = d.borderWidth;
+                    o.label = d.label;
+                    delete datasets[o.id];
                 } else {
                     removable.push(o);
                 }
@@ -319,7 +347,7 @@
 
 Source: <a href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data">Johns Hopkins CSSE</a> (data updated once a day)
 <br>
-Help development at <a href="https://github.com/e3rd/covid-19/tree/master/static">github</a>.
+Help development at <a href="https://github.com/e3rd/covid-19/tree/master/">github</a>.
 
 
 <div id="territories" class="row">

@@ -9,7 +9,8 @@ class Territory {
         this.name = name;
         this.type = type;
         this.toggled = false;
-        this.shown = false;
+        this.shown = true;
+        this.is_starred = false;
         this.id = "t" + (++counter);
         this.data = {"confirmed": []};
 
@@ -39,7 +40,7 @@ class Territory {
     /**
      * @returns {String} Name of the territory. (Possible quotes around the name stripped.)
      */
-    get_name() {
+    get_name(hightlightable = false) {
         let s = this.name;
         if (s.substring && s.substring(0, 1) === '"' && s.substring(-1, 1) === '"') {
             s = s.substr(1, s.length - 2);
@@ -47,31 +48,75 @@ class Territory {
         if (this.type === Territory.COUNTRY && this.children.length && this.children.some((ch) => ch.name === s)) {
             s += " (Region)";
         }
+        if (hightlightable && this.is_starred) {
+            s = " *** " + s + "***";
+        }
         return s;
     }
 
-    get checked() {
+    get is_checked() {
         return this.plot.checked.indexOf(this) > -1;
     }
 
-    uncheck() {
-        this.plot.checked = this.plot.checked.filter(e => e !== this); // remove from chosens
-        this.$element.find("input").prop("checked", false);
-        if (!Territory.refresh_freeze) {
-            refresh();
-        }
+    check(check = true) {
+        this.$check_button.prop("checked", check);
+        if (!Territory.loading_freeze) {
+            if (!Territory.parent_freeze) {
+                console.log("CHILDREN CHECK!!!");
+                this.parents.forEach(p => p.some_children_checked(check));
+            }
+            if (check) {
+                this.plot.checked.push(this);
+//                if (!Territory.parent_freeze) {
+//                    refresh();
+//                }
+            } else {
+                this.plot.checked = this.plot.checked.filter(e => e !== this); // remove from chosens
+//                if (!Territory.parent_freeze) {
+//                    refresh();
+//                }
+            }
+    }
     }
 
-    check() {
-        this.plot.checked.push(this);
-        this.$element.find("input").prop("checked", true);
-        if (!Territory.refresh_freeze) {
-            refresh();
+    some_children_checked(set = true) {
+        let off = null;
+        console.log("ZDEE true", set === true, this.children.every(ch => ch.is_checked), this.children);
+        if (!set) {
+            off = true;
+        } else if (this.children.every(ch => ch.$check_button.prop("checked", true))) { // XX if its a performance issue, may be delayed
+            off = false;
+            console.log("OFF FALSE");
         }
+        if (off !== null) {
+            this.$child_check_button.toggleClass("off", off);
+        }
+
+        this.parents.forEach(p => p.some_children_checked(set));
     }
 
     /**
-     * Hide the territory and its children
+     *
+     * @param {type} set If null, star toggled.
+     * @returns {undefined}
+     */
+    star(set = null) {
+        if (set === null) {
+            set = !(this.plot.starred.indexOf(this) > -1);
+        }
+        $("> span:eq(1)", this.$element).toggleClass("off", !set);
+        if (!Territory.loading_freeze) {
+            if (set) {
+                this.plot.starred.push(this);
+            } else {
+                this.plot.starred = this.plot.starred.filter(e => e !== this); // remove from starred
+            }
+        }
+        return this.is_starred = set;
+    }
+
+    /**
+     * Hide the territory (if not checked) and its descendants
      * @returns {undefined}
      */
     hide() {
@@ -81,7 +126,7 @@ class Territory {
     }
 
     /**
-     * Show the territory and its children
+     * Show the territory and its descendants
      * @returns {undefined}
      */
     show() {
@@ -94,18 +139,35 @@ class Territory {
         return $("#" + this.id);
     }
 
+    get $child_check_button() {
+        return $("> span:eq(3)", this.$element);
+    }
+
+    get $check_button(){
+        return $("> input", this.$element);
+    }
+
     get plot() {
         return Plot.current_plot;
     }
 
+    static set plot(plot) {
+        Territory.loading_freeze = true;
+        Territory.id_list.forEach(t => t.check(plot.checked.indexOf(t) > -1));
+        Territory.id_list.forEach(t => t.star(plot.starred.indexOf(t) > -1));
+        Territory.loading_freeze = false;
+    }
+
     get_html() {
+        let disabled = this.data["confirmed"].filter(d => d !== "0").length ? "" : " (zero)";
         let s = "<div id='" + this.id + "'>";
         s += "<input type=checkbox />";
         //s += "<span>unicode star</span>"; // XXX
-        s += "<span>" + this.get_name() + "</span>";
+        s += "<span>" + this.get_name() + "</span>" + disabled;
+        s += " <span class='off'>☆</span> ";
         if (this.children.length) {
-            s += "<span>👁</span>"; // XXX
-            s += " <span>✓</span> ";
+            s += "<span>👁</span>"; // XX save to hash
+            s += " <span class='off'>✓</span> ";
         }
         s += "</div>";
         return s;
@@ -123,11 +185,15 @@ class Territory {
      * @returns {undefined}
      */
     toggle_children_visibility() {
+        let off;
         if (this.children.some((child) => child.shown || child.children.some((grand_ch) => grand_ch.shown))) { // is there any visible children
+            off = true;
             this.children.forEach((child) => child.hide());
         } else {
+            off = false;
             this.children.forEach((child) => child.show());
         }
+        $("> span:eq(2)", this.$element).toggleClass("off", off);
     }
 
     /**
@@ -135,14 +201,11 @@ class Territory {
      * @returns {undefined}
      */
     toggle_children_checked() {
-        Territory.refresh_freeze = true;
-        if (this.children.some((child) => child.checked)) {
-            this.children.forEach((child) => child.uncheck());
-        } else {
-            this.children.forEach((child) => child.check());
-        }
-        Territory.refresh_freeze = false;
-        refresh();
+        Territory.parent_freeze = true;
+        let any_checked_hide_all = this.children.some((child) => child.is_checked);
+        this.children.forEach((child) => child.check(!any_checked_hide_all));
+        $("> span:eq(3)", this.$element).toggleClass("off", any_checked_hide_all);
+        Territory.parent_freeze = false;
     }
 
     static get(name, type) {
@@ -154,7 +217,7 @@ class Territory {
     }
 
     static get_by_name(name) {
-        for (let o of Territory.territories) {
+        for (let o of Territory.id_list) {
             if (o.get_name() === name) {
                 return o;
             }
@@ -178,9 +241,14 @@ class Territory {
 
         let headers = lines[0].split(","); // XX add dates or something
         for (let i = 1; i < lines.length; i++) {
+            if (!lines[i]) {
+                continue;
+            }
             let line = splitCsv(lines[i]);
             let data = line.slice(4);
-
+            if (data.length && data[data.length - 1] === "") {
+                data.slice(0, -1); // strip last empty field
+            }
             let t = Territory.get(line[1], Territory.COUNTRY);
             if (line[0]) {
                 let ch = Territory.get(line[0], Territory.STATE);
@@ -205,7 +273,8 @@ Territory.id_list = []; // sorted by id
 Territory.states = {}; // ex:Czechia, Texas
 Territory.countries = {}; // ex: USA, China
 Territory.continents = {};
-Territory.refresh_freeze = false;
+Territory.parent_freeze = false;
+Territory.loading_freeze = false;
 
 
 class Plot {
@@ -218,23 +287,26 @@ class Plot {
          * @property {Territory[]} chosen
          */
         this.starred = starred_names.map(name => Territory.get_by_name(name));
-        
+
         Plot.plots.push(this);
 
     }
 
     focus() {
-        return Plot.current_plot = this;
+        return Territory.plot = Plot.current_plot = this;
     }
 
     static deserialize(data) {
         Plot.plots = [];
         data.forEach((d) => new Plot(d[0], d[1]));
+        if (Plot.plots.length) {
+            Plot.plots[0].focus();
+        }
     }
 
     static serialize() {
         return Plot.plots.map(p => {
-            return [p.checked.map(t => t.get_name()), p.starred.map(t => t.get_name())]
+            return [p.checked.map(t => t.get_name()), p.starred.map(t => t.get_name())];
         });
     }
 }

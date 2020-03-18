@@ -2,6 +2,10 @@ main {
     min-width: 800px;  // important for mobile view
 }
 
+canvas {
+    //max-height: 300px; /// XXXX development
+}
+
 .range-container{
     display: flex;
     align-items: center;
@@ -14,10 +18,33 @@ main {
 }
 
 // territory cell styling
+@color_on: darkgoldenrod;
+@color_off: darkgray;
 #territories > div > div {
     vertical-align: top;
     cursor: pointer;
     span {
         font-size: 75%;
+
+        // icon of eye and checkmark
+        &:nth-of-type(2), &:nth-of-type(3), &:nth-of-type(4) {
+            /*color: @color_on;*/
+            border-radius: 10px;
+            padding: 2px;
+            background-color: @color_on;
+            &:nth-of-type(2), &:nth-of-type(4) {
+                background-color: yellow;;
+                border: 1px solid black;
+            }
+
+            &.off {
+                /*color: @color_on;*/
+                background-color: @color_off;
+                &:nth-of-type(2), &:nth-of-type(4) {
+                    background-color: unset;
+                border: 1px solid white;
+                }
+            }
+        }
     }
 }
