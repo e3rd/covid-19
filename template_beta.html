@@ -2,7 +2,7 @@
     <strong>Dynamic correlation searching covid-19 dashboard</strong>
 </div>
 
-<form id="setup">
+<form id="setup" onsubmit="return false">
     <div class="range-container">
         <input class="refresh" type="checkbox"  id="outbreak-on" value="on" checked>
         <label for="outbreak-on">Outbreak </label>
@@ -32,7 +32,7 @@
     <a id="plot-new" class="btn btn-light">+</a>
     <div id="plot-stack"></div>
     <p>
-        Use any arithmetic expression C/R/D (confirmed/recovered/death), prepended by N (newly added) and/or d (derivation).
+        Put any arithmetic expression using C/R/D (confirmed/recovered/death), prepended by N (newly added) and/or d (derivation), or P (population).
     </p>
     <div class="alert alert-warning" id="plot-alert"></div>
     <!-- XX P for population -->
@@ -82,4 +82,8 @@
     Source: <a href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data">Johns Hopkins CSSE</a> (data updated once a day)
     <br>
     Help development at <a href="https://github.com/e3rd/covid-19/tree/master/">github</a>.
+    <br>
+</p>
+<p>
+    Disclaimer: The chart is based only on cases of infection confirmed by testing. Due to the varying amounts of testing done in different countries, real numbers of cases may be very different.
 </p>

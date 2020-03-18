@@ -19,6 +19,7 @@
 * jiné default countries
 * hashovat hidden očka
 * south korea duplication bug
+* mobily, at to neni v jednom sloupci
 
 
 ## nice to have:

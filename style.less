@@ -47,6 +47,11 @@ canvas {
             }
         }
     }
+    i { // population
+        font-size: 75%;
+        color: gray;
+        font-style: italic;
+    }
 }
 
 #territories-legend{
@@ -66,4 +71,27 @@ canvas {
 #plot-alert {
     clear:both;
     font-size: 75%;
+}
+
+#plot-stack {
+    display: inline-flex;
+    > div {
+        cursor:pointer;
+        background-color: gray;
+        border: 1px solid gray;
+        border-radius: 2px;
+        font-size: 75%;
+        float:left;
+        &.active {
+            background-color: green;
+        }
+        &.invalid{
+            background-color: darkred;
+        }
+
+        > .name {
+            color:white;
+            padding: 2px 25px 2px 25px;
+        }
+    }
 }

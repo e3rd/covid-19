@@ -5,6 +5,7 @@ var just_stored_hash = ""; // determine if hash change is in progress
 let url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-';
 let ready_to_refresh = false;
 var $ctx = $("#chart");
+var $plot = $("#plot");
 
 
 $(function () {
@@ -40,7 +41,7 @@ $(function () {
         };
     });
     // refresh on plot change
-    $("#plot").keyup(function () {
+    $plot.keyup(function () {
         let v = $(this).val();
         if ($(this).data("last") !== v) {
             Plot.current_plot.expression = v;
@@ -49,19 +50,36 @@ $(function () {
         }
     });
     // possibility to add a new plot
-//    $("#plot-new").click(() => {
-//        $el = $("<div><span class=name>" + $("#plot").val() + "</span><span class=shown>EYE</span><span class='remove btn btn-light'>×</span></div>")
-//                .data("plot", Plot.current_plot)
-//                .prependTo($("#plot-stack"))
-//                .on("click", "span.remove", () => {
-//                    alert("remove");
-//                }).on("click", "span.shown", () => {
-//            alert("click");
-//
-//        }).on("click", "span.name", () => {
-//            alert("get back");
-//        });
-//    }); XXX
+    $("#plot-new").click(() => {
+        console.log(Plot.current_plot, "PLOOOOO", Plot.current_plot.valid);
+        if (!Plot.current_plot.valid) {
+            alert("This plot expression is invalid");
+            return;
+        }
+        Plot.current_plot.assure_stack();
+        $plot.val("");
+        (new Plot()).focus();
+    });
+    // clicking on plot stack
+    $("#plot-stack").on("click", "> div", function (event) {
+        let plot = $(this).data("plot");
+        if (event.target === $("span.name", $(this))[0]) {
+            plot.focus();
+            // re-edit
+// XXX
+        } else {
+            if (event.target === $("span.remove", $(this))[0]) {
+                Plot.plots = Plot.plots.filter(p => p !== $(this).data("plot"));
+                $(this).hide(500, function () {
+                    $(this).remove();
+                });
+            } else if (event.target === $("span.shown", $(this))[0]) {
+                // toggle hide
+                $(this).toggleClass("active", plot.active = !plot.active);
+            }
+            refresh();
+        }
+    });
 
 
 
@@ -125,6 +143,7 @@ $(function () {
 });
 
 
+
 function load_hash() {
     console.log("Load hash trying");
     try {
@@ -169,19 +188,19 @@ function load_hash() {
 function refresh_setup(load_from_hash = false, allow_window_hash_change = true) {
     $("#setup input").each(function () {
         // Load value from the $el to setup.
-        $el = $(this);
-        let key = $el.attr("id");
+        plot.$element = $(this);
+        let key = plot.$element.attr("id");
         let val;
-        if ((r = $el.data("ionRangeSlider"))) {
+        if ((r = plot.$element.data("ionRangeSlider"))) {
             if (r.options.type === "double") {
                 val = [r.result.from, r.result.to];
             } else {
                 val = r.result.from;
             }
-        } else if ($el.attr("type") === "checkbox") {
-            val = $el.prop("checked") ? 1 : 0;
+        } else if (plot.$element.attr("type") === "checkbox") {
+            val = plot.$element.prop("checked") ? 1 : 0;
         } else {
-            val = $el.val();
+            val = plot.$element.val();
         }
         setup[key] = val;
     });
@@ -264,12 +283,15 @@ function refresh(event = null) {
      *
      * @type {Territory|Plot} territory If sum-territories is on, we receive Plot
      */
-    for (let [territory, data] of plot_data) {
+    for (let [plot, territory, data] of plot_data) {
         // choose only some days in range
         if (!data.length) {
             continue;
         }
         let chosen_data = [];
+        let [name, label, starred, id] = plot.territory_info(territory);
+        let color = "#" + intToRGB(hashCode(name));
+        console.log("ZDEE", label, starred, id);
         for (let i = setup["day-range"][0]; i < data.length && i < setup["day-range"][1]; i++) {
             chosen_data.push(data[i]);
         }
@@ -279,15 +301,15 @@ function refresh(event = null) {
         // push new dataset
         let dataset = {
             type: 'line',
-            borderColor: "#" + intToRGB(hashCode(territory.get_name())), //"#5793DB",
-            label: territory.get_name(true),
+            borderColor: color,
+            label: label,
             data: chosen_data,
-            borderWidth: territory.is_starred ? 6 : 3,
+            borderWidth: starred ? 6 : 3,
             fill: false,
-            backgroundColor: "#" + intToRGB(hashCode(territory.get_name())), //"#5793DB",
-            id: territory.id
+            backgroundColor: color,
+            id: id
         };
-        datasets[territory.id] = dataset;
+        datasets[id] = dataset;
     }
     let labels = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1])).map(String);
 
