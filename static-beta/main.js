@@ -6,7 +6,6 @@ let url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse
 let ready_to_refresh = false;
 
 
-
 $(function () {
     // DOM configuration
     $("#outbreak-threshold").ionRangeSlider({
