@@ -4,7 +4,8 @@
 
 <form id="setup">
     <div class="range-container">
-        <label for="outbreak-threshold">Outbreak</label>
+        <input class="refresh" type="checkbox"  id="outbreak-on" value="on" checked>
+        <label for="outbreak-on">Outbreak </label>
         <div>
             <input type="range" id="outbreak-threshold" value="20">
         </div>
@@ -18,50 +19,62 @@
     </div>
 
     <div>
-        <input class="refresh" type="checkbox"  id="log-switch" value="off">
+        <input class="refresh" type="checkbox"  id="log-switch" value="on" checked>
         <label for="log-switch">Log scale</label>
     </div>
+
+    <div>
+        <input class="refresh" type="checkbox"  id="sum-territories" value="off">
+        <label for="sum-territories">Sum territories into single curve</label>
+    </div>
+
+    Plot expression: <input type="text" id="plot" placeholder="R/(C+R+D)" value="C"/>
+    <a id="plot-new" class="btn btn-light">+</a>
+    <div id="plot-stack"></div>
+    <p>
+        Use any arithmetic expression C/R/D (confirmed/recovered/death), prepended by N (newly added) and/or d (derivation).
+    </p>
+    <div class="alert alert-warning" id="plot-alert"></div>
+    <!-- XX P for population -->
 </form>
 
-Plot expression: <input type="text" id="plot" />
-Use C/R/D for (confirmed/recovered/dead)
 
 <canvas id="chart"></canvas>
 
 
 
 <div class="container">
-<div class="row">
-    <div class="col-md">
-        <h1>State <span></span></h1>
+    <div class="row">
+        <div class="col-md">
+            <h1>State <span></span></h1>
+        </div>
+        <div class="col-md">
+            <h1>Country <span></span></h1>
+        </div>
+        <div class="col-md">
+            <h1>Continent <span></span></h1>
+        </div>
     </div>
-    <div class="col-md">
-        <h1>Country <span></span></h1>
-    </div>
-    <div class="col-md">
-        <h1>Continent <span></span></h1>
-    </div>
-</div>
 
-<div id="territories-legend" class="row">
-    <div class="col-md">
-        <span class='off'>☆</span> – hightlight curve
-        <span>👁</span> – show/hide all non-active descendants
-        <span class='off'>✓</span> – activate all children curves
+    <div id="territories-legend" class="row">
+        <div class="col-md">
+            <span class='off'>☆</span> – hightlight curve
+            <span>👁</span> – show/hide all non-active descendants
+            <span class='off'>✓</span> – activate all children curves
+        </div>
+        <div class="col-md-4">
+            <a id="uncheck-all">Uncheck all</a>
+        </div>
     </div>
-    <div class="col-md-4">
-        <a id="uncheck-all">Uncheck all</a>
-    </div>
-</div>
 
-<div id="territories" class="row">
-    <div class="col-md">
+    <div id="territories" class="row">
+        <div class="col-md">
+        </div>
+        <div class="col-md">
+        </div>
+        <div class="col-md">
+        </div>
     </div>
-    <div class="col-md">
-    </div>
-    <div class="col-md">
-    </div>
-</div>
 </div>
 
 <p>

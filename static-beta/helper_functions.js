@@ -70,3 +70,18 @@ function splitCsv(str) {
         return accum;
     }, {soFar: [], isConcatting: false}).soFar
 }
+
+
+/**
+ * Sum arrays while filling zeroes to the shorter.
+ * @returns {Array}
+ */
+function sumArrays(ar1, ar2) {
+    let total = [];
+    for (var i = 0; i < ar1.length || i < ar2.length; i++) {
+        let a = ar1[i];
+        let b = ar2[i];
+        total.push((isNaN(a) ? 0 : a) + (isNaN(b) ? 0 : b));
+    }
+    return total;
+}

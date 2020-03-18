@@ -12,7 +12,7 @@ class Territory {
         this.shown = true;
         this.is_starred = false;
         this.id = "t" + (++counter);
-        this.data = {"confirmed": []};
+        this.data = {"confirmed": [], "deaths": [], "recovered": []};
 
         /** @type {Territory[]} */
         this.parents = [];
@@ -27,12 +27,12 @@ class Territory {
 //        if (this.name === "United Kingdom" || (this.parents.some(p => p.name === "United Kingdom"))) {
 //            console.log("Sčítám", this.name, this.data[type], data);
 //        }
-
+        data = data.map(d => parseInt(d));
         if (!this.data[type].length) {
             this.data[type] = data;
         } else {
             this.data[type] = this.data[type].map((num, idx) => {
-                return parseInt(num) + parseInt(data[idx]);
+                return num + data[idx];
             });
         }
         this.parents.forEach(p => p.add_data(data, type));
@@ -243,7 +243,7 @@ class Territory {
     }
 
     /**
-     *
+     * Get territory by its id.
      * @param {String} id (Territory.id), ex: t15 -> will return 15th territory
      * @returns {Territory}
      */
@@ -254,7 +254,7 @@ class Territory {
     /**
      * @param {type} csv Raw data from github
      */
-    static build(csv) {
+    static build(csv, type) {
         let lines = csv.split("\n");
 
         let headers = lines[0].split(","); // XX add dates or something
@@ -271,9 +271,9 @@ class Territory {
             if (line[0]) {
                 let ch = Territory.get(line[0], Territory.STATE);
                 t.add_child(ch);
-                ch.add_data(data);
+                ch.add_data(data, type);
             }
-            t.add_data(data);
+            t.add_data(data, type);
             t.parents.forEach(p => p.add_data(data));
         }
     }
@@ -296,7 +296,7 @@ Territory.loading_freeze = false;
 
 
 class Plot {
-    constructor(checked_names = [], starred_names = []) {
+    constructor(expression = "", checked_names = [], starred_names = []) {
         /**
          * @property {Territory[]} chosen territories to be processed
          */
@@ -305,9 +305,12 @@ class Plot {
          * @property {Territory[]} chosen
          */
         this.starred = starred_names.map(name => Territory.get_by_name(name));
+        this.expression = expression;
 
         Plot.plots.push(this);
 
+        // we need to implement this method because of sum-territories that may return Plot to refresh function (that want id)
+        this.id = Plot.plots.length;
     }
 
     focus() {
@@ -316,7 +319,7 @@ class Plot {
 
     static deserialize(data) {
         Plot.plots = [];
-        data.forEach((d) => new Plot(d[0], d[1]));
+        data.forEach((d) => new Plot(d[0], d[1], d[2]));
         if (Plot.plots.length) {
             Plot.plots[0].focus();
         }
@@ -324,8 +327,110 @@ class Plot {
 
     static serialize() {
         return Plot.plots.map(p => {
-            return [p.checked.map(t => t.get_name()), p.starred.map(t => t.get_name())];
+            return [p.expression,
+                p.checked.map(t => t.get_name()),
+                p.starred.map(t => t.get_name())];
         });
+    }
+
+    get_name() {
+        let n = this.checked.length;
+        if (n < 4) {
+            return this.checked.map(t => t.get_name()).join(", ");
+        } else {
+            return n + " territories";
+        }
+    }
+    /**
+     * We need to implement this method because of sum-territories -> in that case method refresh receive Plot instead of Territory
+     * @type type
+     */
+    get is_starred() {
+        return false;
+    }
+
+    /**
+     * @returns {Array} Sorted by chosen countries.
+     */
+    static get_data() {
+        let result = [];   // countries with outbreak
+        let outbreak_threshold = parseInt(setup["outbreak-threshold"]);
+        for (let p of Plot.plots) {
+            let aggregated = [];
+            if (p === Plot.current_plot) {
+                Plot.expression = setup["plot"];
+            }
+            for (let t of p.checked) {
+                let C = t.data["confirmed"];
+                let R = t.data["recovered"];
+                let D = t.data["deaths"];
+                let outbreak_data = [];
+                let ignore = true;
+
+                //console.log("Terr", t, t.data);
+                let last_vars = null;
+                for (let j = 0; j < C.length; j++) {
+                    if (C[j] >= outbreak_threshold) { // append the data starting with threshold
+                        ignore = false;
+                    }
+                    if (!ignore) {
+
+                        // value calculation
+                        let vars = {
+                            "R": R[j],
+                            "D": D[j],
+                            "C": C[j]
+                        };
+
+                        if (last_vars) {
+                            vars["NR"] = R[j] - last_vars["R"]; // == dR
+                            vars["ND"] = D[j] - last_vars["D"]; // == dD
+                            vars["NC"] = C[j] - last_vars["C"] + vars["NR"] + vars["ND"];
+
+                            vars["dC"] = C[j] - last_vars["C"];
+
+                            vars["dNC"] = vars["NC"] - last_vars["NC"];
+                            vars["dNR"] = vars["NR"] - last_vars["NR"];
+                            vars["dND"] = vars["ND"] - last_vars["ND"];
+//                         vars["P"] = t.population;  XX
+                        } else {
+                            vars["NR"] = R[j]; // == dR
+                            vars["ND"] = D[j]; // == dD
+                            vars["NC"] = C[j];
+
+                            vars["dC"] = C[j];
+
+                            vars["dNC"] = vars["NC"];
+                            vars["dNR"] = vars["NR"];
+                            vars["dND"] = vars["ND"];
+                        }
+
+                        last_vars = vars;
+                        let result = Calculation.calculate(Plot.current_plot.expression.replace(/(dNC)|(dND)|(dNR)|(dC)|(NC)|(ND)|(NR)|[CRD]/g, m => vars[m]));
+                        $("#plot-alert").hide();
+                        if (typeof (result) === "string") { // error encountered
+                            if (Plot.current_plot.expression.trim()) {
+                                $("#plot-alert").show().html("<b>" + result + "</b> Use one of the following variables: <i>C R D NC NR ND dC dNC dNR dND</i>");
+                            }
+                            return false;
+                        } else {
+                            outbreak_data.push(Math.round(result * 100) / 100);
+                        }
+
+                    }
+                }
+                if (setup["sum-territories"]) {
+                    aggregated = sumArrays(aggregated, outbreak_data);
+                } else {
+                    result.push([t, outbreak_data]);
+                }
+            }
+            if (setup["sum-territories"]) {
+                result.push([p, aggregated]);
+            }
+        }
+        console.log("Plot data", result);
+        return result;
     }
 }
 

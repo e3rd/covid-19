@@ -9,22 +9,16 @@
 * hide labels with no data in current view (mitigate legend spread)
 * world
 * legend
-
+* aggregate territories into single curve
+* arbitrary arithmetic plot function expression, evaluating territory data
 
 # TBD XXX
-* at je osa x nezávislá na linii (aby když skryju Itálii, aby ty dny tam nebyly) – nebo proste pridel xAxe nejdelší
-* vic možností výpočtů: closed cases, closed cases/confirmed, derivation
-* víc regionů
 * double click to check only that country
-* un/check all
-* hightlight country (přidej hvězdičky k CZ); (star, double star)
 * label: highlight current line (najedu na zemi a vidim i ostatní, víc zřetelné, která)
 * hightlight hovered line
-* hide territories with no data XXX when no data given, mark as disabled
-* sum plot into line checkbox
 * jiné default countries
-* countries un/check all
 * hashovat hidden očka
+* south korea duplication bug
 
 
 ## nice to have:

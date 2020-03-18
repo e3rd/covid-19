@@ -2,8 +2,9 @@
 var setup = {};
 var chart = null; // chart instance
 var just_stored_hash = ""; // determine if hash change is in progress
-let url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv';
+let url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-';
 let ready_to_refresh = false;
+var $ctx = $("#chart");
 
 
 $(function () {
@@ -38,16 +39,38 @@ $(function () {
             refresh(false);
         };
     });
-
+    // refresh on plot change
+    $("#plot").keyup(function () {
+        let v = $(this).val();
+        if ($(this).data("last") !== v) {
+            Plot.current_plot.expression = v;
+            refresh();
+            $(this).data("last", v);
+        }
+    });
+    // possibility to add a new plot
+//    $("#plot-new").click(() => {
+//        $el = $("<div><span class=name>" + $("#plot").val() + "</span><span class=shown>EYE</span><span class='remove btn btn-light'>×</span></div>")
+//                .data("plot", Plot.current_plot)
+//                .prependTo($("#plot-stack"))
+//                .on("click", "span.remove", () => {
+//                    alert("remove");
+//                }).on("click", "span.shown", () => {
+//            alert("click");
+//
+//        }).on("click", "span.name", () => {
+//            alert("get back");
+//        });
+//    }); XXX
 
 
 
 // runtime
-
-    $.get(url, (data) => {
-        // we need to build Territory objects from CSV first
-        Territory.build(data);
-
+    $.when(// we need to build Territory objects from CSV first
+            $.get(url_pattern + "Confirmed.csv", (data) => Territory.build(data, "confirmed")),
+            $.get(url_pattern + "Deaths.csv", (data) => Territory.build(data, "deaths")),
+            $.get(url_pattern + "Recovered.csv", (data) => Territory.build(data, "recovered")),
+            ).then(() => {
         // draw territories
         let $territories = $("#territories");
         let td = (col_id, storage) => {
@@ -89,7 +112,7 @@ $(function () {
         // start plotting
         if (!Plot.plots.length) {
             console.log("CREATING NEW");
-            (new Plot()).focus(); // current plot
+            (new Plot(setup["plot"])).focus(); // current plot
             for (let country of european_countries) { // X ["Czechia", "United Kingdom"]
                 Territory.get(country, Territory.COUNTRY).set_active();
             }
@@ -100,30 +123,6 @@ $(function () {
         refresh(set_ready = true);
     });
 });
-
-/**
- * @param {type} csv Raw data from github
- * @returns {Array} Sorted by chosen countries.
- */
-function prepare_plot_data() {
-    let result = [];   // countries with outbreak
-    for (let t of Plot.current_plot.checked) {
-        let line = t.data["confirmed"];
-        let outbreak_data = [];
-        let ignore = true;
-        for (let j = 0; j < line.length; j++) {
-            if (line[j] >= setup["outbreak-threshold"]) { // append the data starting with threshold
-                ignore = false;
-            }
-            if (!ignore) {
-                outbreak_data.push(line[j]);
-            }
-        }
-        result.push([t, outbreak_data]);
-    }
-    //console.log("Plot data", result);
-    return result;
-}
 
 
 function load_hash() {
@@ -200,11 +199,14 @@ function refresh_setup(load_from_hash = false, allow_window_hash_change = true) 
 }
 
 function init_chart() {
-    let ctx = $("#chart");
-    chart = new Chart(ctx, {
+    chart = new Chart($ctx, {
         type: 'line',
         data: {},
         options: {
+            title: {
+                display: false,
+                text: ""
+            },
             tooltips: {
                 mode: 'index',
                 intersect: false
@@ -254,7 +256,15 @@ function refresh(event = null) {
     // process each country
     let longest_data = 0;
     let datasets = {};
-    for (let [territory, data] of prepare_plot_data()) {
+    let plot_data = Plot.get_data();
+    if (plot_data === false) { // error when processing plot function formula
+        return false;
+    }
+    /**
+     *
+     * @type {Territory|Plot} territory If sum-territories is on, we receive Plot
+     */
+    for (let [territory, data] of plot_data) {
         // choose only some days in range
         if (!data.length) {
             continue;
@@ -305,6 +315,13 @@ function refresh(event = null) {
         chart.data.datasets = chart.data.datasets.filter((el) => !removable.includes(el));
         // insert new
         Object.values(datasets).forEach(el => chart.data.datasets.push(el));
+    }
+    if (!chart.data.datasets.length) {
+        console.log(Object.values(datasets), "daTATSGFSDGJKH");
+        chart.options.title.text = "No data";
+        chart.options.title.display = true;
+    } else {
+        chart.options.title.display = false;
     }
     chart.options.scales.xAxes[0].scaleLabel.labelString = `Days count since >= ${setup["outbreak-threshold"]} confirmed cases`;
     chart.options.scales.yAxes[0].type = setup["log-switch"] ? "logarithmic" : "linear";
