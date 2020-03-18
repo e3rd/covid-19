@@ -7,6 +7,8 @@
 * PNG export (via right button)
 * possible to display provinces, countries and continents and freely combine
 * hide labels with no data in current view (mitigate legend spread)
+* world
+* legend
 
 
 # TBD XXX
@@ -20,10 +22,13 @@
 * hightlight hovered line
 * hide territories with no data XXX when no data given, mark as disabled
 * sum plot into line checkbox
-* legenda, co je oko a checkmarks – třeba jen do nadpisu "Countries (3 hidden)" a hashovat hidden očka
 * jiné default countries
+* countries un/check all
+* hashovat hidden očka
+
 
 ## nice to have:
+* hide countries: třeba jen do nadpisu "Countries (3 hidden)"
 * github open source
 * hezčí barvičky zemí (vlaječky)
 * on hover, label each date for country (not only reported value, but also state its date)

@@ -34,7 +34,8 @@ class Territory {
             this.data[type] = this.data[type].map((num, idx) => {
                 return parseInt(num) + parseInt(data[idx]);
             });
-    }
+        }
+        this.parents.forEach(p => p.add_data(data, type));
     }
 
     /**
@@ -54,16 +55,16 @@ class Territory {
         return s;
     }
 
-    get is_checked() {
+    get is_active() {
         return this.plot.checked.indexOf(this) > -1;
     }
 
-    check(check = true) {
-        this.$check_button.prop("checked", check);
+    set_active(check = true) {
+        this.$activate_button.prop("checked", check);
         if (!Territory.loading_freeze) {
             if (!Territory.parent_freeze) {
                 console.log("CHILDREN CHECK!!!");
-                this.parents.forEach(p => p.some_children_checked(check));
+                this.parents.forEach(p => p.some_children_active(check));
             }
             if (check) {
                 this.plot.checked.push(this);
@@ -79,20 +80,27 @@ class Territory {
     }
     }
 
-    some_children_checked(set = true) {
+    static uncheck_all() {
+        Territory.parent_freeze = true;
+        Territory.id_list.forEach(t => t.set_active(false));
+        Territory.parent_freeze = false;
+        refresh();
+    }
+
+    some_children_active(set = true) {
         let off = null;
-        console.log("ZDEE true", set === true, this.children.every(ch => ch.is_checked), this.children);
+        //console.log("ZDEE true", set === true, this.children.every(ch => ch.is_active), this.children);
         if (!set) {
             off = true;
-        } else if (this.children.every(ch => ch.$check_button.prop("checked", true))) { // XX if its a performance issue, may be delayed
+        } else if (this.children.every(ch => ch.$activate_button.prop("checked"))) { // XX if its a performance issue, may be delayed
             off = false;
             console.log("OFF FALSE");
         }
         if (off !== null) {
-            this.$child_check_button.toggleClass("off", off);
+            this.$child_activate_button.toggleClass("off", off);
         }
 
-        this.parents.forEach(p => p.some_children_checked(set));
+        this.parents.forEach(p => p.some_children_active(set));
     }
 
     /**
@@ -100,7 +108,7 @@ class Territory {
      * @param {type} set If null, star toggled.
      * @returns {undefined}
      */
-    star(set = null) {
+    set_star(set = null) {
         if (set === null) {
             set = !(this.plot.starred.indexOf(this) > -1);
         }
@@ -120,8 +128,10 @@ class Territory {
      * @returns {undefined}
      */
     hide() {
-        this.shown = false;
-        this.$element.hide(1000);
+        if (!this.is_active) {
+            this.shown = false;
+            this.$element.hide(1000);
+        }
         this.children.forEach(ch => ch.hide());
     }
 
@@ -139,11 +149,11 @@ class Territory {
         return $("#" + this.id);
     }
 
-    get $child_check_button() {
+    get $child_activate_button() {
         return $("> span:eq(3)", this.$element);
     }
 
-    get $check_button(){
+    get $activate_button() {
         return $("> input", this.$element);
     }
 
@@ -153,8 +163,8 @@ class Territory {
 
     static set plot(plot) {
         Territory.loading_freeze = true;
-        Territory.id_list.forEach(t => t.check(plot.checked.indexOf(t) > -1));
-        Territory.id_list.forEach(t => t.star(plot.starred.indexOf(t) > -1));
+        Territory.id_list.forEach(t => t.set_active(plot.checked.indexOf(t) > -1));
+        Territory.id_list.forEach(t => t.set_star(plot.starred.indexOf(t) > -1));
         Territory.loading_freeze = false;
     }
 
@@ -181,15 +191,18 @@ class Territory {
     }
 
     /**
-     * If there any visible children, hide it, else show all.
+     * If there any visible and non-active children, hide it, else show all.
      * @returns {undefined}
      */
     toggle_children_visibility() {
         let off;
-        if (this.children.some((child) => child.shown || child.children.some((grand_ch) => grand_ch.shown))) { // is there any visible children
+        // is there any visible descendant that is not checked
+        if (this.children.some((child) => (child.shown && !child.is_active) || child.children.some((grand_ch) => (grand_ch.shown && !grand_ch.is_active)))) {
+            // there are, we may hide them
             off = true;
             this.children.forEach((child) => child.hide());
         } else {
+            // nothing more to hide, show them all
             off = false;
             this.children.forEach((child) => child.show());
         }
@@ -202,8 +215,8 @@ class Territory {
      */
     toggle_children_checked() {
         Territory.parent_freeze = true;
-        let any_checked_hide_all = this.children.some((child) => child.is_checked);
-        this.children.forEach((child) => child.check(!any_checked_hide_all));
+        let any_checked_hide_all = this.children.some((child) => child.is_active);
+        this.children.forEach((child) => child.set_active(!any_checked_hide_all));
         $("> span:eq(3)", this.$element).toggleClass("off", any_checked_hide_all);
         Territory.parent_freeze = false;
     }
