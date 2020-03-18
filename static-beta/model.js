@@ -78,7 +78,7 @@ class Territory {
             if (!Territory.parent_freeze) {
                 console.log("CHILDREN CHECK!!!");
                 this.parents.forEach(p => p.some_children_active(check));
-                Plot.current_plot.refresh_stack();
+                Plot.current_plot.refresh_html();
             }
     }
     }
@@ -277,7 +277,12 @@ class Territory {
     static build(csv, type) {
         let lines = csv.split("\n");
 
-        let headers = lines[0].split(","); // XX add dates or something
+        let headers = lines[0].split(",").slice(4); // XX add dates or something
+        if (headers.length && headers[headers.length - 1] === "") {
+                headers.slice(0, -1); // strip last empty field
+            }
+        Territory.header = headers;
+
         for (let i = 1; i < lines.length; i++) {
             if (!lines[i]) {
                 continue;
@@ -313,6 +318,7 @@ Territory.countries = {}; // ex: USA, China
 Territory.continents = {};
 Territory.parent_freeze = false;
 Territory.loading_freeze = false;
+Territory.header = [];
 
 
 class Plot {
@@ -334,8 +340,9 @@ class Plot {
 
         // we need to implement this method because of sum-territories that may return Plot to refresh function (that want id)
         this.id = Plot.plots.length;
+        this.figure = 1; // figure number
 
-        this.assure_stack();
+        this.build_html();
         if (add_to_stack) {
             this.$element.show();
             //this.assure_stack();
@@ -388,30 +395,15 @@ class Plot {
     /**
      * Assure the plot is in the plot stack
      */
-    assure_stack() {
-//        if (this.$element) {
-//            return this;
-//        }
-//
-//        let in_stack = false;
-//        $("#plot-stack div").each(function () {
-//            if (this === $(this).data("plot")) {
-//                this.$element = $(this);
-//                in_stack = true;
-//            }
-//        });
-//
-//        if (!in_stack) {
+    build_html() {
         this.$element = $("<div><span class=name></span><span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
                 .data("plot", this)
                 .hide()
                 .prependTo($("#plot-stack"));
-        this.refresh_stack();
-//        }
-//        return this;
+        this.refresh_html();
     }
 
-    refresh_stack(expression = null) {
+    refresh_html(expression = null) {
         if (expression !== null) {
             this.expression = expression;
         }
@@ -436,7 +428,6 @@ class Plot {
         if (Plot.plots.length) {
             Plot.plots[0].focus();
         }
-        console.log("ZDEEEEEEEEEEE", Plot.current_plot);
     }
 
     static serialize() {
@@ -481,11 +472,10 @@ class Plot {
      */
     static get_data() {
         let result = [];   // countries with outbreak
-        let outbreak_threshold = parseInt(setup["outbreak-threshold"]);
+        let outbreak_threshold = setup["outbreak-on"] ? parseInt(setup["outbreak-threshold"]) : 0;
+        let boundaries = [Number.POSITIVE_INFINITY, 0];
         for (let p of Plot.plots.filter(p => p.active)) {
-            console.log("Plot valid null", p.valid);
             p.valid = null;
-            console.log("Plot valid null", p.valid);
             let aggregated = [];
             if (p === Plot.current_plot) {
                 Plot.expression = setup["plot"];
@@ -546,6 +536,7 @@ class Plot {
                             p.valid = false;
                             break;
                         } else {
+                            boundaries = [Math.min(result, boundaries[0]), Math.max(result, boundaries[1])];
                             outbreak_data.push(Math.round(result * 10000) / 10000);
                         }
 
@@ -557,20 +548,20 @@ class Plot {
                     result.push([p, t, outbreak_data]);
                 }
             }
-            console.log("INVALID???", p.valid);
+            //console.log("INVALID???", p.valid);
             if (p.valid === false) {
                 break;
             } else {
-                console.log("PLOT DATA VALID", p);
+                //console.log("PLOT DATA VALID", p);
                 p.valid = true;
             }
             if (setup["sum-territories"]) {
                 result.push([p, null, aggregated]);
             }
-            console.log("PLOT END");
+            //console.log("PLOT END");
         }
-        console.log("Plot data: ", result);
-        return result;
+        //console.log("Plot data: ", result);
+        return [result, boundaries];
     }
 }
 

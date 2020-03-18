@@ -2,8 +2,25 @@ main {
     min-width: 800px;  // important for mobile view
 }
 
-canvas {
-    //max-height: 300px; /// XXXX development
+form {
+    padding: 0 15px;
+}
+
+#view-menu {
+    float:right;
+    margin-left: 30px;
+    padding: 10px;
+    border: 1px solid gray;
+}
+
+#canvas-container {
+    width: 33%;
+    &.big{
+        width: 100%;
+    }
+    canvas {
+        //max-height: 300px; /// XXXX development
+    }
 }
 
 .range-container{
@@ -12,7 +29,11 @@ canvas {
     label {
         width: 100px;
     }
-    div {
+    #outbreak-value     {
+        width:70px;
+        margin-right: 20px;
+    }
+    > div:last-child {
         flex: 1;
     }
 }
@@ -68,45 +89,67 @@ canvas {
 }
 
 
-#plot-alert {
-    clear:both;
-    font-size: 75%;
+#plot-options {
+    #chart-id {
+        width: 50px;
+    }
+    #plot-hint {
+        color: darkgray;
+        font-size: 90%;
+    }
+
+    #plot-alert {
+        clear:both;
+        font-size: 75%;
+    }
+
+    #plot-stack {
+        display: inline-flex;
+        > div {
+            cursor:pointer;
+            margin-right: 10px;
+            //background-color: gray;
+            border: 1px solid gray;
+            border-radius: 2px;
+            font-size: 75%;
+            float:left;
+            background-color: green;
+
+            opacity: 0.3;
+            /*        > .shown {
+                        background-color: darkgray;
+                    }*/
+
+            &.active {
+                opacity: 1;
+                /*            > .shown {
+                                background-color: gray;
+                            }*/
+            }
+            &.edited{
+                //background-color: #005;
+                font-weight: bold;
+            }
+            &.invalid{
+                background-color: darkred;
+            }
+
+            > .name {
+                color:white;
+                padding: 2px 25px 2px 25px;
+            }
+        }
+    }
 }
 
-#plot-stack {
-    display: inline-flex;
-    > div {
-        cursor:pointer;
-        margin-right: 10px;
-        //background-color: gray;
-        border: 1px solid gray;
-        border-radius: 2px;
-        font-size: 75%;
-        float:left;
-        background-color: green;
-
-        opacity: 0.3;
-/*        > .shown {
-            background-color: darkgray;
-        }*/
-
-        &.active {
-            opacity: 1;
-/*            > .shown {
-                background-color: gray;
-            }*/
-        }
-        &.edited{
-            //background-color: #005;
-            font-weight: bold;
-        }
-        &.invalid{
-            background-color: darkred;
-        }
-
-        > .name {
-            color:white;
-            padding: 2px 25px 2px 25px;
-        }
+#reset-zoom {
+    display:none;
+    position:fixed;
+    top:3px;
+    right:3px;
+    padding:25px;
+    /*    background-color: white;*/
+    a {
+        border: 1px solid black;
     }
 }

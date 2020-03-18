@@ -11,6 +11,8 @@
 * legend
 * aggregate territories into single curve
 * arbitrary arithmetic plot function expression, evaluating territory data
+* range sliders custom value, changing boundaries according to current data
+* zooming
 
 # TBD XXX
 * double click to check only that country
@@ -22,6 +24,8 @@
 * mobily, at to neni v jednom sloupci
 * ui change chart size
 * the data are now rounded – round them on label only
+* outbreak – disable range slider
+* Axe Y name ID – když fce nesdílí škálu, zobrazí se do též velikosti grafu, neroztáhne ho
 
 
 ## nice to have:

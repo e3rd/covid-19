@@ -6,29 +6,43 @@ let url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/mas
 let ready_to_refresh = false;
 var $ctx = $("#chart");
 var $plot = $("#plot");
-
+var $plot_figure = $("#plot-figure");
 
 $(function () {
     // DOM configuration
-    $("#outbreak-threshold").ionRangeSlider({
-        skin: "big",
-        //type: "double",
-        grid: true,
-        min: 0,
-        max: 50
-                //from: setup["outbreak-threshold"]
-    });
-
-
     $("#day-range").ionRangeSlider({
         skin: "big",
         type: "double",
         grid: true,
         min: 0,
-        max: 50, //XX setup["day-range"][1],
-        to: 50, //XXsetup["day-range"][1],
+        max: 100, //XX setup["day-range"][1],
+        to: 100, //XXsetup["day-range"][1],
         from: 0
     });
+
+    $("#outbreak-threshold").ionRangeSlider({
+        skin: "big",
+//        type: "double",
+        grid: true,
+        min: 0,
+        max: 50
+    });
+
+    $("#outbreak-value").change(function () {
+        let ion = $("#outbreak-threshold").data("ionRangeSlider");
+        let v = {from: $(this).val()};
+        if (ion.options.max < $(this).val()) {
+            v["max"] = $(this).val();
+        }
+        ion.update(v);
+    });
+
+    // disabling outbreak will disable its range
+    $("#outbreak-on").change(function () {
+        $("#outbreak-threshold, #outbreak-value").parent().toggle($(this).prop("checked"));
+    });
+    /*$("#outbreak-on").click(outbreak_range);
+     outbreak_range.call($("#outbreak-on")); // will immediately disable outbreak (changing the DOM default behaviour to off)*/
 
     // refresh on input change
     $("#setup input:not(.irs-hidden-input)").change(refresh); // every normal input change
@@ -36,7 +50,8 @@ $(function () {
         let opt = $(this).data("ionRangeSlider").options;
         opt.onFinish = refresh;
         // do not change window hash when moving input slider
-        opt.onChange = () => {
+        opt.onChange = (a, b, c) => {
+            console.log("AAA", a, b, c);
             refresh(false);
         };
     });
@@ -44,49 +59,77 @@ $(function () {
     $plot.keyup(function () {
         let v = $(this).val();
         if ($(this).data("last") !== v) {
-            Plot.current_plot.refresh_stack(v);
+            Plot.current_plot.refresh_html(v);
             refresh();
             $(this).data("last", v);
         }
     });
+    // place plot on a different figure
+    $plot_figure.keyup(function () {
+        Plot.current_plot.figure = $(this).val();
+        refresh(false);
+    });
     // possibility to add a new plot
     $("#plot-new").click(() => {
         console.log(Plot.current_plot, "PLOOOOO", Plot.current_plot.valid);
-        if (!Plot.current_plot.valid) {
+        let cp = Plot.current_plot;
+        if (!cp.valid) {
             alert("This plot expression is invalid");
             return;
         }
         //Plot.current_plot.assure_stack();
         console.log("Resets $plot.val");
         $plot.val("");
-        (new Plot()).focus();
+        let p = (new Plot()).focus();
+        p.checked = Object.assign(cp.checked);
+        p.starred = Object.assign(cp.starred);
     });
     // clicking on plot stack
     $("#plot-stack").on("click", "> div", function (event) {
         let plot = $(this).data("plot");
-        if (event.target === $("span.name", $(this))[0]) {
+        if (event.target === $("span.name", $(this))[0]) { // re-edit
             plot.focus();
-            // re-edit
-// XXX
+
         } else {
-            if (event.target === $("span.remove", $(this))[0]) {
+            if (event.target === $("span.remove", $(this))[0]) { // delete plot
                 $(this).data("plot").remove();
-            } else if (event.target === $("span.shown", $(this))[0]) {
-                // toggle hide
+            } else if (event.target === $("span.shown", $(this))[0]) { // toggle hide
                 $(this).toggleClass("active", plot.active = !plot.active);
             }
             refresh();
         }
     });
+    //reset zoom ready
+    $("#reset-zoom").on("click", "a", () => {
+        chart.resetZoom();
+        chart.config.options.plugins.zoom.pan.enabled = false;
+        chart.config.options.plugins.zoom.zoom.enabled = true;
+        $("#reset-zoom").fadeOut(500);
+    });
+
+    // view menu switches parts of the program on/off
+    $(".custom-control-input").change(function () {
+        let $el = $("#" + $(this).attr("id").slice(0, -"-switch".length));
+        if ($el.length) {
+            $el.toggle($(this).prop("checked"));
+        }
+    });
 
 
 
-// runtime
+
+
+
+    // runtime
     $.when(// we need to build Territory objects from CSV first
             $.get(url_pattern + "Confirmed.csv", (data) => Territory.build(data, "confirmed")),
             $.get(url_pattern + "Deaths.csv", (data) => Territory.build(data, "deaths")),
             $.get(url_pattern + "Recovered.csv", (data) => Territory.build(data, "recovered")),
             ).then(() => {
+
+        // setup options according to data boundaries
+        $("#day-range").data("ionRangeSlider").update({max: Territory.header.length});
+
         // draw territories
         let $territories = $("#territories");
         let td = (col_id, storage) => {
@@ -116,7 +159,11 @@ $(function () {
             }
             refresh();
         });
-        $("#uncheck-all").click(Territory.uncheck_all);
+        // XX? $("#uncheck-all").click(Territory.uncheck_all);
+        //
+        // toggle chart size
+        $("#big-chart").change(chart_size);
+        chart_size();
 
         // document events
         window.addEventListener('hashchange', () => {
@@ -129,8 +176,8 @@ $(function () {
         if (!Plot.plots.length) {
             console.log("CREATING NEW", setup["plot"], setup);
             (new Plot(setup["plot"])).focus(); // current plot
-            for (let country of european_countries) { // X ["Czechia", "United Kingdom"]
-                Territory.get(country, Territory.COUNTRY).set_active();
+            for (let country of ["Czechia", "Italy"]) { // X ["Czechia", "United Kingdom"] european_countries
+                Territory.get_by_name(country, Territory.COUNTRY).set_active();
             }
         } else {
             console.log("USING OLD");
@@ -145,12 +192,12 @@ $(function () {
 function load_hash() {
     console.log("Load hash trying ...");
     try {
-        let hash = "{" +decodeURI(window.location.hash.substr(1))+ "}";
+        let hash = "{" + decodeURI(window.location.hash.substr(1)) + "}";
         //console.log("Hash", hash, just_stored_hash, " (having plot: ", setup["plot"]);
         if (hash === just_stored_hash || hash === "{}") {
             return;
         }
-        setup = JSON.parse( hash );
+        setup = JSON.parse(hash);
     } catch (e) {
         return;
     }
@@ -177,6 +224,7 @@ function load_hash() {
             $el.val(val);
         }
     }
+    $("#outbreak-on").change();
     refresh();
 }
 
@@ -206,12 +254,21 @@ function refresh_setup(load_from_hash = false, allow_window_hash_change = true) 
         //console.log("Call load_hash from refresh_setup");
         load_hash();
     } else if (allow_window_hash_change) {
+        $("#outbreak-value").val(setup["outbreak-threshold"]);
         // save to hash
         setup["plots"] = Plot.serialize();
         let s = just_stored_hash = JSON.stringify(setup);
         window.location.hash = s.substring(1, s.length - 1);
         //console.log("Hash stored with plot: ", setup["plot"]);
 }
+}
+
+
+function chart_size() {
+    $("#canvas-container").toggleClass("big", $(this).prop("checked"));
+    if (chart) {
+        chart.resize();
+    }
 }
 
 function init_chart() {
@@ -246,6 +303,108 @@ function init_chart() {
                             }
                         }
                     }]
+            },
+            plugins: {
+                zoom: {
+                    // Container for pan options
+                    pan: {
+                        // Boolean to enable panning
+                        enabled: false,
+
+                        // Panning directions. Remove the appropriate direction to disable
+                        // Eg. 'y' would only allow panning in the y direction
+                        // A function that is called as the user is panning and returns the
+                        // available directions can also be used:
+                        //   mode: function({ chart }) {
+                        //     return 'xy';
+                        //   },
+                        mode: 'xy',
+
+                        rangeMin: {
+                            // Format of min pan range depends on scale type
+                            x: null,
+                            y: null
+                        },
+                        rangeMax: {
+                            // Format of max pan range depends on scale type
+                            x: null,
+                            y: null
+                        },
+
+                        // On category scale, factor of pan velocity
+                        speed: 20,
+
+                        // Minimal pan distance required before actually applying pan
+                        threshold: 10,
+
+                        // Function called while the user is panning
+                        onPan: function ( {chart}) {
+                            console.log(`I'm panning!!!`);
+                        },
+                        // Function called once panning is completed
+                        onPanComplete: function ( {chart}) {
+                            console.log(`I was panned!!!`);
+                        }
+                    },
+
+                    // Container for zoom options
+                    zoom: {
+                        // Boolean to enable zooming
+                        enabled: true,
+
+                        // Enable drag-to-zoom behavior
+//                        drag: true,
+
+//                         Drag-to-zoom effect can be customized
+                        drag: {
+                            borderColor: 'rgba(225,225,225,0.3)',
+                            borderWidth: 5,
+                            backgroundColor: 'rgb(225,225,225)',
+                            animationDuration: 0
+                        },
+
+                        // Zooming directions. Remove the appropriate direction to disable
+                        // Eg. 'y' would only allow zooming in the y direction
+                        // A function that is called as the user is zooming and returns the
+                        // available directions can also be used:
+                        //   mode: function({ chart }) {
+                        //     return 'xy';
+                        //   },
+                        mode: 'xy',
+
+                        rangeMin: {
+                            // Format of min zoom range depends on scale type
+                            x: null,
+                            y: null
+                        },
+                        rangeMax: {
+                            // Format of max zoom range depends on scale type
+                            x: null,
+                            y: null
+                        },
+
+                        // Speed of zoom via mouse wheel
+                        // (percentage of zoom on a wheel event)
+                        speed: 0.1,
+
+                        // On category scale, minimal zoom level before actually applying zoom
+                        sensitivity: 3,
+
+                        // Function called while the user is zooming
+                        onZoom: function ( {chart}) {
+                            console.log(`I'm zooming!!!`);
+                        },
+                        // Function called once zooming is completed
+                        onZoomComplete: function ( {chart}) {
+                            chart.config.options.plugins.zoom.pan.enabled = true;
+                            chart.config.options.plugins.zoom.zoom.enabled = false;
+                            $("#reset-zoom").show();
+                            //this.enabled = false;
+                            console.log(this, chart);
+                            console.log(`I was zoomed!!!`);
+                        }
+                    }
+                }
             }
         }
     });
@@ -265,17 +424,28 @@ function refresh(event = null) {
         return false;
     }
     // assure `setup` is ready
-    refresh_setup(false, event !== false);
+    let can_redraw_sliders = event !== false;
+    refresh_setup(false, can_redraw_sliders);
 
 
     // build chart data
     // process each country
     let longest_data = 0;
     let datasets = {};
-    let plot_data = Plot.get_data();
+    let [plot_data, boundaries] = Plot.get_data();
     if (plot_data === false) { // error when processing plot function formula
         return false;
     }
+    if (can_redraw_sliders) {
+        $("#outbreak-threshold").data("ionRangeSlider").update({
+            //min: boundaries[0],
+            max: boundaries[1]
+        });
+
+        console.log("MIN", boundaries);
+    }
+
+
     /**
      *
      * @type {Territory|Plot} territory If sum-territories is on, we receive Plot
@@ -293,7 +463,8 @@ function refresh(event = null) {
             chosen_data.push(data[i]);
         }
 
-        longest_data = Math.max(longest_data, chosen_data.length);
+        longest_data = Math.max(longest_data, setup["day-range"][0] + chosen_data.length);
+        //console.log("Longest", longest_data, chosen_data.length, chosen_data);
         //console.log("Territory", territory.name, territory.is_starred);
         // push new dataset
         let dataset = {
@@ -308,7 +479,9 @@ function refresh(event = null) {
         };
         datasets[id] = dataset;
     }
-    let labels = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1])).map(String);
+    let r = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
+    //console.log(r, longest_data);
+    let labels = setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)]);
 
     // update chart data
     if (!chart) {
@@ -340,7 +513,8 @@ function refresh(event = null) {
         chart.options.title.text = "No data";
         chart.options.title.display = true;
     } else {
-        chart.options.title.display = false;
+        chart.options.title.text = Plot.plots.filter(p => p.active).map(p => p.get_name()).join(", ");
+        chart.options.title.display = true;
     }
     chart.options.scales.xAxes[0].scaleLabel.labelString = `Days count since >= ${setup["outbreak-threshold"]} confirmed cases`;
     chart.options.scales.yAxes[0].type = setup["log-switch"] ? "logarithmic" : "linear";
