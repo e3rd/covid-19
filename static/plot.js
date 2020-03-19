@@ -20,7 +20,7 @@ for (let v in variables) {
 
 
 class Plot {
-    constructor(expression = "", active = true, figure_id = null, checked_names = [], starred_names = []) {
+    constructor(expression = "", active = true, figure_id = null, y_axis= 1, checked_names = [], starred_names = []) {
         /**
          * @property {Territory[]} chosen territories to be processed
          */
@@ -39,6 +39,7 @@ class Plot {
         // we need to implement this method because of sum-territories that may return Plot to refresh function (that want id)
         this.id = Plot.plots.length;
         this.set_figure(Figure.get(figure_id || 1));
+        this.y_axis = y_axis;
 
         this.build_html();
         /*        if (add_to_stack) {
@@ -52,6 +53,7 @@ class Plot {
             return [p.expression,
                 p.active,
                 p.figure.id,
+                p.y_axis,
                 p.checked.map(t => t.get_name()),
                 p.starred.map(t => t.get_name())];
         });
@@ -134,10 +136,9 @@ class Plot {
      */
     build_html() {
         let s = '<input type="number" min="1" class="plot-figure" value="' + this.figure.id + '" title="If you change the number, you place the plot on a different figure."/>';
-        this.$element = $("<div><span class=name></span>" + s + "<span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
+        let t = '<input type="number" min="1" max="5" class="y-axis" value="' + this.y_axis + '" title="Independent y-axis scale"/>';
+        this.$element = $("<div><span class=name></span>" + s + t+ "<span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
                 .data("plot", this)
-                //.hide()
-                //.addClass("edited")
                 .prependTo($("#plot-stack"));
         this.refresh_html();
     }
@@ -162,6 +163,7 @@ class Plot {
         // allow multiple figures
         //console.log("SHOW PLOT FIGURE?", setup["plot-figure"]);
         $(".plot-figure", this.$element).toggle(Boolean(parseInt(setup["plot-figure-switch"])));
+        $(".y-axis", this.$element).toggle(Boolean(parseInt(setup["y-axis-independency-switch"])));
 
         // hide remove buttons if there is last plot
         $(".remove", $("#plot-stack")).toggle(Plot.plots.length > 1);

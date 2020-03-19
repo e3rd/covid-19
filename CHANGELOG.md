@@ -29,7 +29,6 @@
 
 * Axe Y name ID – když fce nesdílí škálu, zobrazí se do též velikosti grafu, neroztáhne ho
 * axes should become figure parameters (input to toggle if the axes input manipulate single figure or all of them)
-* když měním days range, nemizí legend zemí, které se nevešly
 
 
 ## nice to have:

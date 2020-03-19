@@ -159,7 +159,7 @@ class Figure {
                     text: "Empty"
                 },
                 tooltips: {
-                    enabled: false, // XXX
+                    //enabled: false, // XXX
                     mode: 'index',
 //                    mode: 'nearest',
                     intersect: false,
@@ -190,18 +190,21 @@ class Figure {
                                 display: true
                             }
                         }],
-                    yAxes: [{
-                            display: true,
+                    yAxes: range(1, 6).map(i => {
+                        return {
+                            display: false,
+                            id: i,
                             scaleLabel: {
                                 display: true,
-                                labelString: 'Total confirmed cases'
+                                labelString: i === 1 ? "Total cases":'Axe ' + i
                             },
                             ticks: {
                                 callback: function (value, index, values) {
                                     return Math.round(value * 100) / 100;
                                 }
                             }
-                        }]
+                        }
+                    }),
                 },
                 plugins: {
                     zoom: {
@@ -319,6 +322,7 @@ class Figure {
         let plots = this.plots.filter(p => p.active);
         let [plot_data, boundaries, title] = Plot.get_data(plots);
         this.plot_data = plot_data;
+        let y_axes = new Set();
 
         /**
          *
@@ -354,10 +358,12 @@ class Figure {
                 borderWidth: DATASET_BORDER[starred],
                 fill: false,
                 backgroundColor: color,
-                id: id
+                id: id,
+                yAxisID: parseInt(plot.y_axis)
                         //,
                         //territory: territory
             };
+            y_axes.add(parseInt(plot.y_axis));
             this.datasets_used[id] = {plot: plot, territory: territory, star: false};
             datasets[id] = dataset;
             //console.log("Push name", plot.get_name(), plot.id, territory);
@@ -399,7 +405,11 @@ class Figure {
             this.chart.options.title.text = title.join(", ");
         }
         this.chart.options.scales.xAxes[0].scaleLabel.labelString = `Days count since >= ${setup["outbreak-threshold"]} confirmed cases`;
-        this.chart.options.scales.yAxes[0].type = setup["log-switch"] ? "logarithmic" : "linear";
+        //y_axes.forEach(axe => {this.chart.options.scales.yAxes[parseInt(axe)].type = setup["log-switch"] ? "logarithmic" : "linear"});
+        this.chart.options.scales.yAxes.forEach(axe => {
+            axe.type = setup["log-switch"] ? "logarithmic" : "linear";
+            axe.display = y_axes.has(axe.id);
+        });
         this.chart.update();
         return boundaries[1];
     }

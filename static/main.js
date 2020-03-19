@@ -68,8 +68,13 @@ $(function () {
     // place plot on a different figure
     $("#plot-stack").on("change", ".plot-figure", function () {
         let plot = $(this).parent().data("plot").focus();
-        let id = $(this).val();
-        plot.set_figure(Figure.get(id));
+        plot.set_figure(Figure.get($(this).val()));
+        refresh(false);
+    });
+    // place plot on a different Y axe
+    $("#plot-stack").on("change", ".y-axis", function () {
+         let plot = $(this).parent().data("plot").focus();
+        plot.y_axis = $(this).val();
         refresh(false);
     });
     // possibility to add a new plot
