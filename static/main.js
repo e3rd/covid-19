@@ -63,8 +63,7 @@ $(function () {
     $("#plot-stack").on("change", ".plot-figure", function () {
         let plot = $(this).parent().data("plot").focus();
         let id = $(this).val();
-        Figure.get(id); // assure it exists
-        plot.figure = id;
+        plot.set_figure(Figure.get(id));
         refresh(false);
     });
     // possibility to add a new plot
@@ -86,7 +85,7 @@ $(function () {
         console.log("OP fokusu", cp.checked.length, p.checked.length);
         $plot.focus();
     });
-    // clicking on plot stack
+    // clicking on a plot stack curve label
     $("#plot-stack").on("click", "> div", function (event) {
         let plot = $(this).data("plot");
         if (event.target === $("span.name", $(this))[0]) { // re-edit
@@ -154,9 +153,10 @@ $(function () {
         // document events
         window.addEventListener('hashchange', () => {
             console.log("HASH change event");
-            //load_hash();
+            load_hash();
         }, false);
-        refresh_setup(true, false);
+        refresh_setup(false);
+        load_hash();
 
 
         // view menu switches parts of the program on/off
@@ -181,7 +181,8 @@ $(function () {
         // start plotting
         if (!Plot.plots.length) {
             console.debug("Plot.current -> creating new", setup["plot"], setup);
-            (new Plot(setup["plot"])).focus(); // current plot
+            (new Plot()).focus(); // current plot
+            // Xsetup["plot"] ??
             for (let country of ["Czechia", "Italy"]) { // X ["Czechia", "United Kingdom"] european_countries
                 Territory.get_by_name(country, Territory.COUNTRY).set_active();
             }
@@ -199,6 +200,10 @@ $(function () {
 
 
 
+/**
+ * window.hash -> `setup` -> DOM
+ * @returns {undefined}
+ */
 function load_hash() {
     console.log("Load hash trying ...");
     try {
@@ -233,13 +238,20 @@ function load_hash() {
         } else {
             $el.val(val);
         }
+        $el.change();
     }
-    $("#outbreak-on").change();
+    // XXX?$("#outbreak-on").change();
     refresh();
 }
 
 
-function refresh_setup(load_from_hash = false, allow_window_hash_change = true) {
+/*
+ * DOM -> `setup`
+ * @param {type} load_from_hash
+ * @param {type} allow_window_hash_change
+ * @returns {undefined}
+ */
+function refresh_setup(allow_window_hash_change = true) {
     $("#setup input").each(function () {
         // Load value from the $el to setup.
         $el = $(this);
@@ -260,15 +272,11 @@ function refresh_setup(load_from_hash = false, allow_window_hash_change = true) 
         setup[key] = val;
     });
 
-    if (load_from_hash) {
-        //console.log("Call load_hash from refresh_setup");
-        load_hash();
-    } else if (allow_window_hash_change) {
+    if (allow_window_hash_change) {
         $("#outbreak-value").val(setup["outbreak-threshold"]);
         // save to hash
         setup["plots"] = Plot.serialize();
         let s = just_stored_hash = JSON.stringify(setup);
-        console.log("STORIGN hash", s); // XXX
         window.location.hash = s.substring(1, s.length - 1);
         //console.log("Hash stored with plot: ", setup["plot"]);
 }
@@ -292,7 +300,7 @@ function refresh(event = null) {
     }
     // assure `setup` is ready
     let can_redraw_sliders = event !== false;
-    refresh_setup(false, can_redraw_sliders);
+    refresh_setup(can_redraw_sliders);
 
 
     // build chart data

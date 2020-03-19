@@ -8,17 +8,25 @@ class Figure {
 
 
         this.$element = $("<canvas />", {id: "figure-" + id}).appendTo($("#canvas-container"));
+
+        $("#canvas-container").sorting("> canvas");
+
     }
 
-    add_plot(plot){
+    add_plot(plot) {
         this.plots.push(plot);
         return this;
     }
-    remove_plot(plot){
+    remove_plot(plot) {
         this.plots = this.plots.filter(it => it !== plot);
         return this;
     }
 
+    /**
+     * Assure the figure exists and returns it.
+     * @param {type} id
+     * @returns {Figure}
+     */
     static get(id) {
         let f;
         if (id in Figure.figures) {
@@ -199,8 +207,8 @@ class Figure {
                             // Function called once zooming is completed
                             onZoomComplete: function ( {chart}) {
                                 /*chart.config.options.plugins.zoom.pan.enabled = true;
-                                chart.config.options.plugins.zoom.zoom.enabled = false; XXX
-                                */
+                                 chart.config.options.plugins.zoom.zoom.enabled = false; XXX
+                                 */
                                 $("#reset-zoom").show(); // XX might work for every chart independently
                                 //this.enabled = false;
                                 console.log(this, chart);
@@ -217,11 +225,12 @@ class Figure {
         let longest_data = 0;
         let datasets = {};
 
-        let [plot_data, boundaries, title] = Plot.get_data(this.plots);
+        let plots = this.plots.filter(p => p.active);
+        let [plot_data, boundaries, title] = Plot.get_data(plots);
 
         /**
          *
-         * @type {Territory|Plot} territory If sum-territories is on, we receive Plot
+         * @type {Territory|null} territory Null if sum-territories is on.
          */
         for (let [plot, territory, data] of plot_data) {
             // choose only some days in range
@@ -243,7 +252,7 @@ class Figure {
             let dataset = {
                 type: 'line',
                 borderColor: color,
-                label: label,
+                label: label + (plots.length > 1 ? " (" + plot.expression + ")" : ""),
                 data: chosen_data,
                 borderWidth: starred ? 6 : 3,
                 fill: false,
@@ -251,7 +260,7 @@ class Figure {
                 id: id
             };
             datasets[id] = dataset;
-            console.log("Push name", plot.get_name(), plot.id, territory);
+            //console.log("Push name", plot.get_name(), plot.id, territory);
         }
         let r = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
         //console.log(r, longest_data);

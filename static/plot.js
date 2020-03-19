@@ -1,8 +1,26 @@
 setup = setup || {};
 $plot = $plot || {};
 
+let variables = {
+    "R": "recovered",
+    "D": "death",
+    "C": "confirmed",
+    "P": "population",
+    "NR": "newly recovered",
+    "ND": "newly deceased",
+    "NC": "newly confirmed",
+    "dC": "confirmed derivation",
+    "dNC": "newly confirmed derivation",
+    "dND": "newly deceased derivation",
+    "dNR": "newly recovered derivation"
+};
+for (let v in variables) {
+    variables[v] = " " + variables[v] + " ";
+}
+
+
 class Plot {
-    constructor(expression = "", active = true, checked_names = [], starred_names = [], add_to_stack = false) {
+    constructor(expression = "", active = true, figure_id = null, checked_names = [], starred_names = []) {
         /**
          * @property {Territory[]} chosen territories to be processed
          */
@@ -20,13 +38,38 @@ class Plot {
 
         // we need to implement this method because of sum-territories that may return Plot to refresh function (that want id)
         this.id = Plot.plots.length;
-        this.figure = Figure.get(1).add_plot(this);; // figure object, type: string
+        this.set_figure(Figure.get(figure_id || 1));
 
         this.build_html();
         /*        if (add_to_stack) {
          this.$element.show();
          //this.assure_stack();
          }*/
+    }
+
+    static serialize() {
+        return Plot.plots.map(p => {
+            return [p.expression,
+                p.active,
+                p.figure.id,
+                p.checked.map(t => t.get_name()),
+                p.starred.map(t => t.get_name())];
+        });
+    }
+
+    static deserialize(data) {
+        Plot.plots = [];
+        data.forEach((d) => new Plot(...d));
+        if (Plot.plots.length) {
+            Plot.plots[0].focus();
+        }
+    }
+
+    set_figure(figure) {
+        if (this.figure) {
+            this.figure.remove_plot(this);
+        }
+        this.figure = figure.add_plot(this);
     }
 
     get valid() {
@@ -47,12 +90,11 @@ class Plot {
     focus(clean = true) {
         let cp = Plot.current_plot;
         if (clean && cp && cp !== this) { // kick out the old plot
-            //XXX jestli stojconsole.log("V POHODE", Plot.current_plot.expression, Plot.current_plot.checked.length);
             if (cp.checked && cp.expression) { // show only if it is worthy
                 cp.$element.removeClass("edited");
                 //cp.$element.show();
             } else {
-                cp.remove();
+                cp.remove(false);
             }
         }
         Territory.plot = Plot.current_plot = this;
@@ -63,12 +105,14 @@ class Plot {
         return this;
     }
 
-    remove() {
+    remove(focus_next = true) {
         let without_me = Plot.plots.filter(p => p !== this);
 
         if (this === Plot.current_plot) {
             if (without_me.length) {
-                without_me[0].focus(false);
+                if (focus_next) {
+                    without_me[0].focus(false);
+                }
             } else {
                 // we cannot remove the last plot, just clear the text
                 $plot.val("").focus();
@@ -78,6 +122,7 @@ class Plot {
             }
         }
 
+        this.figure.remove_plot(this);
         Plot.plots = without_me;
         this.$element.hide(500, function () {
             $(this).remove();
@@ -88,7 +133,7 @@ class Plot {
      * Assure the plot is in the plot stack
      */
     build_html() {
-        let s = '<input type="number" min="1" class="plot-figure" value="1" title="If you change the number, you place the plot on a different figure."/>';
+        let s = '<input type="number" min="1" class="plot-figure" value="' + this.figure.id + '" title="If you change the number, you place the plot on a different figure."/>';
         this.$element = $("<div><span class=name></span>" + s + "<span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
                 .data("plot", this)
                 //.hide()
@@ -122,25 +167,8 @@ class Plot {
         $(".remove", $("#plot-stack")).toggle(Plot.plots.length > 1);
     }
 
-    static deserialize(data) {
-        Plot.plots = [];
-        data.forEach((d) => new Plot(d[0], d[1], d[2], d[3], data.length > 1));
-        if (Plot.plots.length) {
-            Plot.plots[0].focus();
-        }
-    }
-
-    static serialize() {
-        return Plot.plots.map(p => {
-            return [p.expression,
-                p.active,
-                p.checked.map(t => t.get_name()),
-                p.starred.map(t => t.get_name())];
-        });
-    }
-
     get_name() {
-        // XXXX starred first, state how many countries for stack
+        // XX starred first
         let s;
         let n = this.checked.length;
         if (n < 4) {
@@ -149,7 +177,7 @@ class Plot {
             s = n + " territories";
         }
         if (Plot.plots.length > 1) {
-            s += " (" + this.expression + ")";
+            s += " (" + this.express(variables).trim() + ")";
         }
         return s;
     }
@@ -160,7 +188,7 @@ class Plot {
      */
     territory_info(territory = null) {
         if (territory) {
-            return [territory.get_name(), territory.get_name(true), territory.is_starred, territory.id];
+            return [territory.get_name(), territory.get_name(true), territory.is_starred, this.id + "" + territory.id];
         } else {
             return [this.get_name(), this.get_name(), false, this.id];
     }
@@ -174,13 +202,9 @@ class Plot {
         let result = [];
         let outbreak_threshold = setup["outbreak-on"] ? parseInt(setup["outbreak-threshold"]) : 0;
         let boundaries = [Number.POSITIVE_INFINITY, 0];
-        for (let p of plots.filter(p => p.active)) {
-            console.log("Active plot", p, p.id);
+        for (let p of plots) {
             p.valid = null;
             let aggregated = [];
-//            if (p === Plot.current_plot) { // I think this may be ignored
-//                Plot.expression = setup["plot"];
-//            }
             for (let t of p.checked) {
                 let C = t.data["confirmed"];
                 let R = t.data["recovered"];
@@ -226,7 +250,7 @@ class Plot {
                         }
 
                         last_vars = vars;
-                        let result = Calculation.calculate(p.expression.replace(/(dNC)|(dND)|(dNR)|(dC)|(NC)|(ND)|(NR)|[CRDP]/g, m => vars[m]));
+                        let result = Calculation.calculate(p.express(vars));
                         $("#plot-alert").hide();
                         if (typeof (result) === "string") { // error encountered
                             if (p.expression.trim()) {
@@ -255,13 +279,17 @@ class Plot {
             }
             if (setup["sum-territories"]) {
                 result.push([p, null, aggregated]);
-                title.push("Sum " +p.get_name());
+                title.push("Sum " + p.get_name());
             } else {
                 title.push(p.get_name());
             }
         }
         //console.log("Plot data: ", result);
         return [result, boundaries, title];
+    }
+
+    express(vars) {
+        return this.expression.replace(/(dNC)|(dND)|(dNR)|(dC)|(NC)|(ND)|(NR)|[CRDP]/g, m => vars[m]);
     }
 }
 
