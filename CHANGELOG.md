@@ -17,6 +17,7 @@
 * multiple figures possible
 * tooltip sort by value
 * highlight hovered line, clicked line to toggle star
+* hide the country from the figure if it has no data (ex: because of the date range settings)
 
 # TBD XXX
 * jiné default countries
@@ -28,14 +29,14 @@
     * reset zoom -> add radio: zooming / panning; checkbox (wheel zooming), decimal places
 
 * Axe Y name ID – když fce nesdílí škálu, zobrazí se do též velikosti grafu, neroztáhne ho
-
 * axes should become figure parameters (input to toggle if the axes input manipulate single figure or all of them)
-* když měním days range, nemizí legend
+* když měním days range, nemizí legend zemí, které se nevešly
 * když adélka klikne na fajfčičku, chce země defaultně zaškrnout, ne odškrtnout
 
 
 
 ## nice to have:
+* bug: stars interreact through figures; when clicked on a figure and axe change, the territory un/stars on every other scale (while starred aggreagation Sum curve gets forgot and disappears)
 * ion opposite outbreak škála (highlight from right to left, not from left to right) (intuitivnější z druhé strany)
 * hide countries: třeba jen do nadpisu "Countries (3 hidden)"
 * country colours, flags or two-letter abbreviation

@@ -311,7 +311,7 @@ function refresh(event = null) {
 
     // build chart data
     // process each country
-    let boundary_total_max = Math.max(Object.values(Figure.figures).map(f => f.refresh()));
+    let boundary_total_max = Math.max(...Object.values(Figure.figures).map(f => f.refresh()));
 
     // XX all figures have the same outbreak and day range, this is not ideal
     if (can_redraw_sliders) {

@@ -176,13 +176,14 @@ class Plot {
         } else {
             s = n + " territories";
         }
-        if (Plot.plots.length > 1) {
-            s += " (" + this.express(variables).trim() + ")";
-        }
         if(highlight) {
             s = " *** " + s + " ***";
         }
         return s;
+    }
+
+    get_title() {
+        return this.get_name() + " (" + this.express(variables).trim() + ")";
     }
 
     /**
@@ -311,9 +312,9 @@ class Plot {
             }
             if (setup["sum-territories"]) {
                 result.push([p, null, aggregated]);
-                title.push("Sum " + p.get_name());
+                title.push("Sum of " + p.get_title());
             } else {
-                title.push(p.get_name());
+                title.push(p.get_title());
             }
         }
         //console.log("Plot data: ", result);

@@ -19,7 +19,7 @@ class Figure {
         $("#canvas-container").sorting("> canvas");
 
         this.hovered_dataset;
-        this.dataset_meta;
+        this.datasets_used;
     }
 
     add_plot(plot) {
@@ -74,11 +74,44 @@ class Figure {
      * @returns {undefined}
      */
     mouse_leave() {
-        if (this.hovered_dataset !== null) {
-            this.chart.data.datasets[this.hovered_dataset].borderWidth = DATASET_BORDER[this.dataset_meta[this.hovered_dataset]];
+        if (this.hovered_dataset !== null && this.chart) {
+            this.chart.data.datasets[this.hovered_dataset].borderWidth = DATASET_BORDER[this.meta(this.hovered_dataset).star];
             this.hovered_dataset = null;
             this.chart.update();
         }
+    }
+
+    /**
+     * Get dataset meta properties
+     * @param {type} dataset_id
+     * @returns {undefined}
+     */
+    meta(dataset_id) {
+        return this.datasets_used[this.chart.data.datasets[dataset_id].id];
+    }
+
+    /**
+     * Resets the width according to `star` parameter of this.meta property
+     * @param {type} dataset_id
+     * @returns {undefined}
+     */
+    reset_border_width(dataset_id) {
+        this.chart.data.datasets[dataset_id].borderWidth = DATASET_BORDER[this.meta(dataset_id).star];
+    }
+
+    hover(i) {
+        // is already hovered
+        if (i === this.hovered_dataset) {
+            return;
+        } else if (this.hovered_dataset !== null) {
+            // unhover old dataset
+            this.reset_border_width(this.hovered_dataset);
+        }
+
+        // hightlight new dataset
+        this.hovered_dataset = i;
+        this.chart.data.datasets[i].borderWidth = 10;
+        this.chart.update();
     }
 
     init_chart() {
@@ -88,52 +121,37 @@ class Figure {
             type: 'line',
             data: {},
             options: {
+                legend: {
+                    onHover: function (_, item) {
+                        ctx.hover(item.datasetIndex);
+                    }
+                },
                 onClick: function (evt) {
                     // toggle star on any curve -> if the curve is territory, it is starred as well
                     // this function can receive data (all data on index)
-                    let update = false;
-                    this.getElementAtEvent(evt).forEach(el => {
-                        update = true;
-                        let i = el._datasetIndex;
-                        let [plot, territory] = ctx.plot_data[i];
+                    let e = this.getElementAtEvent(evt);
+                    if (e.length) {
+                        let i = e[0]._datasetIndex;
+                        let dst = ctx.meta(i);
                         let star, label;
-                        if (territory) {
-                            star = plot.set_star(territory);
-                            label = territory.get_name(true);
+                        if (dst.territory) {
+                            star = dst.plot.set_star(dst.territory);
+                            label = dst.territory.get_name(true);
                         } else { // this is not territory but another curve (aggregated sum of territories)
-                            star = !ctx.dataset_meta[i];
-                            label = plot.get_name(star);
+                            star = !dst.star;
+                            label = dst.plot.get_name(star);
                         }
-                        ctx.dataset_meta[i] = star;
-                        this.data.datasets[i].borderWidth = DATASET_BORDER[star];
+                        dst.star = star;
+                        ctx.reset_border_width(i);
                         this.data.datasets[i].label = label;
-                    });
-                    if (update) {
                         this.update();
                     }
                 },
-                onHover: function (evt, data) {
+                onHover: function (evt) {
                     // highlight hovered line
-                    let update = false;
-                    this.getElementAtEvent(evt).forEach(el => {
-                        let i = el._datasetIndex;
-
-                        // is already hovered
-                        if (i === ctx.hovered_dataset) {
-                            return;
-                        } else if (ctx.hovered_dataset !== null) {
-                            // unhover old dataset
-                            this.data.datasets[ctx.hovered_dataset].borderWidth = DATASET_BORDER[ctx.dataset_meta[ctx.hovered_dataset]];
-                        }
-
-                        // hightlight new dataset
-                        ctx.hovered_dataset = i;
-                        this.data.datasets[i].borderWidth = 10;
-                        update = true;
-
-                    });
-                    if (update) {
-                        this.update();
+                    let e = this.getElementAtEvent(evt);
+                    if (e.length) {
+                        ctx.hover(e[0]._datasetIndex);
                     }
                 },
                 title: {
@@ -141,6 +159,7 @@ class Figure {
                     text: "Empty"
                 },
                 tooltips: {
+                    enabled: false, // XXX
                     mode: 'index',
 //                    mode: 'nearest',
                     intersect: false,
@@ -295,7 +314,7 @@ class Figure {
     refresh() {
         let longest_data = 0;
         let datasets = {};
-        this.dataset_meta = [];
+        this.datasets_used = {};
 
         let plots = this.plots.filter(p => p.active);
         let [plot_data, boundaries, title] = Plot.get_data(plots);
@@ -319,8 +338,13 @@ class Figure {
             }
 
             longest_data = Math.max(longest_data, setup["day-range"][0] + chosen_data.length);
-            //console.log("Longest", longest_data, chosen_data.length, chosen_data);
+            console.log("Longest", territory.name, longest_data, chosen_data.length, chosen_data);
             //console.log("Territory", territory.name, territory.is_starred);
+
+            // hide the country from the figure if it has no data (ex: because of the date range settings)
+            if (!chosen_data.length) {
+                continue;
+            }
             // push new dataset
             let dataset = {
                 type: 'line',
@@ -334,7 +358,7 @@ class Figure {
                         //,
                         //territory: territory
             };
-            this.dataset_meta.push(false);
+            this.datasets_used[id] = {plot: plot, territory: territory, star: false};
             datasets[id] = dataset;
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }
