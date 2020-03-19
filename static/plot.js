@@ -161,7 +161,7 @@ class Plot {
 
         // allow multiple figures
         //console.log("SHOW PLOT FIGURE?", setup["plot-figure"]);
-        $(".plot-figure", this.$element).toggle(Boolean(parseInt(setup["plot-figure"])));
+        $(".plot-figure", this.$element).toggle(Boolean(parseInt(setup["plot-figure-switch"])));
 
         // hide remove buttons if there is last plot
         $(".remove", $("#plot-stack")).toggle(Plot.plots.length > 1);

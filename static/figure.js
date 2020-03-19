@@ -338,7 +338,7 @@ class Figure {
             }
 
             longest_data = Math.max(longest_data, setup["day-range"][0] + chosen_data.length);
-            console.log("Longest", territory.name, longest_data, chosen_data.length, chosen_data);
+            //console.log("Longest", territory.name, longest_data, chosen_data.length, chosen_data);
             //console.log("Territory", territory.name, territory.is_starred);
 
             // hide the country from the figure if it has no data (ex: because of the date range settings)

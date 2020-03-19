@@ -67,14 +67,8 @@ class Territory {
         if (!Territory.loading_freeze) {
             if (check) {
                 this.plot.checked.push(this);
-//                if (!Territory.parent_freeze) {
-//                    refresh();
-//                }
             } else {
                 this.plot.checked = this.plot.checked.filter(e => e !== this); // remove from chosens
-//                if (!Territory.parent_freeze) {
-//                    refresh();
-//                }
             }
             if (!Territory.parent_freeze) {
                 this.parents.forEach(p => p.some_children_active(check));
@@ -219,15 +213,17 @@ class Territory {
     }
 
     /**
-     * If there any checked children, uncheck them all, else check all.
+     * XIf there any checked children, uncheck them all, else check all.
+     * If there is any unchecked child, check them all, else uncheck all.
      * @returns {undefined}
      */
     toggle_children_checked() {
         Territory.parent_freeze = true;
-        let any_checked_hide_all = this.children.some((child) => child.is_active);
-        this.children.forEach((child) => child.set_active(!any_checked_hide_all));
-        $("> span:eq(3)", this.$element).toggleClass("off", any_checked_hide_all);
+        let any_unchecked_check_all = this.children.some((child) => !child.is_active);
+        this.children.forEach((child) => child.set_active(any_unchecked_check_all));
+        $("> span:eq(3)", this.$element).toggleClass("off", !any_unchecked_check_all);
         Territory.parent_freeze = false;
+        Plot.current_plot.refresh_html();
     }
 
     static get(name, type, population = null) {
