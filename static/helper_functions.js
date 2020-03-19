@@ -117,8 +117,17 @@ if (!String.prototype.format) {
 
 // sort children thanks to https://stackoverflow.com/a/17127455/2036148 (edited)
 jQuery.fn.sorting = function sorting(selector) {
-            $(selector, this[0]).sort(dec_sort).appendTo(this[0]);
-            function dec_sort(a, b) {
-                return ($(b).attr("id")) < ($(a).attr("id")) ? 1 : -1;
-            }
-        };
+    $(selector, this[0]).sort(dec_sort).appendTo(this[0]);
+    function dec_sort(a, b) {
+        return ($(b).attr("id")) < ($(a).attr("id")) ? 1 : -1;
+    }
+};
+
+/**
+ * not very efficient way to remove an object from an array
+ * @param {type} el
+ * @returns {Array.prototype@call;filter}
+ */
+Array.prototype.remove = function (el) {
+    return this.filter(e => e !== el);
+};

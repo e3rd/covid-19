@@ -1,8 +1,15 @@
 setup = setup || {};
+let DATASET_BORDER = {
+    true: 6,
+    false: 3
+};
+
+
 class Figure {
     constructor(id) {
         this.chart = null;
         this.id = id;
+
         Figure.figures[id] = this;
         this.plots = [];
 
@@ -11,6 +18,8 @@ class Figure {
 
         $("#canvas-container").sorting("> canvas");
 
+        this.hovered_dataset;
+        this.dataset_meta;
     }
 
     add_plot(plot) {
@@ -60,11 +69,73 @@ class Figure {
         this.$element.remove();
     }
 
+    /**
+     * Unhighlight dataset on mouse leave
+     * @returns {undefined}
+     */
+    mouse_leave() {
+        if (this.hovered_dataset !== null) {
+            this.chart.data.datasets[this.hovered_dataset].borderWidth = DATASET_BORDER[this.dataset_meta[this.hovered_dataset]];
+            this.hovered_dataset = null;
+            this.chart.update();
+        }
+    }
+
     init_chart() {
+        let ctx = this;
+        this.hovered_dataset = null;
         return this.chart = new Chart(this.$element, {
             type: 'line',
             data: {},
             options: {
+                onClick: function (evt) {
+                    // toggle star on any curve -> if the curve is territory, it is starred as well
+                    // this function can receive data (all data on index)
+                    let update = false;
+                    this.getElementAtEvent(evt).forEach(el => {
+                        update = true;
+                        let i = el._datasetIndex;
+                        let [plot, territory] = ctx.plot_data[i];
+                        let star, label;
+                        if (territory) {
+                            star = plot.set_star(territory);
+                            label = territory.get_name(true);
+                        } else { // this is not territory but another curve (aggregated sum of territories)
+                            star = !ctx.dataset_meta[i];
+                            label = plot.get_name(star);
+                        }
+                        ctx.dataset_meta[i] = star;
+                        this.data.datasets[i].borderWidth = DATASET_BORDER[star];
+                        this.data.datasets[i].label = label;
+                    });
+                    if (update) {
+                        this.update();
+                    }
+                },
+                onHover: function (evt, data) {
+                    // highlight hovered line
+                    let update = false;
+                    this.getElementAtEvent(evt).forEach(el => {
+                        let i = el._datasetIndex;
+
+                        // is already hovered
+                        if (i === ctx.hovered_dataset) {
+                            return;
+                        } else if (ctx.hovered_dataset !== null) {
+                            // unhover old dataset
+                            this.data.datasets[ctx.hovered_dataset].borderWidth = DATASET_BORDER[ctx.dataset_meta[ctx.hovered_dataset]];
+                        }
+
+                        // hightlight new dataset
+                        ctx.hovered_dataset = i;
+                        this.data.datasets[i].borderWidth = 10;
+                        update = true;
+
+                    });
+                    if (update) {
+                        this.update();
+                    }
+                },
                 title: {
                     display: true,
                     text: "Empty"
@@ -224,9 +295,11 @@ class Figure {
     refresh() {
         let longest_data = 0;
         let datasets = {};
+        this.dataset_meta = [];
 
         let plots = this.plots.filter(p => p.active);
         let [plot_data, boundaries, title] = Plot.get_data(plots);
+        this.plot_data = plot_data;
 
         /**
          *
@@ -254,11 +327,14 @@ class Figure {
                 borderColor: color,
                 label: label + (plots.length > 1 ? " (" + plot.expression + ")" : ""),
                 data: chosen_data,
-                borderWidth: starred ? 6 : 3,
+                borderWidth: DATASET_BORDER[starred],
                 fill: false,
                 backgroundColor: color,
                 id: id
+                        //,
+                        //territory: territory
             };
+            this.dataset_meta.push(false);
             datasets[id] = dataset;
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }

@@ -110,16 +110,19 @@ class Territory {
      * @param {type} set If null, star toggled.
      * @returns {undefined}
      */
-    set_star(set = null) {
+    set_star(set = null, plot=null) {
+        if(plot === null) {
+            plot = this.plot;
+        }
         if (set === null) {
-            set = !(this.plot.starred.indexOf(this) > -1);
+            set = !(plot.starred.indexOf(this) > -1);
         }
         $("> span:eq(1)", this.$element).toggleClass("off", !set);
         if (!Territory.loading_freeze) {
             if (set) {
-                this.plot.starred.push(this);
+                plot.starred.push(this);
             } else {
-                this.plot.starred = this.plot.starred.filter(e => e !== this); // remove from starred
+                plot.starred = plot.starred.remove(this);
             }
         }
         return this.is_starred = set;

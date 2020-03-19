@@ -167,7 +167,7 @@ class Plot {
         $(".remove", $("#plot-stack")).toggle(Plot.plots.length > 1);
     }
 
-    get_name() {
+    get_name(highlight = false) {
         // XX starred first
         let s;
         let n = this.checked.length;
@@ -179,6 +179,9 @@ class Plot {
         if (Plot.plots.length > 1) {
             s += " (" + this.express(variables).trim() + ")";
         }
+        if(highlight) {
+            s = " *** " + s + " ***";
+        }
         return s;
     }
 
@@ -188,10 +191,39 @@ class Plot {
      */
     territory_info(territory = null) {
         if (territory) {
-            return [territory.get_name(), territory.get_name(true), territory.is_starred, this.id + "" + territory.id];
+            return [
+                territory.get_name(),
+                territory.get_name(true),
+                this.starred.indexOf(territory) > -1,
+                this.id + "" + territory.id];
         } else {
             return [this.get_name(), this.get_name(), false, this.id];
     }
+    }
+
+    /**
+     *
+     * @param {type} territory
+     * @param {type} star If null, star will be toggled.
+     * @returns {bool} has star
+     */
+    set_star(territory, star = null) {
+        if (!territory) {
+            return false;
+        }
+        return territory.set_star(null, this);
+//
+//        let has = this.starred.indexOf(territory) > -1; // XX can be re-implemented by dict to get more performance
+//        if (star === null) {
+//            star = !has;
+//        }
+//        if (star && !has) {
+//            this.starred.push(territory);
+//        }
+//        if (!star && has) {
+//            this.starred = this.starred.remove(territory);
+//        }
+//        return star;
     }
 
     /**

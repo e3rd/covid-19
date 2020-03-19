@@ -4,8 +4,14 @@ var url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/mas
 var just_stored_hash = ""; // determine if hash change is in progress
 
 $(function () {
-    //
     // DOM configuration
+
+    // canvas configuration
+    $("#canvas-container").on("mouseleave", "canvas", function(){
+        Figure.get($(this).attr("id").substr("figure-".length)).mouse_leave(); // unhighlight dataset on mouse leave
+    });
+
+    // init sliders
     $("#day-range").ionRangeSlider({
         skin: "big",
         type: "double",
