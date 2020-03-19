@@ -184,17 +184,7 @@ class Territory {
             s += " <span class='off'>✓</span> ";
         }
         if (this.population) {
-            let n = String(this.population);
-            let len = n;
-            let postfix;
-            if (len > 6) {
-                n = n.slice(0, -6);
-                postfix = " M";
-            } else if (len > 3) {
-                n = n.slice(0, -3);
-                postfix = " k";
-            }
-            s += " <i>(" + n.replace(/(.)(?=(\d{3})+$)/g, '$1 ') + postfix + ")</i>";
+            s += " <i>(" + number_format(this.population) + ")</i>";
         }
         s += "</div>";
         return s;
@@ -343,10 +333,10 @@ class Plot {
         this.figure = "1"; // figure number, type: string
 
         this.build_html();
-        if (add_to_stack) {
-            this.$element.show();
-            //this.assure_stack();
-    }
+        /*        if (add_to_stack) {
+         this.$element.show();
+         //this.assure_stack();
+         }*/
     }
 
     get valid() {
@@ -359,13 +349,18 @@ class Plot {
         this._valid = val;
     }
 
-    focus() {
+    /**
+     *
+     * @param {bool} clean Clean the old current plot-
+     * @returns {Plot}
+     */
+    focus(clean = true) {
         let cp = Plot.current_plot;
-        if (cp && cp !== this) { // kick out the old plot
+        if (clean && cp && cp !== this) { // kick out the old plot
             //XXX jestli stojconsole.log("V POHODE", Plot.current_plot.expression, Plot.current_plot.checked.length);
             if (cp.checked && cp.expression) { // show only if it is worthy
                 cp.$element.removeClass("edited");
-                cp.$element.show();
+                //cp.$element.show();
             } else {
                 cp.remove();
             }
@@ -379,7 +374,26 @@ class Plot {
     }
 
     remove() {
-        Plot.plots = Plot.plots.filter(p => p !== this);
+        console.log("ZDE se utOPIT", this, Plot.plots);
+        let without_me = Plot.plots.filter(p => p !== this);
+        console.log("2");
+
+        if (this === Plot.current_plot) {
+            console.log("3");
+            if (without_me.length) {
+                console.log("4");
+                without_me[0].focus(false);
+            } else {
+                // we cannot remove the last plot, just clear the text
+                $plot.val("").focus();
+                this.expression = "";
+                this.refresh_html();
+                return;
+            }
+        }
+
+        console.log("5");
+        Plot.plots = without_me;
         this.$element.hide(500, function () {
             $(this).remove();
         });
@@ -389,10 +403,11 @@ class Plot {
      * Assure the plot is in the plot stack
      */
     build_html() {
-        let s = '<input type="number" class="plot-figure" value="1" title="If you change the number, you place the plot on a different figure."/>';
+        let s = '<input type="number" min="1" class="plot-figure" value="1" title="If you change the number, you place the plot on a different figure."/>';
         this.$element = $("<div><span class=name></span>" + s + "<span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
                 .data("plot", this)
-                .hide()
+                //.hide()
+                .addClass("edited")
                 .prependTo($("#plot-stack"));
         this.refresh_html();
     }
@@ -401,12 +416,12 @@ class Plot {
         if (expression !== null) {
             this.expression = expression;
         }
-        if (!this.$element) {
-            return;
-        }
+//        if (!this.$element) {
+//            return;
+//        }
 
-        let name = this.expression + " (" + this.checked.length + " countries)"
-        $("> span[class=name]", this.$element).html(name);
+        let name = this.expression + " (" + this.checked.length + " countries)";
+        $("> .name", this.$element).html(name);
         if (this.active) {
             this.$element.addClass("active");
         }
@@ -417,6 +432,10 @@ class Plot {
         // allow multiple figures
         console.log("SHOW PLOT FIGURE?", setup["plot-figure"]);
         $(".plot-figure", this.$element).toggle(Boolean(parseInt(setup["plot-figure"])));
+
+        console.log("HOOOOOOOOOO", $("> span[class=remove]", this.$element).length, this.$element);
+        // hide remove buttons if there is last plot
+        $(".remove", $("#plot-stack")).toggle(Plot.plots.length > 1);
     }
 
     static deserialize(data) {
@@ -472,6 +491,7 @@ class Plot {
         let result = [];
         let outbreak_threshold = setup["outbreak-on"] ? parseInt(setup["outbreak-threshold"]) : 0;
         let boundaries = [Number.POSITIVE_INFINITY, 0];
+        console.log("Figures: ", figure_id, Plot.plots.filter(p => p.active && (figure_id === null || p.figure === figure_id)));
         for (let p of Plot.plots.filter(p => p.active && (figure_id === null || p.figure === figure_id))) {
             p.valid = null;
             let aggregated = [];
@@ -535,7 +555,8 @@ class Plot {
                             break;
                         } else {
                             boundaries = [Math.min(result, boundaries[0]), Math.max(result, boundaries[1])];
-                            outbreak_data.push(Math.round(result * 10000) / 10000);
+//                            outbreak_data.push(Math.round(result * 10000) / 10000);
+                            outbreak_data.push(Math.round(result));
                         }
 
                     }

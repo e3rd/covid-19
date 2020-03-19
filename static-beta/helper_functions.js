@@ -85,3 +85,33 @@ function sumArrays(ar1, ar2) {
     }
     return total;
 }
+
+
+function number_format(s) {
+    let n = String(s);
+    let len = n;
+    let postfix;
+    if (len > 6) {
+        n = n.slice(0, -6);
+        postfix = " M";
+    } else if (len > 3) {
+        n = n.slice(0, -3);
+        postfix = " k";
+    }
+    return n.replace(/(.)(?=(\d{3})+$)/g, '$1 ') + postfix;
+}
+
+// String formatting function usage "string {0}".format("1") => "string 1"
+if (!String.prototype.format) {
+    String.prototype.format = function () {
+        var args = arguments;
+        return this.replace(/{(\d+)}/g, function (match, number) {
+            return typeof args[number] !== 'undefined'
+                    ? args[number]
+                    : match
+                    ;
+        });
+    };
+}
+
+

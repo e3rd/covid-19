@@ -48,8 +48,7 @@ $(function () {
         let opt = $(this).data("ionRangeSlider").options;
         opt.onFinish = refresh;
         // do not change window hash when moving input slider
-        opt.onChange = (a, b, c) => {
-            console.log("AAA", a, b, c);
+        opt.onChange = () => {
             refresh(false);
         };
     });
@@ -64,9 +63,10 @@ $(function () {
     });
     // place plot on a different figure
     $("#plot-stack").on("change", ".plot-figure", function () {
+        let plot = $(this).parent().data("plot").focus();
         let id = $(this).val();
         Figure.get(id); // assure it exists
-        Plot.current_plot.figure = id;
+        plot.figure = id;
         refresh(false);
     });
     // possibility to add a new plot
@@ -75,6 +75,7 @@ $(function () {
         let cp = Plot.current_plot;
         if (!cp.valid) {
             alert("This plot expression is invalid");
+            $plot.focus();
             return;
         }
         //Plot.current_plot.assure_stack();
@@ -83,13 +84,15 @@ $(function () {
         let p = (new Plot()).focus();
         p.checked = Object.assign(cp.checked);
         p.starred = Object.assign(cp.starred);
+        p.refresh_html();
+        console.log("OP fokusu", cp.checked.length, p.checked.length);
+        $plot.focus();
     });
     // clicking on plot stack
     $("#plot-stack").on("click", "> div", function (event) {
         let plot = $(this).data("plot");
         if (event.target === $("span.name", $(this))[0]) { // re-edit
             plot.focus();
-
         } else {
             if (event.target === $("span.remove", $(this))[0]) { // delete plot
                 $(this).data("plot").remove();
@@ -324,22 +327,30 @@ class Figure {
             data: {},
             options: {
                 title: {
-                    display: false,
-                    text: ""
+                    display: true,
+                    text: "Empty"
                 },
                 tooltips: {
                     mode: 'index',
+//                    mode: 'nearest',
                     intersect: false,
+                    itemSort: (a, b, data) => b.yLabel - a.yLabel // sort by value
+//                    itemSort:  (a, b, data) => data.datasets[b.datasetIndex].label - data.datasets[a.datasetIndex].label
+                    // sort by name
 //                    callbacks: {
 //                        label: function (tooltipItem, data) {
+//                            console.log("HEEEEEEE",  tooltipItem, data);//data, tooltipItem,
 //                            var label = data.datasets[tooltipItem.datasetIndex].label || '';
 //
 //                            if (label) {
 //                                label += ': ';
 //                            }
-//                            label += Math.round(tooltipItem.yLabel * 100) / 100;
+//                            label += Math.round(tooltipItem.yLabel * 10000) / 10000;
 //                            return label;
 //                        }
+//                    },
+//                    custom: function(a,b,c,d) {
+//                        console.log("CUSTOM", a,b,c,d);
 //                    }
                 },
 
@@ -358,7 +369,7 @@ class Figure {
                             },
                             ticks: {
                                 callback: function (value, index, values) {
-                                    return Number(value.toString());
+                                    return Math.round(value * 100) / 100;
                                 }
                             }
                         }]
@@ -492,21 +503,17 @@ function refresh(event = null) {
 
     // build chart data
     // process each country
-    let longest_data = 0;
-    let datasets = {};
     let boundary_max = 0;
     for (let figure_id in Figure.figures) {
+        let longest_data = 0;
+        let datasets = {};
         let [plot_data, boundaries] = Plot.get_data(figure_id);
 
         let figure = Figure.get(figure_id);
         let chart = figure.chart;
+        let title = [];
 
-        if (!plot_data.length) { // error when processing plot function formula
-            figure.remove();
-            continue;
-        }
         boundary_max = Math.max(boundary_max, boundaries[1]);
-
         /**
          *
          * @type {Territory|Plot} territory If sum-territories is on, we receive Plot
@@ -539,6 +546,7 @@ function refresh(event = null) {
                 id: id
             };
             datasets[id] = dataset;
+            title.push(p.get_name());
         }
         let r = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
         //console.log(r, longest_data);
@@ -569,13 +577,13 @@ function refresh(event = null) {
             // insert new
             Object.values(datasets).forEach(el => chart.data.datasets.push(el));
         }
-        if (!chart.data.datasets.length) {
+        if (!plot_data.length) { // error when processing plot function formula
+            chart.options.title.text = "Empty figure " + figure.id;
+        } else if (!chart.data.datasets.length) {
             console.log(Object.values(datasets), "No data");
             chart.options.title.text = "No data";
-            chart.options.title.display = true;
         } else {
-            chart.options.title.text = Plot.plots.filter(p => p.active).map(p => p.get_name()).join(", ");
-            chart.options.title.display = true;
+            chart.options.title.text = title.join(", ");
         }
         chart.options.scales.xAxes[0].scaleLabel.labelString = `Days count since >= ${setup["outbreak-threshold"]} confirmed cases`;
         chart.options.scales.yAxes[0].type = setup["log-switch"] ? "logarithmic" : "linear";

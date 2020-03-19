@@ -15,19 +15,20 @@
 * zooming
 * UI regrouping
 * multiple figures possible
+* tooltip sort by value
 
 # TBD XXX
 * double click to check only that country
 * label: highlight current line (najedu na zemi a vidim i ostatní, víc zřetelné, která)
-* hightlight hovered line
+* hightlight hovered line <- this may help https://www.chartjs.org/samples/latest/tooltips/custom-points.html
 * jiné default countries
 * hashovat hidden očka
 * south korea duplication bug
 * mobily, at to neni v jednom sloupci
 * ui change chart size
 * the data are now rounded – round them on label only
-* outbreak – disable range slider
 * Axe Y name ID – když fce nesdílí škálu, zobrazí se do též velikosti grafu, neroztáhne ho
+* fix me: figure jsou nedotažený, zmizí
 
 * číslo figury do malého tagu grafů – neukládá se ještě do hashe. Axy se mají stát parametrem Figure.
     * nefunguje moc dobře přepínání, jestli jsou zaplé
@@ -35,6 +36,8 @@
 * když měním days range, nemizí legend
 * ion opposite outbreak škála (intuitivnější z druhé strany)
 * outbreak skrývání moc nejde
+* když adélka klikne na fajfčičku, chce země defaultně zaškrnout, ne odškrtnout
+
 
 
 ## nice to have:
@@ -45,3 +48,4 @@
 * legend: sort
 * disable territories with zero data
 * XXX oko nereaguje úplně 100%
+* outbreak -> turn to filter with any arbitrary condition (ex: start counting when R > 20)
