@@ -70,3 +70,48 @@ function splitCsv(str) {
         return accum;
     }, {soFar: [], isConcatting: false}).soFar
 }
+
+
+/**
+ * Sum arrays while filling zeroes to the shorter.
+ * @returns {Array}
+ */
+function sumArrays(ar1, ar2) {
+    let total = [];
+    for (var i = 0; i < ar1.length || i < ar2.length; i++) {
+        let a = ar1[i];
+        let b = ar2[i];
+        total.push((isNaN(a) ? 0 : a) + (isNaN(b) ? 0 : b));
+    }
+    return total;
+}
+
+
+function number_format(s) {
+    let n = String(s);
+    let len = n;
+    let postfix;
+    if (len > 6) {
+        n = n.slice(0, -6);
+        postfix = " M";
+    } else if (len > 3) {
+        n = n.slice(0, -3);
+        postfix = " k";
+    }
+    return n.replace(/(.)(?=(\d{3})+$)/g, '$1 ') + postfix;
+}
+
+// String formatting function usage "string {0}".format("1") => "string 1"
+if (!String.prototype.format) {
+    String.prototype.format = function () {
+        var args = arguments;
+        return this.replace(/{(\d+)}/g, function (match, number) {
+            return typeof args[number] !== 'undefined'
+                    ? args[number]
+                    : match
+                    ;
+        });
+    };
+}
+
+

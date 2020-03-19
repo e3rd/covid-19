@@ -24,11 +24,12 @@
 * jiné default countries
 * hashovat hidden očka
 * south korea duplication bug
-* mobily, at to neni v jednom sloupci
-* ui change chart size
-* the data are now rounded – round them on label only
+* UI
+    * mobily, at territories nejsou v jednom sloupci
+    * ui change chart size
+    * reset zoom -> add radio: zooming / panning; checkbox (wheel zooming), decimal places
+
 * Axe Y name ID – když fce nesdílí škálu, zobrazí se do též velikosti grafu, neroztáhne ho
-* fix me: figure jsou nedotažený, zmizí
 
 * číslo figury do malého tagu grafů – neukládá se ještě do hashe. Axy se mají stát parametrem Figure.
     * nefunguje moc dobře přepínání, jestli jsou zaplé

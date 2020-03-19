@@ -1,33 +1,44 @@
 // definitions
-var setup = {};
-var chart = null; // chart instance
+var ready_to_refresh = false;
+var url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-';
 var just_stored_hash = ""; // determine if hash change is in progress
-let url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv';
-let ready_to_refresh = false;
-
-
 
 $(function () {
+    //
     // DOM configuration
-    $("#outbreak-threshold").ionRangeSlider({
-        skin: "big",
-        //type: "double",
-        grid: true,
-        min: 0,
-        max: 50
-                //from: setup["outbreak-threshold"]
-    });
-
-
     $("#day-range").ionRangeSlider({
         skin: "big",
         type: "double",
         grid: true,
         min: 0,
-        max: 50, //XX setup["day-range"][1],
-        to: 50, //XXsetup["day-range"][1],
+        max: 100, //XX setup["day-range"][1],
+        to: 100, //XXsetup["day-range"][1],
         from: 0
     });
+
+    $("#outbreak-threshold").ionRangeSlider({
+        skin: "big",
+//        type: "double",
+        grid: true,
+        min: 0,
+        max: 50
+    });
+
+    $("#outbreak-value").change(function () {
+        let ion = $("#outbreak-threshold").data("ionRangeSlider");
+        let v = {from: $(this).val()};
+        if (ion.options.max < $(this).val()) {
+            v["max"] = $(this).val();
+        }
+        ion.update(v);
+    });
+
+    // disabling outbreak will disable its range
+    $("#outbreak-on").change(function () {
+        $("#outbreak-threshold, #outbreak-value").parent().toggle($(this).prop("checked"));
+    });
+    /*$("#outbreak-on").click(outbreak_range);
+     outbreak_range.call($("#outbreak-on")); // will immediately disable outbreak (changing the DOM default behaviour to off)*/
 
     // refresh on input change
     $("#setup input:not(.irs-hidden-input)").change(refresh); // every normal input change
@@ -39,15 +50,75 @@ $(function () {
             refresh(false);
         };
     });
+    // refresh on plot change
+    $plot.keyup(function () {
+        let v = $(this).val();
+        if ($(this).data("last") !== v) {
+            Plot.current_plot.refresh_html(v);
+            refresh();
+            $(this).data("last", v);
+        }
+    });
+    // place plot on a different figure
+    $("#plot-stack").on("change", ".plot-figure", function () {
+        let plot = $(this).parent().data("plot").focus();
+        let id = $(this).val();
+        Figure.get(id); // assure it exists
+        plot.figure = id;
+        refresh(false);
+    });
+    // possibility to add a new plot
+    $("#plot-new").click(() => {
+        console.log(Plot.current_plot, "PLOOOOO", Plot.current_plot.valid);
+        let cp = Plot.current_plot;
+        if (!cp.valid) {
+            alert("This plot expression is invalid");
+            $plot.focus();
+            return;
+        }
+        //Plot.current_plot.assure_stack();
+        console.log("Resets $plot.val");
+        $plot.val("");
+        let p = (new Plot()).focus();
+        p.checked = Object.assign(cp.checked);
+        p.starred = Object.assign(cp.starred);
+        p.refresh_html();
+        console.log("OP fokusu", cp.checked.length, p.checked.length);
+        $plot.focus();
+    });
+    // clicking on plot stack
+    $("#plot-stack").on("click", "> div", function (event) {
+        let plot = $(this).data("plot");
+        if (event.target === $("span.name", $(this))[0]) { // re-edit
+            plot.focus();
+        } else {
+            if (event.target === $("span.remove", $(this))[0]) { // delete plot
+                $(this).data("plot").remove();
+            } else if (event.target === $("span.shown", $(this))[0]) { // toggle hide
+                $(this).toggleClass("active", plot.active = !plot.active);
+            }
+            refresh();
+        }
+    });
+    //reset zoom ready
+    $("#reset-zoom").on("click", "a", Figure.reset_zoom);
 
 
 
 
-// runtime
 
-    $.get(url, (data) => {
-        // we need to build Territory objects from CSV first
-        Territory.build(data);
+
+
+
+    // runtime
+    $.when(// we need to build Territory objects from CSV first
+            $.get(url_pattern + "Confirmed.csv", (data) => Territory.build(data, "confirmed")),
+            $.get(url_pattern + "Deaths.csv", (data) => Territory.build(data, "deaths")),
+            $.get(url_pattern + "Recovered.csv", (data) => Territory.build(data, "recovered")),
+            ).then(() => {
+
+        // setup options according to data boundaries
+        $("#day-range").data("ionRangeSlider").update({max: Territory.header.length});
 
         // draw territories
         let $territories = $("#territories");
@@ -78,74 +149,73 @@ $(function () {
             }
             refresh();
         });
-        $("#uncheck-all").click(Territory.uncheck_all);
+        // XX? $("#uncheck-all").click(Territory.uncheck_all);
 
         // document events
         window.addEventListener('hashchange', () => {
             console.log("HASH change event");
-            load_hash();
+            //load_hash();
         }, false);
         refresh_setup(true, false);
 
+
+        // view menu switches parts of the program on/off
+        let view_change = function () {
+            let target = $(this).attr("data-target");
+            let $el;
+            if (target) {
+                $el = $(target);
+            } else {
+                $el = $("#" + $(this).attr("id").slice(0, -"-switch".length));
+            }
+            if ($el.length) {
+                $el.toggle($(this).prop("checked"));
+            }
+        };
+        $(".custom-control-input").change(view_change).each(view_change);
+
+        // toggle chart size
+        $("#big-chart").change(Figure.chart_size);
+        Figure.chart_size();
+
         // start plotting
         if (!Plot.plots.length) {
-            console.log("CREATING NEW");
-            (new Plot()).focus(); // current plot
-            for (let country of european_countries) { // X ["Czechia", "United Kingdom"]
-                Territory.get(country, Territory.COUNTRY).set_active();
+            console.debug("Plot.current -> creating new", setup["plot"], setup);
+            (new Plot(setup["plot"])).focus(); // current plot
+            for (let country of ["Czechia", "Italy"]) { // X ["Czechia", "United Kingdom"] european_countries
+                Territory.get_by_name(country, Territory.COUNTRY).set_active();
             }
         } else {
-            console.log("USING OLD");
+            console.debug("Plot.current -> using old");
             Plot.plots[0].focus();
         }
         refresh(set_ready = true);
+
+        // loading effect
+        $("main").show();
+        //$("main").fadeIn(1000); XXX
     });
 });
 
-/**
- * @param {type} csv Raw data from github
- * @returns {Array} Sorted by chosen countries.
- */
-function prepare_plot_data() {
-    let result = [];   // countries with outbreak
-    for (let t of Plot.current_plot.checked) {
-        let line = t.data["confirmed"];
-        let outbreak_data = [];
-        let ignore = true;
-        for (let j = 0; j < line.length; j++) {
-            if (line[j] >= setup["outbreak-threshold"]) { // append the data starting with threshold
-                ignore = false;
-            }
-            if (!ignore) {
-                outbreak_data.push(line[j]);
-            }
-        }
-        result.push([t, outbreak_data]);
-    }
-    //console.log("Plot data", result);
-    return result;
-}
 
 
 function load_hash() {
-    console.log("Load hash trying");
+    console.log("Load hash trying ...");
     try {
         let hash = "{" + decodeURI(window.location.hash.substr(1)) + "}";
-        //console.log("Hash", hash, just_stored_hash);
-        if (hash === just_stored_hash) {
+        //console.log("Hash", hash, just_stored_hash, " (having plot: ", setup["plot"]);
+        if (hash === just_stored_hash || hash === "{}") {
             return;
         }
         setup = JSON.parse(hash);
     } catch (e) {
         return;
     }
-    console.log("LOAD HASH NOW *******");
+    console.log("... load hash now!", setup);
     for (let key in setup) {
         let val = setup[key];
         if (key === "plots") {
             Plot.deserialize(val);
-            //plot = Plot.current_plot;
-            console.log("NOVY PLOT", Plot.current_plot);
             continue;
         }
         let $el = $("#" + key);
@@ -164,6 +234,7 @@ function load_hash() {
             $el.val(val);
         }
     }
+    $("#outbreak-on").change();
     refresh();
 }
 
@@ -185,54 +256,26 @@ function refresh_setup(load_from_hash = false, allow_window_hash_change = true) 
         } else {
             val = $el.val();
         }
+        //console.log("Refresh setup", key, "from", setup[key], " to ", $el.val());
         setup[key] = val;
     });
 
     if (load_from_hash) {
-        console.log("HASH load");
+        //console.log("Call load_hash from refresh_setup");
         load_hash();
     } else if (allow_window_hash_change) {
+        $("#outbreak-value").val(setup["outbreak-threshold"]);
         // save to hash
         setup["plots"] = Plot.serialize();
         let s = just_stored_hash = JSON.stringify(setup);
-        //console.log("JSUT stored", just_stored_hash);
+        console.log("STORIGN hash", s); // XXX
         window.location.hash = s.substring(1, s.length - 1);
+        //console.log("Hash stored with plot: ", setup["plot"]);
 }
 }
 
-function init_chart() {
-    let ctx = $("#chart");
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: {},
-        options: {
-            tooltips: {
-                mode: 'index',
-                intersect: false
-            },
-            scales: {
-                xAxes: [{
-                        display: true,
-                        scaleLabel: {
-                            display: true
-                        }
-                    }],
-                yAxes: [{
-                        display: true,
-                        scaleLabel: {
-                            display: true,
-                            labelString: 'Total confirmed cases'
-                        },
-                        ticks: {
-                            callback: function (value, index, values) {
-                                return Number(value.toString());
-                            }
-                        }
-                    }]
-            }
-        }
-    });
-}
+
+
 
 
 /**
@@ -248,67 +291,22 @@ function refresh(event = null) {
         return false;
     }
     // assure `setup` is ready
-    refresh_setup(false, event !== false);
+    let can_redraw_sliders = event !== false;
+    refresh_setup(false, can_redraw_sliders);
 
 
     // build chart data
     // process each country
-    let longest_data = 0;
-    let datasets = {};
-    for (let [territory, data] of prepare_plot_data()) {
-        // choose only some days in range
-        if (!data.length) {
-            continue;
-        }
-        let chosen_data = [];
-        for (let i = setup["day-range"][0]; i < data.length && i < setup["day-range"][1]; i++) {
-            chosen_data.push(data[i]);
-        }
+    let boundary_total_max = Math.max(Object.values(Figure.figures).map(f => f.refresh()));
 
-        longest_data = Math.max(longest_data, chosen_data.length);
-        //console.log("Territory", territory.name, territory.is_starred);
-        // push new dataset
-        let dataset = {
-            type: 'line',
-            borderColor: "#" + intToRGB(hashCode(territory.get_name())), //"#5793DB",
-            label: territory.get_name(true),
-            data: chosen_data,
-            borderWidth: territory.is_starred ? 6 : 3,
-            fill: false,
-            backgroundColor: "#" + intToRGB(hashCode(territory.get_name())), //"#5793DB",
-            id: territory.id
-        };
-        datasets[territory.id] = dataset;
-    }
-    let labels = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1])).map(String);
+    // XX all figures have the same outbreak and day range, this is not ideal
+    if (can_redraw_sliders) {
+        $("#outbreak-threshold").data("ionRangeSlider").update({
+            //min: boundaries[0],
+            max: boundary_total_max
+        });
 
-    // update chart data
-    if (!chart) {
-        init_chart();
-        chart.data = {datasets: Object.values(datasets), labels: labels};
-    } else {
-        // update just some datasets, do not replace them entirely (smooth movement)
-        chart.data.labels = labels;
-        let removable = [];
-        // update changed
-        for (let o of chart.data.datasets) {
-            if (o.id in datasets) { // update changes
-                let d = datasets[o.id];
-                o.data = d.data;
-                o.borderWidth = d.borderWidth;
-                o.label = d.label;
-                delete datasets[o.id];
-            } else {
-                removable.push(o);
-            }
-        }
-        // remove unused
-        chart.data.datasets = chart.data.datasets.filter((el) => !removable.includes(el));
-        // insert new
-        Object.values(datasets).forEach(el => chart.data.datasets.push(el));
-    }
-    chart.options.scales.xAxes[0].scaleLabel.labelString = `Days count since >= ${setup["outbreak-threshold"]} confirmed cases`;
-    chart.options.scales.yAxes[0].type = setup["log-switch"] ? "logarithmic" : "linear";
-    chart.update();
+        //console.log("MIN", boundary_max);
+}
 }
 

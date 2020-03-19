@@ -2,35 +2,86 @@
     <strong>Dynamic correlation searching covid-19 dashboard</strong>
 </div>
 
-<form id="setup">
-    <div class="range-container">
-        <label for="outbreak-threshold">Outbreak</label>
-        <div>
-            <input type="range" id="outbreak-threshold" value="20">
+<div id="reset-zoom"><a class="btn btn-light">Reset zoom</a></div>
+<div id="canvas-container" class="big">
+</div>
+
+<form id="setup" onsubmit="return false">
+    <div id="view-menu">
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="big-chart" checked>
+            <label class="custom-control-label" for="big-chart">Big chart</label>
+        </div>
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="axes-options-switch" checked>
+            <label class="custom-control-label" for="axes-options-switch">Axes options</label>
+        </div>
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="plot-options-switch" checked>
+            <label class="custom-control-label" for="plot-options-switch">Plot options</label>
+        </div>
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="plot-figure-switch" data-target=".plot-figure">
+            <label class="custom-control-label" for="plot-figure-switch">Allow multiple figures</label>
+        </div>
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="territory-options-switch" checked>
+            <label class="custom-control-label" for="territory-options-switch">Territory options</label>
+        </div>
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="credits-switch" checked>
+            <label class="custom-control-label" for="credits-switch">Credits</label>
         </div>
     </div>
 
-    <div class="range-container">
-        <label for="day-range">Show days since outbreak:</label>
-        <div>
-            <input type="range" id="day-range"  max="25"/>
+
+    <div id="axes-options">
+        <div class="range-container">
+            <label for="day-range">Days visible:</label>
+            <div>
+                <input type="range" id="day-range" max="25"/>
+            </div>
         </div>
+
+        <div>
+            <input class="refresh" type="checkbox"  id="log-switch" value="on" checked>
+            <label for="log-switch">Log scale</label>
+        </div>
+
+        <div class="range-container">
+            <div>
+                <input class="refresh" type="checkbox"  id="outbreak-on" value="off" checked>
+                <label for="outbreak-on">Outbreak</label>
+            </div>
+            <div>
+                <input type="number" id="outbreak-value" />
+            </div>
+            <div id="outbreak-threshold-container">
+                <input type="range" id="outbreak-threshold" value="20">
+            </div>
+        </div>
+
     </div>
 
-    <div>
-        <input class="refresh" type="checkbox"  id="log-switch" value="off">
-        <label for="log-switch">Log scale</label>
+    <div id="plot-options">
+
+        <div>
+            <input class="refresh" type="checkbox"  id="sum-territories" value="off">
+            <label for="sum-territories">Sum territories into single curve</label>
+        </div>
+
+        Plot expression: <input type="text" id="plot" placeholder="R/(C+R+D)" value="C"/>
+        <a id="plot-new" class="btn btn-light">+</a>
+        <div id="plot-stack"></div>
+        <p id="plot-hint">
+            Put any arithmetic expression using <code>C/R/D</code> (confirmed/recovered/death), prepended by <code>N</code> (newly added) and/or <code>d</code> (derivation), or <code>P</code> (population).
+            <br>Ex: <code>R/(C+R+D)</code> (total recovered ratio), <code>NR+ND</code> (daily closed cases)
+        </p>
+        <div class="alert alert-warning" id="plot-alert"></div>
     </div>
 </form>
 
-<!--Plot expression: <input type="text" id="plot" />
-Use C/R/D for (confirmed/recovered/dead)-->
-
-<canvas id="chart"></canvas>
-
-
-
-<div class="container">
+<div class="container" id="territory-options">
     <div class="row">
         <div class="col-md">
             <h1>State <span></span></h1>
@@ -64,9 +115,15 @@ Use C/R/D for (confirmed/recovered/dead)-->
     </div>
 </div>
 
-<p>
-    <br><br>
-    Source: <a href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data">Johns Hopkins CSSE</a> (data updated once a day)
-    <br>
-    Help development at <a href="https://github.com/e3rd/covid-19/tree/master/">github</a>.
-</p>
+<div id="credits">
+    <p>
+        <br><br>
+        Source: <a href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data">Johns Hopkins CSSE</a> (data updated once a day)
+        <br>
+        Help development at <a href="https://github.com/e3rd/covid-19/tree/master/">github</a>.
+        <br>
+    </p>
+    <p>
+        Disclaimer: The chart is based only on cases of infection confirmed by testing. Due to the varying amounts of testing done in different countries, real numbers of cases may be very different.
+    </p>
+</div>
