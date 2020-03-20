@@ -10,7 +10,7 @@ class Territory {
         this.name = name;
         this.type = type;
         this.toggled = false;
-        this.shown = true;
+        this.shown = this.type === Territory.CONTINENT;  // by default, every countries are hidden
         this.is_starred = false;
         this.id = "t" + (++counter);
         this.data = {"confirmed": [], "deaths": [], "recovered": []};
@@ -74,7 +74,8 @@ class Territory {
                 this.parents.forEach(p => p.some_children_active(check));
                 Plot.current_plot.refresh_html();
             }
-    }
+        }
+        return this;
     }
 
     static uncheck_all() {
@@ -104,8 +105,8 @@ class Territory {
      * @param {type} set If null, star toggled.
      * @returns {undefined}
      */
-    set_star(set = null, plot=null) {
-        if(plot === null) {
+    set_star(set = null, plot = null) {
+        if (plot === null) {
             plot = this.plot;
         }
         if (set === null) {
@@ -168,14 +169,14 @@ class Territory {
     }
 
     get_html() {
+        let v = this.shown ? "" : " style='display:none'";
         let disabled = this.data["confirmed"].filter(d => d !== "0").length ? "" : " (zero)";
-        let s = "<div id='" + this.id + "'>";
+        let s = "<div " + v + "id='" + this.id + "'>";
         s += "<input type=checkbox />";
-        //s += "<span>unicode star</span>"; // XXX
         s += "<span>" + this.get_name() + "</span>" + disabled;
         s += " <span class='off'>☆</span> ";
         if (this.children.length) {
-            s += "<span>👁</span>"; // XX save to hash
+            s += "<span class='off'>👁</span>"; // XX save to hash
             s += " <span class='off'>✓</span> ";
         }
         if (this.population) {
@@ -258,7 +259,7 @@ class Territory {
         return Territory.id_list[parseInt(id.substr(1)) - 1];
     }
 
-    /**
+    /** Create Territory objects.
      * @param {type} csv Raw data from github
      */
     static build(csv, type) {
@@ -269,6 +270,7 @@ class Territory {
             headers.slice(0, -1); // strip last empty field
         }
         Territory.header = headers;
+        let default_territory = Territory.get("Other", Territory.CONTINENT); // here comes countries that are not stated in mapping.js
 
         for (let i = 1; i < lines.length; i++) {
             if (!lines[i]) {
@@ -284,6 +286,9 @@ class Territory {
                 let ch = Territory.get(line[0], Territory.STATE);
                 t.add_child(ch);
                 ch.add_data(data, type);
+            }
+            if (!t.parents.length) {
+                default_territory.add_child(t);
             }
             t.add_data(data, type);
             t.parents.forEach(p => p.add_data(data));

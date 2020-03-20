@@ -7,7 +7,7 @@ $(function () {
     // DOM configuration
 
     // canvas configuration
-    $("#canvas-container").on("mouseleave", "canvas", function(){
+    $("#canvas-container").on("mouseleave", "canvas", function () {
         Figure.get($(this).attr("id").substr("figure-".length)).mouse_leave(); // unhighlight dataset on mouse leave
     });
 
@@ -73,13 +73,18 @@ $(function () {
     });
     // place plot on a different Y axe
     $("#plot-stack").on("change", ".y-axis", function () {
-         let plot = $(this).parent().data("plot").focus();
+        let plot = $(this).parent().data("plot").focus();
         plot.y_axis = $(this).val();
-        refresh(false);
+        if (plot.active) {
+            // possible chartjs bug – if I did not toggle the plot activity, Y axis would appear but data would stay still wrongly linked to the old Y axis
+            plot.active = false;
+            refresh(false);
+            plot.active = true;
+            refresh(false);
+        }
     });
     // possibility to add a new plot
     $("#plot-new").click(() => {
-        console.log(Plot.current_plot, "PLOOOOO", Plot.current_plot.valid);
         let cp = Plot.current_plot;
         if (!cp.valid) {
             alert("This plot expression is invalid");
@@ -130,7 +135,7 @@ $(function () {
         // setup options according to data boundaries
         $("#day-range").data("ionRangeSlider").update({max: Territory.header.length});
 
-        // draw territories
+        // build territories
         let $territories = $("#territories");
         let td = (col_id, storage) => {
             let text = [];
@@ -159,16 +164,6 @@ $(function () {
             }
             refresh();
         });
-        // XX? $("#uncheck-all").click(Territory.uncheck_all);
-
-        // document events
-        window.addEventListener('hashchange', () => {
-            console.log("HASH change event");
-            load_hash();
-        }, false);
-        refresh_setup(false);
-        load_hash();
-
 
         // view menu switches parts of the program on/off
         let view_change = function () {
@@ -187,15 +182,23 @@ $(function () {
 
         // toggle chart size
         $("#big-chart").change(Figure.chart_size);
-        Figure.chart_size();
+
+
+        // document events
+        window.addEventListener('hashchange', () => {
+            console.log("HASH change event");
+            load_hash();
+        }, false);
+        refresh_setup(false);
+        load_hash();
+
 
         // start plotting
         if (!Plot.plots.length) {
             console.debug("Plot.current -> creating new", setup["plot"], setup);
-            (new Plot()).focus(); // current plot
-            // Xsetup["plot"] ??
+            (new Plot(setup["plot"])).focus(); // current plot
             for (let country of ["Czechia", "Italy"]) { // X ["Czechia", "United Kingdom"] european_countries
-                Territory.get_by_name(country, Territory.COUNTRY).set_active();
+                Territory.get_by_name(country, Territory.COUNTRY).set_active().show();
             }
         } else {
             console.debug("Plot.current -> using old");
@@ -249,6 +252,7 @@ function load_hash() {
         } else {
             $el.val(val);
         }
+        console.log("EFFFF", $el, $el.attr("name"));
         $el.change();
     }
     // XXX?$("#outbreak-on").change();

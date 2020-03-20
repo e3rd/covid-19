@@ -15,6 +15,7 @@
 * zooming
 * UI regrouping
 * multiple figures possible
+* multiple Y axes possible
 * tooltip sort by value
 * highlight hovered line, clicked line to toggle star
 * hide the country from the figure if it has no data (ex: because of the date range settings)
@@ -25,14 +26,14 @@
 * UI
     * mobily, at territories nejsou v jednom sloupci
     * ui change chart size
-    * reset zoom -> add radio: zooming / panning; checkbox (wheel zooming), decimal places
-
-* Axe Y name ID – když fce nesdílí škálu, zobrazí se do též velikosti grafu, neroztáhne ho
-* axes should become figure parameters (input to toggle if the axes input manipulate single figure or all of them)
+    * reset zoom -> add radio: zooming / panning; checkbox (wheel zooming), decimal places; tooltips on/off
 
 
 ## nice to have:
-* jiné default countries
+* share button (copy the link)
+* disqus?
+* axes should become figure parameters (input to toggle whether the axes input should manipulate single figure or all of them)
+* change default countries
 * hashovat hidden očka
 * bug: stars interreact through figures; when clicked on a figure and axe change, the territory un/stars on every other scale (while starred aggreagation Sum curve gets forgot and disappears)
 * ion opposite outbreak škála (highlight from right to left, not from left to right) (intuitivnější z druhé strany)

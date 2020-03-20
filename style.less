@@ -1,7 +1,7 @@
 body {
     > main { // we need to override rebot scss, hence the inheritance
              min-width: 800px;  // important for mobile view
-      // XXX loading effect       display:none;
+             // XXX loading effect       display:none;
     }
 }
 
@@ -124,18 +124,14 @@ form {
             background-color: green;
 
             opacity: 0.3;
-            /*        > .shown {
-                        background-color: darkgray;
-                    }*/
+            > .shown {
+                margin-left: 8px;
+            }
 
             &.active {
                 opacity: 1;
-                /*            > .shown {
-                                background-color: gray;
-                            }*/
             }
             &.edited{
-                //background-color: #005;
                 font-weight: bold;
             }
             &.invalid{
@@ -150,7 +146,6 @@ form {
 
         .plot-figure, .y-axis {
             width: 30px;
-            margin-right: 8px;
         }
     }
 }

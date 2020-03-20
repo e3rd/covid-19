@@ -159,7 +159,7 @@ class Figure {
                     text: "Empty"
                 },
                 tooltips: {
-                    //enabled: false, // XXX
+                    //enabled: false,
                     mode: 'index',
 //                    mode: 'nearest',
                     intersect: false,
@@ -190,18 +190,18 @@ class Figure {
                                 display: true
                             }
                         }],
-                    yAxes: range(1, 6).map(i => {
+                    yAxes: range(1, 6).map(i => { // create 5 available axes
                         return {
                             display: false,
                             id: i,
                             scaleLabel: {
                                 display: true,
-                                labelString: i === 1 ? "Total cases":'Axe ' + i
+                                labelString: i === 1 ? "Total cases" : 'Axe ' + i
                             },
                             ticks: {
-                                callback: function (value, index, values) {
-                                    return Math.round(value * 100) / 100;
-                                }
+//                                callback: function (value, index, values) {
+//                                    return Math.round(value * 100) / 100;
+//                                }
                             }
                         }
                     }),
