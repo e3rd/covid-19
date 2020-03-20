@@ -20,7 +20,7 @@ for (let v in variables) {
 
 
 class Plot {
-    constructor(expression = "", active = true, figure_id = null, y_axis= 1, checked_names = [], starred_names = []) {
+    constructor(expression = "", active = true, figure_id = null, y_axis = 1, checked_names = [], starred_names = []) {
         /**
          * @property {Territory[]} chosen territories to be processed
          */
@@ -137,7 +137,7 @@ class Plot {
     build_html() {
         let s = '<input type="number" min="1" class="plot-figure" value="' + this.figure.id + '" title="If you change the number, you place the plot on a different figure."/>';
         let t = '<input type="number" min="1" max="5" class="y-axis" value="' + this.y_axis + '" title="Independent y-axis scale"/>';
-        this.$element = $("<div><span class=name></span>" + s + t+ "<span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
+        this.$element = $("<div><span class=name></span>" + s + t + "<span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
                 .data("plot", this)
                 .prependTo($("#plot-stack"));
         this.refresh_html();
@@ -178,7 +178,7 @@ class Plot {
         } else {
             s = n + " territories";
         }
-        if(highlight) {
+        if (highlight) {
             s = " *** " + s + " ***";
         }
         return s;
@@ -294,7 +294,9 @@ class Plot {
                             p.valid = false;
                             break;
                         } else {
-                            boundaries = [Math.min(result, boundaries[0]), Math.max(result, boundaries[1])];
+                            if (!isNaN(result)) {
+                                boundaries = [Math.min(result, boundaries[0]), Math.max(result, boundaries[1])];
+                            }
 //                            outbreak_data.push(Math.round(result * 10000) / 10000);
                             outbreak_data.push(Math.round(result));
                         }

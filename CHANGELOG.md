@@ -22,11 +22,19 @@
 
 
 # TBD
-* south korea duplication bug
 * UI
     * mobily, at territories nejsou v jednom sloupci
     * ui change chart size
     * reset zoom -> add radio: zooming / panning; checkbox (wheel zooming), decimal places; tooltips on/off
+* Data check
+    * Zambia, Gambia, Bahamas are NaN
+    * south korea duplication bug
+
+
+* possible outbreak / population
+* help switch
+* chart size slider
+* do callbacku můžeš přidat i datum
 
 
 ## nice to have:

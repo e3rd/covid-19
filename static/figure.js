@@ -46,8 +46,9 @@ class Figure {
         return f;
     }
 
-    static chart_size() {
-        $("#canvas-container").toggleClass("big", $("#big-chart").prop("checked"));
+    static chart_size(e) {
+        $("#canvas-container").css("width", {5: 150, 4: 100, 3: 75, 2: 50, 1: 33}[e.from] + "%");
+        //$("#canvas-container").toggleClass("big", $("#big-chart").prop("checked"));
         Object.values(Figure.figures).forEach(f => f.chart && f.chart.resize());
     }
 

@@ -12,19 +12,32 @@ $(function () {
     });
 
     // init sliders
+    $("#chart-size").ionRangeSlider({
+        skin: "big",
+        grid: false,
+        min: 1,
+        max: 5,
+        from: 3,
+        onChange: Figure.chart_size
+//        function(a,b,c) {
+//            console.log(this,a,b,c);
+//            //
+//        }
+
+    });
+
     $("#day-range").ionRangeSlider({
         skin: "big",
         type: "double",
         grid: true,
         min: 0,
-        max: 100, //XX setup["day-range"][1],
-        to: 100, //XXsetup["day-range"][1],
+        max: 100,
+        to: 100,
         from: 0
     });
 
     $("#outbreak-threshold").ionRangeSlider({
         skin: "big",
-//        type: "double",
         grid: true,
         min: 0,
         max: 50
@@ -49,7 +62,11 @@ $(function () {
     // refresh on input change
     $("#setup input:not(.irs-hidden-input)").change(refresh); // every normal input change
     $("#setup input.irs-hidden-input").each(function () { // sliders
+        if($(this).closest(".custom-handler").length) {
+            return;
+        }
         let opt = $(this).data("ionRangeSlider").options;
+        console.log("ZDEE", this);
         opt.onFinish = refresh;
         // do not change window hash when moving input slider
         opt.onChange = () => {
@@ -180,9 +197,6 @@ $(function () {
         };
         $(".custom-control-input").change(view_change).each(view_change);
 
-        // toggle chart size
-        $("#big-chart").change(Figure.chart_size);
-
 
         // document events
         window.addEventListener('hashchange', () => {
@@ -238,7 +252,7 @@ function load_hash() {
             continue;
         }
         let $el = $("#" + key);
-        if (!key in setup) {
+        if (!key in setup || !$el.length) {
             continue;
         }
         if ((r = $el.data("ionRangeSlider"))) {
@@ -252,7 +266,7 @@ function load_hash() {
         } else {
             $el.val(val);
         }
-        console.log("EFFFF", $el, $el.attr("name"));
+        //console.log("EFFFF",key, $el, $el.attr("name"));
         $el.change();
     }
     // XXX?$("#outbreak-on").change();
@@ -326,7 +340,7 @@ function refresh(event = null) {
     if (can_redraw_sliders) {
         $("#outbreak-threshold").data("ionRangeSlider").update({
             //min: boundaries[0],
-            max: boundary_total_max
+            max: isFinite(boundary_total_max) ? boundary_total_max : 10 // all values can be NaN
         });
 
         //console.log("MIN", boundary_max);
