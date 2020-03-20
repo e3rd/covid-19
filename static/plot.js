@@ -298,42 +298,49 @@ class Plot {
                             vars["dNR"] = vars["NR"];
                             vars["dND"] = vars["ND"];
                         }
-                        for (let key in vars) {
-                            vars[key] = "(" + vars[key] + ")";
-                        }
 
                         last_vars = vars;
 
 
                         // Since the Calculation does not work with default `*` operatation (ex: `(1)1` is not treated as `(1)*1`)
                         // we adopt this buggy workaround.
+//                        parenth_vars = [];
+//                        for (let key in vars) {
+//                            parenth_vars[key] = "(" + vars[key] + ")";
+//                        }
                         // XX
-                        let numeral = [];
-                        let s = "";
-                        for (let l of p.express(vars)) { // strip out spaces
-                            if (l !== " ") {
-                                s += l;
-                            }
-                        }
-                        for (let i in s) {
-                            let c = s[i];
-                            if (c === "(") { // prepend `*` before any parenthesis, if there is not any other operator
-                                if (s[i - 1] && !(// this is not string beggining
-                                        (s[i - 1] && "!^*/+-,".indexOf(s[i - 1]) > -1) // there are not any operator
-                                        || (s[i - 3] && s.substr(i - 3, 3) === "min") // nor a min or sqrt function
-                                        || (s[i - 4] && s.substr(i - 4, 4) === "sqrt")
-                                        )) {
-                                    numeral.push("*");
-                                }
-                            }
-                            numeral.push(c);
-                            if (c === ")") { // append `*` if it is not end of string nor there is any operator
-                                if (s[i * 1 + 1] && "!^*/+-,".indexOf(s[i * 1 + 1]) === -1) {
-                                    numeral.push("*");
-                                }
-                            }
-                        }
-                        let result = Calculation.calculate(numeral.join(""));
+//                        let numeral = [];
+//                        let s = "";
+//                        for (let l of p.express(vars)) { // strip out spaces
+//                            if (l !== " ") {
+//                                s += l;
+//                            }
+//                        }
+//                        console.log("Vars", vars);
+//                        console.log("Express", p.express(vars));
+//                        console.log("S", s);
+//                        for (let i in s) {
+//                            let c = s[i];
+//                            if (c === "(") { // prepend `*` before any parenthesis, if there is not any other operator
+//                                if (s[i - 1] && !(// this is not string beggining
+//                                        (s[i - 1] && "!^*/+-,".indexOf(s[i - 1]) > -1) // there are not any operator
+//                                        || (s[i - 3] && s.substr(i - 3, 3) === "min") // nor a min or sqrt function
+//                                        || (s[i - 4] && s.substr(i - 4, 4) === "sqrt")
+//                                        )) {
+//                                    numeral.push("*");
+//                                }
+//                            }
+//                            numeral.push(c);
+//                            if (c === ")") { // append `*` if it is not end of string nor there is any operator
+//                                if (s[i * 1 + 1] && "!^*/+-,".indexOf(s[i * 1 + 1]) === -1) {
+//                                    numeral.push("*");
+//                                }
+//                            }
+//                        }
+//                        console.log("Numeral" , numeral);
+//                        let result = Calculation.calculate(numeral.join(""));
+//                        console.log("CALC", vars, p.express(vars));
+                        let result = Calculation.calculate(p.express(vars));
                         $("#plot-alert").hide();
                         if (typeof (result) === "string") { // error encountered
                             if (p.expression.trim()) {

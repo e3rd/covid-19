@@ -21,11 +21,15 @@
             <label class="custom-control-label" for="plot-options-switch">Plot options</label>
         </div>
         <div class="custom-control custom-switch">
-            <input type="checkbox" class="custom-control-input" id="plot-figure-switch" data-target=".plot-figure">
+            <input type="checkbox" class="custom-control-input" id="plot-multiple-switch" data-target="#plot-new, #plot-stack" data-parent="#plot-options-switch">
+            <label class="custom-control-label" for="plot-multiple-switch">Allow multiple plots</label>
+        </div>
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="plot-figure-switch" data-target=".plot-figure" data-parent="#plot-multiple-switch">
             <label class="custom-control-label" for="plot-figure-switch">Allow multiple figures</label>
         </div>
         <div class="custom-control custom-switch">
-            <input type="checkbox" class="custom-control-input" id="y-axis-independency-switch" data-target=".y-axis">
+            <input type="checkbox" class="custom-control-input" id="y-axis-independency-switch" data-target=".y-axis" data-parent="#plot-multiple-switch">
             <label class="custom-control-label" for="y-axis-independency-switch">Allow multiple y-axis</label>
         </div>
         <div class="custom-control custom-switch">

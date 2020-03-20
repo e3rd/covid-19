@@ -51,7 +51,7 @@ $(function () {
     });
 
     // refresh on input change
-    $("#setup input:not(.irs-hidden-input)").change(refresh); // every normal input change
+    $("#setup input:not(.irs-hidden-input)").change(refresh); // every normal input change will redraw chart
     $("#setup input.irs-hidden-input").each(function () { // sliders
         if ($(this).closest(".custom-handler").length) {
             return;
@@ -180,8 +180,9 @@ $(function () {
             refresh();
         });
 
-        // view menu switches parts of the program on/off
+        // view menu
         let view_change = function () {
+            // switches -> show/hide DOM sections
             let target = $(this).attr("data-target");
             let $el;
             if (target) {
@@ -192,6 +193,14 @@ $(function () {
             if ($el.length) {
                 $el.toggle($(this).prop("checked"));
             }
+
+            // Checkbox inheritance, will show/hide children checkboxes
+            // Checkbox is visible only if its data-parent is both checked and visible ( = not hidden due to its data-parent)
+            $("#setup [data-parent]").each(function () {
+                let $parent = $($(this).attr("data-parent"));
+                $(this).parent().toggle($parent.prop("checked") && $parent.parent().is(":visible"));
+
+            });
         };
         $(".custom-control-input").change(view_change).each(view_change);
 

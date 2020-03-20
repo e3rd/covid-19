@@ -35,6 +35,7 @@
 
 
 ## nice to have:
+* arithmetic calculation will not default multiply; expression `10*k` resolved as `101000`
 * share button (copy the link)
 * disqus?
 * axes should become figure parameters (input to toggle whether the axes input should manipulate single figure or all of them)
