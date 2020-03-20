@@ -117,7 +117,7 @@ class Territory {
             if (set) {
                 plot.starred.push(this);
             } else {
-                plot.starred = plot.starred.remove(this);
+                plot.starred = plot.starred.filter(e => e !== this);
             }
         }
         return this.is_starred = set;

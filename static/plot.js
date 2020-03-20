@@ -1,6 +1,10 @@
 setup = setup || {};
 $plot = $plot || {};
 
+/**
+ *
+ * @type type Used by Plot.express
+ */
 let variables = {
     "R": "recovered",
     "D": "death",
@@ -12,7 +16,9 @@ let variables = {
     "dC": "confirmed derivation",
     "dNC": "newly confirmed derivation",
     "dND": "newly deceased derivation",
-    "dNR": "newly recovered derivation"
+    "dNR": "newly recovered derivation",
+    "k": "1 000",
+    "M": "1 000 000"
 };
 for (let v in variables) {
     variables[v] = " " + variables[v] + " ";
@@ -235,8 +241,9 @@ class Plot {
     static get_data(plots = []) {
         let title = [];
         let result = [];
-        let outbreak_threshold = setup["outbreak-on"] ? parseInt(setup["outbreak-threshold"]) : 0;
-        let boundaries = [Number.POSITIVE_INFINITY, 0];
+        let outbreak_population = setup["outbreak-mode"] ? 1 : 0;
+        let outbreak_threshold = setup["outbreak-on"] ? parseInt(setup["outbreak-value"]) : 0;
+        let boundaries = [Number.POSITIVE_INFINITY, 0, 0]; // min, max, outbreak population percentil
         for (let p of plots) {
             p.valid = null;
             let aggregated = [];
@@ -249,7 +256,13 @@ class Plot {
 
                 let last_vars = null;
                 for (let j = 0; j < C.length; j++) {
-                    if (C[j] >= outbreak_threshold) { // append the data starting with threshold
+                    // append the data starting with threshold (while threshold can be number of confirmed cases totally or confirmed cases in population
+                    if (ignore && // we have not yet passed outbreak
+                            ((outbreak_population && C[j] >= outbreak_threshold * t.population / 100000) // outbreak determined by population
+                                    || (!outbreak_population && C[j] >= outbreak_threshold) // outbreak determined by constant number of casesz
+                                    )
+                            )
+                    {
                         ignore = false;
                     }
                     if (!ignore) {
@@ -259,7 +272,9 @@ class Plot {
                             "R": R[j],
                             "D": D[j],
                             "C": C[j],
-                            "P": t.population
+                            "P": t.population,
+                            "k": "1000",
+                            "M": 1000000
                         };
 
                         if (last_vars) {
@@ -283,19 +298,56 @@ class Plot {
                             vars["dNR"] = vars["NR"];
                             vars["dND"] = vars["ND"];
                         }
+                        for (let key in vars) {
+                            vars[key] = "(" + vars[key] + ")";
+                        }
 
                         last_vars = vars;
-                        let result = Calculation.calculate(p.express(vars));
+
+
+                        // Since the Calculation does not work with default `*` operatation (ex: `(1)1` is not treated as `(1)*1`)
+                        // we adopt this buggy workaround.
+                        // XX
+                        let numeral = [];
+                        let s = "";
+                        for (let l of p.express(vars)) { // strip out spaces
+                            if (l !== " ") {
+                                s += l;
+                            }
+                        }
+                        for (let i in s) {
+                            let c = s[i];
+                            if (c === "(") { // prepend `*` before any parenthesis, if there is not any other operator
+                                if (s[i - 1] && !(// this is not string beggining
+                                        (s[i - 1] && "!^*/+-,".indexOf(s[i - 1]) > -1) // there are not any operator
+                                        || (s[i - 3] && s.substr(i - 3, 3) === "min") // nor a min or sqrt function
+                                        || (s[i - 4] && s.substr(i - 4, 4) === "sqrt")
+                                        )) {
+                                    numeral.push("*");
+                                }
+                            }
+                            numeral.push(c);
+                            if (c === ")") { // append `*` if it is not end of string nor there is any operator
+                                if (s[i * 1 + 1] && "!^*/+-,".indexOf(s[i * 1 + 1]) === -1) {
+                                    numeral.push("*");
+                                }
+                            }
+                        }
+                        let result = Calculation.calculate(numeral.join(""));
                         $("#plot-alert").hide();
                         if (typeof (result) === "string") { // error encountered
                             if (p.expression.trim()) {
-                                $("#plot-alert").show().html("<b>Use one of the following variables: <code>C R D NC NR ND dC dNC dNR dND P</code></b> (" + result + ")");
+                                $("#plot-alert").show().html("<b>Use one of the following variables: <code>C R D NC NR ND dC dNC dNR dND P M k</code></b> (" + result + ")");
                             }
                             p.valid = false;
                             break;
                         } else {
                             if (!isNaN(result)) {
-                                boundaries = [Math.min(result, boundaries[0]), Math.max(result, boundaries[1])];
+                                boundaries = [
+                                    Math.min(result, boundaries[0]),
+                                    Math.max(result, boundaries[1]),
+                                    t.population
+                                ];
                             }
 //                            outbreak_data.push(Math.round(result * 10000) / 10000);
                             outbreak_data.push(Math.round(result));
@@ -304,7 +356,7 @@ class Plot {
                     }
                 }
                 if (setup["sum-territories"]) {
-                    aggregated = sumArrays(aggregated, outbreak_data);
+                    aggregated = aggregated.sumTo(outbreak_data);
                 } else {
                     result.push([p, t, outbreak_data]);
                 }
@@ -326,7 +378,7 @@ class Plot {
     }
 
     express(vars) {
-        return this.expression.replace(/(dNC)|(dND)|(dNR)|(dC)|(NC)|(ND)|(NR)|[CRDP]/g, m => vars[m]);
+        return this.expression.replace(/(dNC)|(dND)|(dNR)|(dC)|(NC)|(ND)|(NR)|[CRDPkM]/g, m => vars[m]);
     }
 }
 

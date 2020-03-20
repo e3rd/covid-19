@@ -8,10 +8,10 @@
 
 <form id="setup" onsubmit="return false">
     <div id="view-menu">
-<!--        <div class="custom-control custom-switch">
-            <input type="checkbox" class="custom-control-input" id="big-chart" checked>
-            <label class="custom-control-label" for="big-chart">Big chart</label>
-        </div>-->
+        <!--        <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="big-chart" checked>
+                    <label class="custom-control-label" for="big-chart">Big chart</label>
+                </div>-->
         <div class="custom-control custom-switch">
             <input type="checkbox" class="custom-control-input" id="axes-options-switch" checked>
             <label class="custom-control-label" for="axes-options-switch">Axes options</label>
@@ -41,10 +41,10 @@
             <label class="custom-control-label" for="help-box-switch">Help box</label> XXX
         </div>
 
-        <div class="range-container custom-handler">
+        <div class="range-container custom-handler" id="chart-size-wrapper">
             <label for="chart-size">Figure size:</label>
             <div>
-                <input type="range" id="chart-size"/>
+                <input type="range" id="chart-size" min="33" max="150"  value="85" />  <!-- default value should be the same as in style.less -->
             </div>
         </div>
     </div>
@@ -67,12 +67,15 @@
             <div>
                 <input class="refresh" type="checkbox"  id="outbreak-on" value="off" checked>
                 <label for="outbreak-on">Outbreak</label>
+                <label><input type="checkbox"  id="outbreak-mode" value="off">population</label>
             </div>
             <div>
-                <input type="number" id="outbreak-value" />
+                <input type="number" min="1" id="outbreak-value" value="1" />
+                <!--                <label><input type="radio" name="outbreak-mode" id="outbreak-confirmed" value="1"/> confirmed cases</label>
+                                <label><input type="radio" name="outbreak-mode" id="outbreak-population" value="2"/> 1/100 000 of population</label>-->
             </div>
             <div id="outbreak-threshold-container">
-                <input type="range" id="outbreak-threshold" value="20">
+                <input type="range" id="outbreak-threshold" value="1">
             </div>
         </div>
 
@@ -85,12 +88,15 @@
             <label for="sum-territories">Sum territories into single curve</label>
         </div>
 
-        Plot expression: <input type="text" id="plot" placeholder="R/(C+R+D)" value="C"/>
+        Plot expression: <input type="text" id="plot" placeholder="NR+ND" value="C"/>
         <a id="plot-new" class="btn btn-light">+</a>
         <div id="plot-stack"></div>
         <p id="plot-hint">
-            Put any arithmetic expression using <code>C/R/D</code> (confirmed/recovered/death), prepended by <code>N</code> (newly added) and/or <code>d</code> (derivation), or <code>P</code> (population).
-            <br>Ex: <code>R/(C+R+D)</code> (total recovered ratio), <code>NR+ND</code> (daily closed cases)
+            Put any arithmetic expression using <code>C</code>/<code>R</code>/<code>D</code> (confirmed/recovered/death),
+            <code>NC</code>/<code>NR</code>/<code>ND</code> (newly confirmed/recovered/death cases),
+            <code>dNC</code>/<code>dNR</code>/<code>dND</code> (derivation of newly added cases),
+            <code>dC</code> (derivation of cumulative confirmed cases), or <code>P</code> (population) while <code>k</code>=10^3 and <code>M</code>=10^6.
+            <br>Ex: <code>R/(C+R+D)</code> (total recovered ratio), <code>NR+ND</code> (newly closed cases)
         </p>
         <div class="alert alert-warning" id="plot-alert"></div>
     </div>

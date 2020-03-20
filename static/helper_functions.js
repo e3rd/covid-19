@@ -73,18 +73,28 @@ function splitCsv(str) {
 
 
 /**
+ * Sum array elements.
+ * @returns {int}
+ */
+Object.defineProperty(Array.prototype, "sum", {
+    value: function () {
+        return this.reduce((a, b) => a + b, 0);
+    }});
+
+/**
  * Sum arrays while filling zeroes to the shorter.
  * @returns {Array}
  */
-function sumArrays(ar1, ar2) {
-    let total = [];
-    for (var i = 0; i < ar1.length || i < ar2.length; i++) {
-        let a = ar1[i];
-        let b = ar2[i];
-        total.push((isNaN(a) ? 0 : a) + (isNaN(b) ? 0 : b));
-    }
-    return total;
-}
+Object.defineProperty(Array.prototype, "sumTo", {
+    value: function (el) {
+        let total = [];
+        for (var i = 0; i < this.length || i < el.length; i++) {
+            let a = this[i];
+            let b = el[i];
+            total.push((isNaN(a) ? 0 : a) + (isNaN(b) ? 0 : b));
+        }
+        return total;
+    }});
 
 
 function number_format(s) {
@@ -102,17 +112,18 @@ function number_format(s) {
 }
 
 // String formatting function usage "string {0}".format("1") => "string 1"
-if (!String.prototype.format) {
-    String.prototype.format = function () {
-        var args = arguments;
-        return this.replace(/{(\d+)}/g, function (match, number) {
-            return typeof args[number] !== 'undefined'
-                    ? args[number]
-                    : match
-                    ;
-        });
-    };
-}
+// XX If used, we cannot loop string for(l in s) otherwise this function gets returned at the end.
+//if (!String.prototype.format) {
+//    String.prototype.format = function () {
+//        var args = arguments;
+//        return this.replace(/{(\d+)}/g, function (match, number) {
+//            return typeof args[number] !== 'undefined'
+//                    ? args[number]
+//                    : match
+//                    ;
+//        });
+//    };
+//}
 
 
 // sort children thanks to https://stackoverflow.com/a/17127455/2036148 (edited)
@@ -124,10 +135,38 @@ jQuery.fn.sorting = function sorting(selector) {
 };
 
 /**
- * not very efficient way to remove an object from an array
- * @param {type} el
- * @returns {Array.prototype@call;filter}
+ * Generate logarithmic steps, based on https://stackoverflow.com/a/846249/2036148
+ * @param {type} position
+ * @returns {Number}
  */
-Array.prototype.remove = function (el) {
-    return this.filter(e => e !== el);
-};
+function logslider(minp = 0, maxp = 100, minv = 100, max_v = 10000000) {
+//    // position will be between 0 and 100
+//    var minp = 0;
+//    var maxp = 100;
+//
+//    // The result should be between 100 an 10000000
+    minv = Math.log(minv);
+    let maxv = Math.log(max_v);
+    let values = [];
+    for (let position of range(minp, maxp + 1)) {
+
+
+        // calculate adjustment factor
+        let scale = (maxv - minv) / (maxp - minp);
+        let v = Math.round(Math.exp(minv + scale * (position - minp)));
+//        console.log("V(position=" , position,") => ", v, values[values.length - 1]);
+        if (values.length && values[values.length - 1] >= v) {
+            v = values[values.length - 1] + 1;
+            //          console.log("Corrected to ", v);
+        }
+        if (v > max_v) {  // there is not enough space for so many steps, we have to shorten the step number
+            if (values[values.length - 1] && values[values.length - 1] !== max_v) {
+                // last step may be equal to the max
+                values.push(Math.floor(max_v));
+            }
+            break;
+        }
+        values.push(v);
+    }
+    return values;
+}

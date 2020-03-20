@@ -15,15 +15,11 @@ $(function () {
     $("#chart-size").ionRangeSlider({
         skin: "big",
         grid: false,
-        min: 1,
-        max: 5,
-        from: 3,
+        min: $("#chart-size").attr("min"),
+        max: $("#chart-size").attr("max"),
+        from: $("#chart-size").val(),
+        postfix: " %",
         onChange: Figure.chart_size
-//        function(a,b,c) {
-//            console.log(this,a,b,c);
-//            //
-//        }
-
     });
 
     $("#day-range").ionRangeSlider({
@@ -39,37 +35,41 @@ $(function () {
     $("#outbreak-threshold").ionRangeSlider({
         skin: "big",
         grid: true,
-        min: 0,
-        max: 50
-    });
+        from: 1,
+        values: [1] //Xrange(101)
+    }).data("bound-input", $("#outbreak-value"));
 
     $("#outbreak-value").change(function () {
-        let ion = $("#outbreak-threshold").data("ionRangeSlider");
-        let v = {from: $(this).val()};
-        if (ion.options.max < $(this).val()) {
-            v["max"] = $(this).val();
-        }
-        ion.update(v);
+        // update corresponding slider to have to nearest value possible
+        //console.log("Outbreak value change to VAL:", $(this).val());
+        set_slider($("#outbreak-threshold"), $(this).val());
     });
 
     // disabling outbreak will disable its range
     $("#outbreak-on").change(function () {
         $("#outbreak-threshold, #outbreak-value").parent().toggle($(this).prop("checked"));
     });
-    /*$("#outbreak-on").click(outbreak_range);
-     outbreak_range.call($("#outbreak-on")); // will immediately disable outbreak (changing the DOM default behaviour to off)*/
 
     // refresh on input change
     $("#setup input:not(.irs-hidden-input)").change(refresh); // every normal input change
     $("#setup input.irs-hidden-input").each(function () { // sliders
-        if($(this).closest(".custom-handler").length) {
+        if ($(this).closest(".custom-handler").length) {
             return;
         }
         let opt = $(this).data("ionRangeSlider").options;
-        console.log("ZDEE", this);
+        let $input = $(this).data("bound-input");
+        if ($input) {
+            $input.data("bound-slider", $(this));
+        }
+
         opt.onFinish = refresh;
         // do not change window hash when moving input slider
         opt.onChange = () => {
+            if ($input) {
+                let r = $(this).data("ionRangeSlider").result;
+                let val = opt.values ? opt.values[r.from] : r.from;
+                $input.val(val);
+            }
             refresh(false);
         };
     });
@@ -109,13 +109,11 @@ $(function () {
             return;
         }
         //Plot.current_plot.assure_stack();
-        console.log("Resets $plot.val");
         $plot.val("");
         let p = (new Plot()).focus();
         p.checked = Object.assign(cp.checked);
         p.starred = Object.assign(cp.starred);
         p.refresh_html();
-        console.log("OP fokusu", cp.checked.length, p.checked.length);
         $plot.focus();
     });
     // clicking on a plot stack curve label
@@ -219,6 +217,7 @@ $(function () {
             Plot.plots[0].focus();
         }
         refresh(set_ready = true);
+        //Figure.chart_size();
 
         // loading effect
         $("main").show();
@@ -247,10 +246,16 @@ function load_hash() {
     console.log("... load hash now!", setup);
     for (let key in setup) {
         let val = setup[key];
+
+        // handle keys that `refresh` does not handle: plots and chart-size
         if (key === "plots") {
             Plot.deserialize(val);
             continue;
+        } else if (key === "chart-size") {
+            Figure.chart_size({"from": val});
         }
+
+        // key may be a DOM element too
         let $el = $("#" + key);
         if (!key in setup || !$el.length) {
             continue;
@@ -258,18 +263,26 @@ function load_hash() {
         if ((r = $el.data("ionRangeSlider"))) {
             if (r.options.type === "double") {
                 r.update({from: val[0], to: val[1]});
+//           X } else if ($el.data("bound-input")) {
+//                console.log("load hash ion set input", $el.attr("id"));
+//                set_slider($el, $el.data("bound-input").val(), val);
+//                continue; // we will not trigger $el.change event because bound-input will trigger it for us
             } else {
-                r.update({from: val});
+                val = r.options.values ? r.options.values[r.result.from] : r.result.from;
+
             }
-        } else if ($el.attr("type") === "checkbox") {
+        } else if ($el.attr("type") === "checkbox" || $el.attr("type") === "radio") {
             $el.prop("checked", val);
         } else {
             $el.val(val);
         }
-        //console.log("EFFFF",key, $el, $el.attr("name"));
+
+//        if ($el.attr("id").indexOf("outbreak-") > -1) {
+//            console.log("ZDE changuju", $el.attr("id"), val);
+//        }
         $el.change();
     }
-    // XXX?$("#outbreak-on").change();
+//    console.log("Refresh!");
     refresh();
 }
 
@@ -281,6 +294,7 @@ function load_hash() {
  * @returns {undefined}
  */
 function refresh_setup(allow_window_hash_change = true) {
+    let thr = null;
     $("#setup input").each(function () {
         // Load value from the $el to setup.
         $el = $(this);
@@ -290,9 +304,10 @@ function refresh_setup(allow_window_hash_change = true) {
             if (r.options.type === "double") {
                 val = [r.result.from, r.result.to];
             } else {
+                // val = r.options.values ? r.options.values[r.result.from] : r.result.from;
                 val = r.result.from;
             }
-        } else if ($el.attr("type") === "checkbox") {
+        } else if ($el.attr("type") === "checkbox" || $el.attr("type") === "radio") {
             val = $el.prop("checked") ? 1 : 0;
         } else {
             val = $el.val();
@@ -302,7 +317,6 @@ function refresh_setup(allow_window_hash_change = true) {
     });
 
     if (allow_window_hash_change) {
-        $("#outbreak-value").val(setup["outbreak-threshold"]);
         // save to hash
         setup["plots"] = Plot.serialize();
         let s = just_stored_hash = JSON.stringify(setup);
@@ -334,16 +348,63 @@ function refresh(event = null) {
 
     // build chart data
     // process each country
-    let boundary_total_max = Math.max(...Object.values(Figure.figures).map(f => f.refresh()));
+    let boundaries = Object.values(Figure.figures).map(f => f.refresh());
 
     // XX all figures have the same outbreak and day range, this is not ideal
     if (can_redraw_sliders) {
-        $("#outbreak-threshold").data("ionRangeSlider").update({
-            //min: boundaries[0],
-            max: isFinite(boundary_total_max) ? boundary_total_max : 10 // all values can be NaN
+        let max = Math.max(...boundaries.map(i => i[1])); // boundary total max
+
+        if (setup["outbreak-mode"]) {
+            max = Math.min(max * 100000 / boundaries.map(i => i[2]).sum());
+        }
+        let values;
+        if (!isFinite(max)) { // all values can be NaN, ex: when toggling outbreak mode to population
+            max = setup["outbreak-value"];
+            values = [1, 2, 3, 4, 5, 6, 7, 8, 9, setup["outbreak-value"]];
+        } else {
+            values = logslider(1, 100, 1, max);
+        }
+        // console.log("Refresh_ change threshold to:", values, $("#outbreak-threshold").data("ionRangeSlider").result.from, values[ $("#outbreak-threshold").data("ionRangeSlider").result.from]);
+        $("#outbreak-threshold").data("values", values).data("ionRangeSlider").update({
+            values: values
         });
-
-        //console.log("MIN", boundary_max);
+        set_slider($("#outbreak-threshold"), setup["outbreak-value"]);
 }
 }
 
+
+function set_slider($slider, val, init_position = null) {
+//    console.log("Set slider", $slider.attr("id"), val, init_position);
+    let r = $slider.data("ionRangeSlider");
+    let o = {};
+    if (init_position) {
+        r.options.values = range(init_position);
+        r.options.values[init_position] = val;
+        o["from"] = init_position;
+    } else if (r.options.values.length) {
+        let index = 0;
+        for (let i in r.options.values) {
+            if (val <= r.options.values[i]) { // this is the chosen position, slighly greater than the wanted value
+                index = i;
+                break;
+            }
+        }
+        if (index >= r.options.values.length) { // we have not found the position - put there the greatest
+            index = r.options.values.length;
+        }
+//        console.log("Changed value", r.options.values, index);
+        r.options.values[index] = parseInt(val);
+//        console.log("Changed values:", r.options.values);
+        o["from"] = index;
+        //$slider.update({from: index});
+
+    } else {
+        //let o = {from: val};
+        o["from"] = val;
+        if (r.result.max < val) {
+            o["max"] = val;
+        }
+    }
+//    console.log("Updating", $slider.attr("id"), o);
+    r.update(o);
+}

@@ -25,14 +25,19 @@ form {
 
 #canvas-container {
     display: flex;
-    width: 100%;
+    justify-content: center;
+    width: 85%;
+    /*    .canvas-wrapper{
+            width: 60%;
+        }*/
 }
 
 .range-container{
     display: flex;
     align-items: center;
     label {
-        width: 100px;
+        /*width: 100px;*/
+        margin-right: 2px;
     }
     #outbreak-value     {
         width:70px;
@@ -40,6 +45,12 @@ form {
     }
     > div:last-child {
         flex: 1;
+    }
+
+    &#chart-size-wrapper .irs{ // hide max min at the chart-size range
+        .irs-min, .irs-max {
+            display:none;
+        }
     }
 }
 

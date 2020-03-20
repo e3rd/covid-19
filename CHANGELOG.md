@@ -19,7 +19,8 @@
 * tooltip sort by value
 * highlight hovered line, clicked line to toggle star
 * hide the country from the figure if it has no data (ex: because of the date range settings)
-
+* chart size slider
+* possible outbreak depending on population
 
 # TBD
 * UI
@@ -29,11 +30,7 @@
 * Data check
     * Zambia, Gambia, Bahamas are NaN
     * south korea duplication bug
-
-
-* possible outbreak / population
-* help switch
-* chart size slider
+* help box switch https://www.jqueryscript.net/tooltip/tooltip-follow-cursor-yacsstooltip.html ?
 * do callbacku můžeš přidat i datum
 
 

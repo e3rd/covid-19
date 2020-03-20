@@ -14,12 +14,15 @@ class Figure {
         this.plots = [];
 
 
+//        this.$element = $("<canvas />", {id: "figure-" + id});
+//        $("<div class='canvas-wrapper'/>").append(this.$element).appendTo($("#canvas-container"));
         this.$element = $("<canvas />", {id: "figure-" + id}).appendTo($("#canvas-container"));
 
-        $("#canvas-container").sorting("> canvas");
+        $("#canvas-container").sorting("> div");
 
         this.hovered_dataset;
         this.datasets_used;
+        Figure.chart_size();
     }
 
     add_plot(plot) {
@@ -46,8 +49,17 @@ class Figure {
         return f;
     }
 
+    /*
+     *
+     * @param {Object} e.from => value
+     */
     static chart_size(e) {
-        $("#canvas-container").css("width", {5: 150, 4: 100, 3: 75, 2: 50, 1: 33}[e.from] + "%");
+        if(e) {
+            this.default_size = e.from;
+        }
+        //$("#canvas-container").css("width", {5: 150, 4: 100, 3: 75, 2: 50, 1: 33}[e.from] + "%");
+        $("#canvas-container").css("width", this.default_size + "%");
+        //$("#canvas-container > .canvas-wrapper").css("width", this.default_size + "%");
         //$("#canvas-container").toggleClass("big", $("#big-chart").prop("checked"));
         Object.values(Figure.figures).forEach(f => f.chart && f.chart.resize());
     }
@@ -405,19 +417,20 @@ class Figure {
         } else {
             this.chart.options.title.text = title.join(", ");
         }
-        this.chart.options.scales.xAxes[0].scaleLabel.labelString = `Days count since >= ${setup["outbreak-threshold"]} confirmed cases`;
+        this.chart.options.scales.xAxes[0].scaleLabel.labelString = setup["outbreak-mode"] ? `Days count since confirmed cases >= (${setup["outbreak-value"]} * population/100 000)`:`Days count since confirmed cases >= ${setup["outbreak-value"]}`;
         //y_axes.forEach(axe => {this.chart.options.scales.yAxes[parseInt(axe)].type = setup["log-switch"] ? "logarithmic" : "linear"});
         this.chart.options.scales.yAxes.forEach(axe => {
             axe.type = setup["log-switch"] ? "logarithmic" : "linear";
             axe.display = y_axes.has(axe.id);
         });
         this.chart.update();
-        return boundaries[1];
+        return boundaries;
     }
 }
 
 
 $(function () {
     Figure.figures = {};
+    Figure.default_size = null;
     Figure.get(1); // create the default figure
 });
