@@ -17,12 +17,17 @@ class Figure {
 //        this.$element = $("<canvas />", {id: "figure-" + id});
 //        $("<div class='canvas-wrapper'/>").append(this.$element).appendTo($("#canvas-container"));
         this.$element = $("<canvas />", {id: "figure-" + id}).appendTo($("#canvas-container"));
-
-        $("#canvas-container").sorting("> div");
+        console.log("MULTIPLE", Figure.figures.length > 1);
+        this.check_canvas_container();
+        $("#canvas-container").sorting("> canvas");
 
         this.hovered_dataset;
         this.datasets_used;
         Figure.chart_size();
+    }
+
+    check_canvas_container() {
+        $("#canvas-container").toggleClass("multiple", Object.keys(Figure.figures).length > 1);
     }
 
     add_plot(plot) {
@@ -81,6 +86,7 @@ class Figure {
             this.chart = null;
         }
         this.$element.remove();
+        this.check_canvas_container();
     }
 
     /**
@@ -313,9 +319,9 @@ class Figure {
                             },
                             // Function called once zooming is completed
                             onZoomComplete: function ( {chart}) {
-                                /*chart.config.options.plugins.zoom.pan.enabled = true;
-                                 chart.config.options.plugins.zoom.zoom.enabled = false; XXX
-                                 */
+                                chart.config.options.plugins.zoom.pan.enabled = true;
+                                chart.config.options.plugins.zoom.zoom.enabled = false;
+
                                 $("#reset-zoom").show(); // XX might work for every chart independently
                                 //this.enabled = false;
                                 console.log(this, chart);

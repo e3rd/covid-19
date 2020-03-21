@@ -127,11 +127,17 @@ function number_format(s) {
 
 
 // sort children thanks to https://stackoverflow.com/a/17127455/2036148 (edited)
-jQuery.fn.sorting = function sorting(selector) {
+/**
+ *
+ * @param {type} selector Children to be sorted.
+ * @param {type} attribute Their pivot attribute to be used while sorting.
+ * @returns {undefined}
+ */
+jQuery.fn.sorting = function sorting(selector, attribute = "id") {
     $(selector, this[0]).sort(dec_sort).appendTo(this[0]);
     function dec_sort(a, b) {
-        return ($(b).attr("id")) < ($(a).attr("id")) ? 1 : -1;
-    }
+        return ($(b).attr(attribute)) < ($(a).attr(attribute)) ? 1 : -1;
+}
 };
 
 /**

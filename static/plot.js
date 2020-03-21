@@ -31,6 +31,7 @@ class Plot {
          * @property {Territory[]} chosen territories to be processed
          */
         this.checked = checked_names.map(name => Territory.get_by_name(name));
+        console.log("Plot", this.checked, checked_names);
         /**
          * @property {Territory[]} chosen
          */

@@ -674,9 +674,6 @@ territories.forEach((cont) => {
 
 
 
-
-
-
 // Country categorising
 var european_countries = [
     "Austria",

@@ -85,8 +85,12 @@ class Territory {
         refresh();
     }
 
+    /**
+     * Tell the parent this territory is/not active.
+     * @param {type} set
+     * @returns {undefined}
+     */
     some_children_active(set = true) {
-        // XXX some children inactive
         let off = null;
         if (!set) {
             off = true;
@@ -98,6 +102,15 @@ class Territory {
         }
 
         this.parents.forEach(p => p.some_children_active(set));
+    }
+
+    /**
+     * Check if there is at least one hidden child.
+     * @returns {bool}
+     */
+    any_hidden_child() {
+        return this.children.some(ch => !ch.shown);
+        //  X|| ch.children.some(grand_ch => !grand_ch.shown)
     }
 
     /**
@@ -132,17 +145,19 @@ class Territory {
             this.shown = false;
             this.$element.hide(1000);
         }
+        this.toggle_eye(false);
         this.children.forEach(ch => ch.hide());
     }
 
     /**
-     * Show the territory and its descendants
+     * Show the territory. Do not show its descendants.
      * @returns {undefined}
      */
     show() {
         this.shown = true;
-        this.$element.show(1000);
-        this.children.forEach(ch => ch.show());
+        this.$element.show(1000).find("span:eq(3)");
+        this.toggle_eye();
+        //this.children.forEach(ch => ch.show());
     }
 
     get $element() {
@@ -163,15 +178,24 @@ class Territory {
 
     static set plot(plot) {
         Territory.loading_freeze = true;
-        Territory.id_list.forEach(t => t.set_active(plot.checked.indexOf(t) > -1));
-        Territory.id_list.forEach(t => t.set_star(plot.starred.indexOf(t) > -1));
+        Territory.id_list.forEach(t => {
+            let active = plot.checked.indexOf(t) > -1;
+            let star = plot.starred.indexOf(t) > -1;
+            t.set_active(active);
+            t.set_star(star);
+            if (active || star) {
+                t.show();
+            }
+        });
+//        Territory.id_list.forEach(t => t.set_active(plot.checked.indexOf(t) > -1));
+//        Territory.id_list.forEach(t => t.set_star(plot.starred.indexOf(t) > -1));
         Territory.loading_freeze = false;
     }
 
     get_html() {
         let v = this.shown ? "" : " style='display:none'";
         let disabled = this.data["confirmed"].filter(d => d !== "0").length ? "" : " (zero)";
-        let s = "<div " + v + "id='" + this.id + "'>";
+        let s = "<div " + v + "id='" + this.id + "' data-sort='"+this.get_name()+"'>";
         s += "<input type=checkbox />";
         s += "<span>" + this.get_name() + "</span>" + disabled;
         s += " <span class='off'>☆</span> ";
@@ -187,30 +211,51 @@ class Territory {
     }
 
     add_child(t) {
-        //let t = Territory.get(name, type);
-        this.children.push(t);
-        this.population += t.population;
-        t.parents.push(this);
+        if (this.children.indexOf(t) === -1) { // not already added
+            this.children.push(t);
+            this.population += t.population;
+            t.parents.push(this);
+        }
         return this;
     }
 
     /**
-     * If there any visible and non-active children, hide it, else show all.
+     * Toggle the eye icon shown or hidden. If not set, it will be in the on=shown state only if there is no hidden child.
+     * @param {bool|null} set
+     */
+    toggle_eye(set = null) {
+        if (set === null) {
+            set = !this.any_hidden_child();
+        }
+        $("> span:eq(2)", this.$element).toggleClass("off", !set);
+    }
+
+    /**
+     * XIf there any visible and non-active children, hide it, else show all.
+     * If there any hidden child, show them all. Else hide all non-active children and their children.
      * @returns {undefined}
      */
     toggle_children_visibility() {
         let off;
-        // is there any visible descendant that is not checked
-        if (this.children.some((child) => (child.shown && !child.is_active) || child.children.some((grand_ch) => (grand_ch.shown && !grand_ch.is_active)))) {
-            // there are, we may hide them
-            off = true;
-            this.children.forEach((child) => child.hide());
-        } else {
-            // nothing more to hide, show them all
+        if (this.any_hidden_child()) {
             off = false;
-            this.children.forEach((child) => child.show());
+            this.children.forEach(ch => ch.show());
+        } else {
+            off = true;
+            this.children.forEach(ch => ch.hide());
         }
-        $("> span:eq(2)", this.$element).toggleClass("off", off);
+//
+//        // is there any visible descendant that is not checked
+//        if (this.children.some((child) => (child.shown && !child.is_active) || child.children.some((grand_ch) => (grand_ch.shown && !grand_ch.is_active)))) {
+//            // there are, we may hide them
+//            off = true;
+//            this.children.forEach((child) => child.hide());
+//        } else {
+//            // nothing more to hide, show them all
+//            off = false;
+//            this.children.forEach((child) => child.show());
+//        }
+        this.toggle_eye(!off);
     }
 
     /**
@@ -248,6 +293,7 @@ class Territory {
                 return o;
             }
         }
+        console.error("Territory", name, "not found.");
     }
 
     /**

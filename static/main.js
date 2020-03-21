@@ -114,10 +114,10 @@ $(function () {
         }
         //Plot.current_plot.assure_stack();
         $plot.val("");
-        let p = (new Plot()).focus();
+        let p = new Plot();
         p.checked = Object.assign(cp.checked);
         p.starred = Object.assign(cp.starred);
-        p.refresh_html();
+        p.focus().refresh_html();
         $plot.focus();
     });
     // clicking on a plot stack curve label
@@ -161,11 +161,12 @@ $(function () {
             for (let o of Object.values(storage)) {
                 text.push(o.get_html());
             }
-            $("> div:eq(" + col_id + ")", $territories).append(text.join(""));
+            $("> div:eq(" + col_id + ")", $territories).append(text.join("")).sorting("> div", "data-sort");
         };
         td(0, Territory.states);
         td(1, Territory.countries);
         td(2, Territory.continents);
+        world.toggle_eye(); // world starts toggled
         $("> div", $territories).on("click", "> div", function (event) {
             let t = Territory.get_id($(this).attr("id"));
             if (event.target === $("span:eq(1)", $(this))[0]) { // un/star all
@@ -316,7 +317,6 @@ function load_hash() {
  * @returns {undefined}
  */
 function refresh_setup(allow_window_hash_change = true) {
-    console.log("REFRESH SETUP"); // XXXX REFRESHES many times
     $("#setup input").each(function () {
         // Load value from the $el to setup.
         $el = $(this);
