@@ -176,3 +176,22 @@ function logslider(minp = 0, maxp = 100, minv = 100, max_v = 10000000) {
     }
     return values;
 }
+
+
+/**
+ * Thanks to https://stackoverflow.com/a/2280117/2036148
+ */
+Date.prototype.toYMD = Date_toYMD;
+function Date_toYMD() {
+    var year, month, day;
+    year = String(this.getFullYear());
+    month = String(this.getMonth() + 1);
+    if (month.length == 1) {
+        month = "0" + month;
+    }
+    day = String(this.getDate());
+    if (day.length == 1) {
+        day = "0" + day;
+    }
+    return year + "-" + month + "-" + day;
+}

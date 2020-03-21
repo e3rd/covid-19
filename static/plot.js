@@ -249,22 +249,24 @@ class Plot {
             p.valid = null;
             let aggregated = [];
             for (let t of p.checked) {
-                let C = t.data["confirmed"];
+                let C = t.data["confirmed"]; // the length of C must be the same as of Territory.header
                 let R = t.data["recovered"];
                 let D = t.data["deaths"];
-                let outbreak_data = [];
+                let chart_data = [];
+                let outbreak_start = null;
                 let ignore = true;
 
                 let last_vars = null;
-                for (let j = 0; j < C.length; j++) {
+                for (let j = 0; j < Territory.header.length; j++) {
                     // append the data starting with threshold (while threshold can be number of confirmed cases totally or confirmed cases in population
                     if (ignore && // we have not yet passed outbreak
                             ((outbreak_population && C[j] >= outbreak_threshold * t.population / 100000) // outbreak determined by population
                                     || (!outbreak_population && C[j] >= outbreak_threshold) // outbreak determined by constant number of casesz
                                     )
-                            )
-                    {
+                            ){
+                        outbreak_start = j;
                         ignore = false;
+                        console.log("Start", j, t.get_name());
                     }
                     if (!ignore) {
 
@@ -358,15 +360,15 @@ class Plot {
                                 ];
                             }
 //                            outbreak_data.push(Math.round(result * 10000) / 10000);
-                            outbreak_data.push(Math.round(result));
+                            chart_data.push(Math.round(result));
                         }
 
                     }
                 }
                 if (setup["sum-territories"]) {
-                    aggregated = aggregated.sumTo(outbreak_data);
+                    aggregated = aggregated.sumTo(chart_data);
                 } else {
-                    result.push([p, t, outbreak_data]);
+                    result.push([p, t, chart_data, outbreak_start]);
                 }
             }
             if (p.valid === false) {
@@ -375,7 +377,7 @@ class Plot {
                 p.valid = true;
             }
             if (setup["sum-territories"]) {
-                result.push([p, null, aggregated]);
+                result.push([p, null, aggregated, outbreak_start]);
                 title.push("Sum of " + p.get_title());
             } else {
                 title.push(p.get_title());

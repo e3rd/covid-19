@@ -166,7 +166,7 @@ $(function () {
         td(0, Territory.states);
         td(1, Territory.countries);
         td(2, Territory.continents);
-        world.toggle_eye(); // world starts toggled
+        world.eye(); // world starts toggled
         $("> div", $territories).on("click", "> div", function (event) {
             let t = Territory.get_id($(this).attr("id"));
             if (event.target === $("span:eq(1)", $(this))[0]) { // un/star all

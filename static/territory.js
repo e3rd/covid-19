@@ -145,7 +145,7 @@ class Territory {
             this.shown = false;
             this.$element.hide(1000);
         }
-        this.toggle_eye(false);
+        this.eye(false);
         this.children.forEach(ch => ch.hide());
     }
 
@@ -156,7 +156,7 @@ class Territory {
     show() {
         this.shown = true;
         this.$element.show(1000).find("span:eq(3)");
-        this.toggle_eye();
+        this.eye();
         //this.children.forEach(ch => ch.show());
     }
 
@@ -223,7 +223,7 @@ class Territory {
      * Toggle the eye icon shown or hidden. If not set, it will be in the on=shown state only if there is no hidden child.
      * @param {bool|null} set
      */
-    toggle_eye(set = null) {
+    eye(set = null) {
         if (set === null) {
             set = !this.any_hidden_child();
         }
@@ -255,7 +255,7 @@ class Territory {
 //            off = false;
 //            this.children.forEach((child) => child.show());
 //        }
-        this.toggle_eye(!off);
+        this.eye(!off);
     }
 
     /**

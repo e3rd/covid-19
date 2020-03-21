@@ -59,11 +59,11 @@ class Figure {
      * @param {Object} e.from => value
      */
     static chart_size(e) {
-        if(e) {
+        if (e) {
             this.default_size = e.from;
         }
         //$("#canvas-container").css("width", {5: 150, 4: 100, 3: 75, 2: 50, 1: 33}[e.from] + "%");
-        console.log("Settings size to",this.default_size);
+        console.log("Settings size to", this.default_size);
         $("#canvas-container").css("width", this.default_size + "%");
         //$("#canvas-container > .canvas-wrapper").css("width", this.default_size + "%");
         //$("#canvas-container").toggleClass("big", $("#big-chart").prop("checked"));
@@ -183,26 +183,43 @@ class Figure {
                     mode: 'index',
 //                    mode: 'nearest',
                     intersect: false,
-                    itemSort: (a, b, data) => b.yLabel - a.yLabel // sort by value
+                    itemSort: (a, b, data) => b.yLabel - a.yLabel, // sort by value
 //                    itemSort:  (a, b, data) => data.datasets[b.datasetIndex].label - data.datasets[a.datasetIndex].label
                     // sort by name
-//                    callbacks: {
-//                        label: function (tooltipItem, data) {
-//                            console.log("HEEEEEEE",  tooltipItem, data);//data, tooltipItem,
-//                            var label = data.datasets[tooltipItem.datasetIndex].label || '';
-//
-//                            if (label) {
-//                                label += ': ';
-//                            }
-//                            label += Math.round(tooltipItem.yLabel * 10000) / 10000;
-//                            return label;
-//                        }
-//                    },
+                    callbacks: {
+                        title: function (el) {
+                            if (setup["outbreak-on"]) {
+                                if(setup["outbreak-mode"]) {
+                                    return "Population outbreak day " + el[0].xLabel;
+                                }
+                                return "Confirmed case outbreak day " + el[0].xLabel;
+                            } else {
+                                return new Date(el[0].xLabel).toYMD();
+                            }
+                        },
+                        label: function (el, data) {
+//                            console.log("HEEEEEEE", el, data);//data, tooltipItem,
+                            let label = data.datasets[el.datasetIndex].label || '';
+                            if (el.datasetIndex === ctx.hovered_dataset) {
+                                label = "→ " + label;
+                            }
+
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += Math.round(el.yLabel * 10000) / 10000;
+                            if (setup["outbreak-on"]) {
+                                let day = Territory.header[parseInt(ctx.meta(el.datasetIndex).outbreak_start) + parseInt(el.xLabel)];
+                                label += " (" + (new Date(day).toYMD()) + ")";
+                            }
+
+                            return label;
+                        }
+                    }
 //                    custom: function(a,b,c,d) {
 //                        console.log("CUSTOM", a,b,c,d);
 //                    }
                 },
-
                 scales: {
                     xAxes: [{
                             display: true,
@@ -348,7 +365,7 @@ class Figure {
          *
          * @type {Territory|null} territory Null if sum-territories is on.
          */
-        for (let [plot, territory, data] of plot_data) {
+        for (let [plot, territory, data, outbreak_start] of plot_data) {
             // choose only some days in range
             if (!data.length) {
                 continue;
@@ -384,12 +401,11 @@ class Figure {
                         //territory: territory
             };
             y_axes.add(parseInt(plot.y_axis));
-            this.datasets_used[id] = {plot: plot, territory: territory, star: false};
+            this.datasets_used[id] = {plot: plot, territory: territory, star: false, outbreak_start: outbreak_start};
             datasets[id] = dataset;
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }
         let r = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
-        //console.log(r, longest_data);
         let labels = setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)]);
 
         // update chart data
@@ -424,7 +440,7 @@ class Figure {
         } else {
             this.chart.options.title.text = title.join(", ");
         }
-        this.chart.options.scales.xAxes[0].scaleLabel.labelString = setup["outbreak-mode"] ? `Days count since confirmed cases >= (${setup["outbreak-value"]} * population/100 000)`:`Days count since confirmed cases >= ${setup["outbreak-value"]}`;
+        this.chart.options.scales.xAxes[0].scaleLabel.labelString = setup["outbreak-mode"] ? `Days count since confirmed cases >= (${setup["outbreak-value"]} * population/100 000)` : `Days count since confirmed cases >= ${setup["outbreak-value"]}`;
         //y_axes.forEach(axe => {this.chart.options.scales.yAxes[parseInt(axe)].type = setup["log-switch"] ? "logarithmic" : "linear"});
         this.chart.options.scales.yAxes.forEach(axe => {
             axe.type = setup["log-switch"] ? "logarithmic" : "linear";

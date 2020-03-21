@@ -21,17 +21,17 @@
 * hide the country from the figure if it has no data (ex: because of the date range settings)
 * chart size slider
 * possible outbreak depending on population
+* chart outbreak tooltip days
 
 # TBD
 * UI
-    * mobily, at territories nejsou v jednom sloupci
-    * ui change chart size
+    * mobile view - single column territory
+    * spread country column to two?
     * reset zoom -> add radio: zooming / panning; checkbox (wheel zooming), decimal places; tooltips on/off
 * Data check
     * Zambia, Gambia, Bahamas are NaN
     * south korea duplication bug
 * help box switch https://www.jqueryscript.net/tooltip/tooltip-follow-cursor-yacsstooltip.html ?
-* do callbacku můžeš přidat i datum
 
 
 ## nice to have:
