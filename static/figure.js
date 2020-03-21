@@ -58,6 +58,7 @@ class Figure {
             this.default_size = e.from;
         }
         //$("#canvas-container").css("width", {5: 150, 4: 100, 3: 75, 2: 50, 1: 33}[e.from] + "%");
+        console.log("Settings size to",this.default_size);
         $("#canvas-container").css("width", this.default_size + "%");
         //$("#canvas-container > .canvas-wrapper").css("width", this.default_size + "%");
         //$("#canvas-container").toggleClass("big", $("#big-chart").prop("checked"));

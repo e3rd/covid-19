@@ -53,10 +53,14 @@ $(function () {
     // refresh on input change
     $("#setup input:not(.irs-hidden-input)").change(refresh); // every normal input change will redraw chart
     $("#setup input.irs-hidden-input").each(function () { // sliders
+        let opt = $(this).data("ionRangeSlider").options;
         if ($(this).closest(".custom-handler").length) {
+            // we are in the view menu DOM context
+            opt.onFinish = refresh_setup; // each change in the view menu should be remembered (note that its onFinish event is rewritten)
             return;
         }
-        let opt = $(this).data("ionRangeSlider").options;
+
+        // we are in the main application DOM context
         let $input = $(this).data("bound-input");
         if ($input) {
             $input.data("bound-slider", $(this));
@@ -67,7 +71,7 @@ $(function () {
         opt.onChange = () => {
             if ($input) {
                 let r = $(this).data("ionRangeSlider").result;
-                let val = opt.values ? opt.values[r.from] : r.from;
+                let val = opt.values.length ? opt.values[r.from] : r.from;
                 $input.val(val);
             }
             refresh(false);
@@ -253,6 +257,9 @@ function load_hash() {
         return;
     }
     console.log("... load hash now!", setup);
+            console.log("INI2",setup["chart-size"]);
+    let original = ready_to_refresh; // block many refreshes issued by every $el.change call
+    ready_to_refresh = false;
     for (let key in setup) {
         let val = setup[key];
 
@@ -262,6 +269,7 @@ function load_hash() {
             continue;
         } else if (key === "chart-size") {
             Figure.chart_size({"from": val});
+            console.log("INI",setup["chart-size"],$("#" + key).length);
         }
 
         // key may be a DOM element too
@@ -272,12 +280,16 @@ function load_hash() {
         if ((r = $el.data("ionRangeSlider"))) {
             if (r.options.type === "double") {
                 r.update({from: val[0], to: val[1]});
-//           X } else if ($el.data("bound-input")) {
+            } else if ($el.data("bound-input")) {
 //                console.log("load hash ion set input", $el.attr("id"));
 //                set_slider($el, $el.data("bound-input").val(), val);
-//                continue; // we will not trigger $el.change event because bound-input will trigger it for us
+                continue; // we will not trigger $el.change event because bound-input will trigger it for us
             } else {
-                val = r.options.values ? r.options.values[r.result.from] : r.result.from;
+                console.log("ION", key, r.options.values.length);
+             //   val = r.options.values.length ? r.options.values[r.result.from] : r.result.from;
+                console.log("ION", key, val);
+                r.update({from: val});
+                continue;
 
             }
         } else if ($el.attr("type") === "checkbox" || $el.attr("type") === "radio") {
@@ -292,6 +304,7 @@ function load_hash() {
         $el.change();
     }
 //    console.log("Refresh!");
+    ready_to_refresh = original;
     refresh();
 }
 
@@ -303,7 +316,7 @@ function load_hash() {
  * @returns {undefined}
  */
 function refresh_setup(allow_window_hash_change = true) {
-    let thr = null;
+    console.log("REFRESH SETUP"); // XXXX REFRESHES many times
     $("#setup input").each(function () {
         // Load value from the $el to setup.
         $el = $(this);
@@ -315,6 +328,7 @@ function refresh_setup(allow_window_hash_change = true) {
             } else {
                 // val = r.options.values ? r.options.values[r.result.from] : r.result.from;
                 val = r.result.from;
+                console.log("EL", key, val);
             }
         } else if ($el.attr("type") === "checkbox" || $el.attr("type") === "radio") {
             val = $el.prop("checked") ? 1 : 0;
