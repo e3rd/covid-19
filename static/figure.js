@@ -13,10 +13,7 @@ class Figure {
         Figure.figures[id] = this;
         this.plots = [];
 
-
-//        this.$element = $("<canvas />", {id: "figure-" + id});
-//        $("<div class='canvas-wrapper'/>").append(this.$element).appendTo($("#canvas-container"));
-        this.$element = $("<canvas />", {id: "figure-" + id}).appendTo($("#canvas-container"));
+        this.$element = $("<canvas />", {id: "figure-" + id}).appendTo($("#canvas-container")).data("figure", this);
         console.log("MULTIPLE", Figure.figures.length > 1);
         this.check_canvas_container();
         $("#canvas-container").sorting("> canvas");
@@ -189,7 +186,7 @@ class Figure {
                     callbacks: {
                         title: function (el) {
                             if (setup["outbreak-on"]) {
-                                if(setup["outbreak-mode"]) {
+                                if (setup["outbreak-mode"]) {
                                     return "Population outbreak day " + el[0].xLabel;
                                 }
                                 return "Confirmed case outbreak day " + el[0].xLabel;
@@ -198,7 +195,6 @@ class Figure {
                             }
                         },
                         label: function (el, data) {
-//                            console.log("HEEEEEEE", el, data);//data, tooltipItem,
                             let label = data.datasets[el.datasetIndex].label || '';
                             if (el.datasetIndex === ctx.hovered_dataset) {
                                 label = "→ " + label;
@@ -282,7 +278,6 @@ class Figure {
                             },
                             // Function called once panning is completed
                             onPanComplete: function ( {chart}) {
-                                console.log("PRCIC");
                                 console.log(`I was panned!!!`);
                             }
                         },
@@ -341,7 +336,6 @@ class Figure {
 
                                 $("#reset-zoom").show(); // XX might work for every chart independently
                                 //this.enabled = false;
-                                console.log(this, chart);
                                 console.log(`I was zoomed!!!`);
                             }
                         }
@@ -447,7 +441,31 @@ class Figure {
             axe.display = y_axes.has(axe.id);
         });
         this.chart.update();
+        this.prepare_export();
         return boundaries;
+    }
+
+    prepare_export() {
+        let ch = this.chart;
+        let rows = [];
+
+        // insert header
+        rows.push(['"' + ch.options.scales.xAxes[0].scaleLabel.labelString + '"', ...ch.data.labels]);
+
+
+        // insert values
+        ch.data.datasets.forEach(d => {
+            rows.push([d.label, ...d.data]);
+        });
+
+        this.$element.data("prepared_export", [ch.options.title.text + ".csv", rows.join("\n")]);
+
+        // html table
+        let table = [];
+        rows.forEach(r => {
+            table.push("<tr><td>", r.join("</td><td>"), "</td></tr>");
+        });
+        $("#export-data").append(table.join(""));
     }
 }
 

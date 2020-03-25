@@ -22,31 +22,4 @@
 * chart size slider
 * possible outbreak depending on population
 * chart outbreak tooltip days
-
-# TBD
-* UI
-    * mobile view - single column territory
-    * spread country column to two?
-    * reset zoom -> add radio: zooming / panning; checkbox (wheel zooming), decimal places; tooltips on/off
-* Data check
-    * Zambia, Gambia, Bahamas are NaN
-    * south korea duplication bug
-* help box switch https://www.jqueryscript.net/tooltip/tooltip-follow-cursor-yacsstooltip.html ?
-
-
-## nice to have:
-* arithmetic calculation will not default multiply; expression `10*k` resolved as `101000`
-* share button (copy the link)
-* disqus?
-* axes should become figure parameters (input to toggle whether the axes input should manipulate single figure or all of them)
-* change default countries
-* hashovat hidden očka
-* bug: stars interreact through figures; when clicked on a figure and axe change, the territory un/stars on every other scale (while starred aggreagation Sum curve gets forgot and disappears)
-* ion opposite outbreak škála (highlight from right to left, not from left to right) (intuitivnější z druhé strany)
-* hide countries: třeba jen do nadpisu "Countries (3 hidden)"
-* country colours, flags or two-letter abbreviation
-* on hover, label each date for country (not only reported value, but also state its date)
-* oko nereaguje úplně 100%
-* legend double click to check only that country
-* complex
-    * outbreak -> turn to filter with any arbitrary condition (ex: start counting when R > 20)
+* export menu, data table

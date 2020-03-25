@@ -1,9 +1,5 @@
-<div class="alert alert-info">
-    <strong>Dynamic correlation searching covid-19 dashboard</strong>
-</div>
-
 <div id="reset-zoom"><a class="btn btn-light">Reset zoom</a></div>
-<div id="canvas-container" class="big">
+<div id="canvas-container">
 </div>
 
 <form id="setup" onsubmit="return false">
@@ -33,6 +29,14 @@
             <label class="custom-control-label" for="y-axis-independency-switch">Allow multiple y-axis</label>
         </div>
         <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="export-switch">
+            <label class="custom-control-label" for="export-switch">Export</label>
+        </div>
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="export-data-switch" data-target="#export-data" checked>
+            <label class="custom-control-label" for="export-data-switch">Data table</label>
+        </div>
+        <div class="custom-control custom-switch">
             <input type="checkbox" class="custom-control-input" id="territory-options-switch" checked>
             <label class="custom-control-label" for="territory-options-switch">Territory options</label>
         </div>
@@ -40,10 +44,10 @@
             <input type="checkbox" class="custom-control-input" id="credits-switch" checked>
             <label class="custom-control-label" for="credits-switch">Credits</label>
         </div>
-        <div class="custom-control custom-switch">
-            <input type="checkbox" class="custom-control-input" id="help-box-switch" checked>
-            <label class="custom-control-label" for="help-box-switch">Help box</label> XXX
-        </div>
+        <!--        <div title="TEST XXX" class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="help-switch" checked>
+                    <label class="custom-control-label" for="help-switch">Help cursor</label>
+                </div>-->
 
         <div class="range-container custom-handler" id="chart-size-wrapper">
             <label for="chart-size">Figure size:</label>
@@ -104,6 +108,15 @@
         </p>
         <div class="alert alert-warning" id="plot-alert"></div>
     </div>
+
+    <div id="export">
+        <a class="btn btn-light" id="export-image">Download image</a>
+        <a class="btn btn-light" id="export-csv">Download table</a>
+        Share link: <input id="export-link" class="copyinput" type="text" size="40" readonly/>
+    </div>
+    <table id="export-data" class="table-bordered">
+
+    </table>
 </form>
 
 <div class="container" id="territory-options">

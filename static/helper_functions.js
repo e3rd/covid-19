@@ -195,3 +195,47 @@ function Date_toYMD() {
     }
     return year + "-" + month + "-" + day;
 }
+
+
+/**
+ * Thanks to https://stackoverflow.com/a/30393357/2036148
+ * @param {type} canvasElement
+ * @param {type} fileName
+ * @returns {undefined}
+ */
+function exportCanvasAsPNG(canvasElement, fileName) {
+
+    //var canvasElement = document.getElementById(id);
+
+    var MIME_TYPE = "image/png";
+
+    var imgURL = canvasElement.toDataURL(MIME_TYPE);
+
+    var dlLink = document.createElement('a');
+    dlLink.download = fileName;
+    dlLink.href = imgURL;
+    dlLink.dataset.downloadurl = [MIME_TYPE, dlLink.download, dlLink.href].join(':');
+
+    document.body.appendChild(dlLink);
+    dlLink.click();
+    document.body.removeChild(dlLink);
+}
+
+/**
+ * Thanks to https://stackoverflow.com/a/18197341/2036148
+ * @param {type} filename
+ * @param {type} text
+ * @returns {undefined}
+ */
+function downloadFile(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+}

@@ -137,9 +137,36 @@ $(function () {
     //reset zoom ready
     $("#reset-zoom").on("click", "a", Figure.reset_zoom);
 
+    // download PNG
+    $("#export-image").click(() => {
+        $("canvas").each(function () {
+            exportCanvasAsPNG(this, $(this).data("figure").chart.options.title.text);
+        });
+    });
+    // download CSV
+    $("#export-csv").click(() => {
+        $("canvas").each(function () {
+            downloadFile(...$(this).data("prepared_export"));
+        });
+    });
 
+    // uncheck all
+    $("#uncheck-all").click(() => {
+        Territory.uncheck_all();
+    });
 
+    // toggle help cursor
+    $("#help-switch").change(function () {
+        if ($(this).prop("toggled")) {
+            let aaa = $('[title]').tooltipster();
+            console.log("ZDEEEEEE", aaa);
+        } else {
 
+        }
+    });
+
+    // copy input
+    $("input.copyinput").prop("readonly", true).click(function(){this.select()});
 
 
 
@@ -258,7 +285,6 @@ function load_hash() {
         return;
     }
     console.log("... load hash now!", setup);
-            console.log("INI2",setup["chart-size"]);
     let original = ready_to_refresh; // block many refreshes issued by every $el.change call
     ready_to_refresh = false;
     for (let key in setup) {
@@ -270,7 +296,6 @@ function load_hash() {
             continue;
         } else if (key === "chart-size") {
             Figure.chart_size({"from": val});
-            console.log("INI",setup["chart-size"],$("#" + key).length);
         }
 
         // key may be a DOM element too
@@ -286,9 +311,7 @@ function load_hash() {
 //                set_slider($el, $el.data("bound-input").val(), val);
                 continue; // we will not trigger $el.change event because bound-input will trigger it for us
             } else {
-                console.log("ION", key, r.options.values.length);
-             //   val = r.options.values.length ? r.options.values[r.result.from] : r.result.from;
-                console.log("ION", key, val);
+                //   val = r.options.values.length ? r.options.values[r.result.from] : r.result.from;
                 r.update({from: val});
                 continue;
 
@@ -328,7 +351,6 @@ function refresh_setup(allow_window_hash_change = true) {
             } else {
                 // val = r.options.values ? r.options.values[r.result.from] : r.result.from;
                 val = r.result.from;
-                console.log("EL", key, val);
             }
         } else if ($el.attr("type") === "checkbox" || $el.attr("type") === "radio") {
             val = $el.prop("checked") ? 1 : 0;
@@ -367,6 +389,7 @@ function refresh(event = null) {
     // assure `setup` is ready
     let can_redraw_sliders = event !== false;
     refresh_setup(can_redraw_sliders);
+    $("#export-data").html(""); // reset export-data, will be refreshed in Figure.refresh/Figure.prepare_export
 
 
     // build chart data
@@ -392,7 +415,9 @@ function refresh(event = null) {
             values: values
         });
         set_slider($("#outbreak-threshold"), setup["outbreak-value"]);
-}
+    }
+
+    $("#export-link").val(window.location.href);
 }
 
 

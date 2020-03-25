@@ -266,7 +266,6 @@ class Plot {
                             ){
                         outbreak_start = j;
                         ignore = false;
-                        console.log("Start", j, t.get_name());
                     }
                     if (!ignore) {
 
