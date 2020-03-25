@@ -47,7 +47,7 @@ $(function () {
 
     // disabling outbreak will disable its range
     $("#outbreak-on").change(function () {
-        $("#outbreak-threshold, #outbreak-value").parent().toggle($(this).prop("checked"));
+        $("#outbreak-threshold, #outbreak-value, #outbreak-mode").parent().toggle($(this).prop("checked"));
     });
 
     // refresh on input change
@@ -166,7 +166,9 @@ $(function () {
     });
 
     // copy input
-    $("input.copyinput").prop("readonly", true).click(function(){this.select()});
+    $("input.copyinput").prop("readonly", true).click(function () {
+        this.select();
+    });
 
 
 

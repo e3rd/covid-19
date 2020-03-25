@@ -13,6 +13,10 @@
             <label class="custom-control-label" for="axes-options-switch">Axes options</label>
         </div>
         <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="outbreak-switch" checked data-target="#outbreak-container">
+            <label class="custom-control-label" for="outbreak-switch">Outbreak shift</label>
+        </div>
+        <div class="custom-control custom-switch">
             <input type="checkbox" class="custom-control-input" id="plot-options-switch">
             <label class="custom-control-label" for="plot-options-switch">Plot options</label>
         </div>
@@ -71,11 +75,13 @@
             <label for="log-switch">Log scale</label>
         </div>
 
-        <div class="range-container">
+        <div class="range-container" id="outbreak-container">
             <div>
-                <input class="refresh" type="checkbox"  id="outbreak-on" value="off" checked>
+                <input class="refresh" type="checkbox"  id="outbreak-on" value="off">
                 <label for="outbreak-on">Outbreak</label>
-                <label><input type="checkbox"  id="outbreak-mode" value="off">population</label>
+            </div>
+            <div>
+                <label><input type="checkbox"  id="outbreak-mode" value="off">~ population</label>
             </div>
             <div>
                 <input type="number" min="1" id="outbreak-value" value="1" />
