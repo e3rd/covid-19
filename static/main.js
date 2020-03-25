@@ -51,8 +51,12 @@ $(function () {
     });
 
     // refresh on input change
-    $("#setup input:not(.irs-hidden-input)").change(refresh); // every normal input change will redraw chart
-    $("#setup input.irs-hidden-input").each(function () { // sliders
+    // every normal input change will redraw chart
+    // (we ignore sliders and .copyinput (#export-link would cause recursion)
+    $("#setup input:not(.irs-hidden-input):not(.nohash)").change(refresh);
+
+    // sliders input change
+    $("#setup input.irs-hidden-input").each(function () {
         let opt = $(this).data("ionRangeSlider").options;
         if ($(this).closest(".custom-handler").length) {
             // we are in the view menu DOM context
@@ -211,6 +215,7 @@ $(function () {
             } else {
                 t.set_active($(event.target).prop("checked"));
             }
+            // XXpossible performance issue: the event fires twice
             refresh();
         });
 
@@ -342,7 +347,7 @@ function load_hash() {
  * @returns {undefined}
  */
 function refresh_setup(allow_window_hash_change = true) {
-    $("#setup input").each(function () {
+    $("#setup input:not(.nohash)").each(function () {
         // Load value from the $el to setup.
         $el = $(this);
         let key = $el.attr("id");
@@ -382,6 +387,7 @@ function refresh_setup(allow_window_hash_change = true) {
  * @returns {Boolean}
  */
 function refresh(event = null) {
+    console.log("REFRESH CALLED", event);
     // pass only when ready
     if (event === true) {
         ready_to_refresh = true;
