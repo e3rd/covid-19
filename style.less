@@ -5,6 +5,22 @@ body {
     }
 }
 
+#showcases {
+    display:none; // XXX
+
+    max-width: 800px;
+    margin:0 auto;
+    > .row {
+        .card { // card
+                margin-bottom: 15px;
+                img { // XXX
+                      width: 200px;
+                }
+
+        }
+    }
+}
+
 form {
     padding: 0 15px;
 }
@@ -30,6 +46,12 @@ form {
     &.multiple{
         justify-content: unset;
     }
+}
+#canvas-exporter {
+    // export thumbnail through this resized canvas
+    display: none;
+    width:500px;
+    max-height:500px;
 }
 
 #export-data {
@@ -65,47 +87,48 @@ form {
 #territories {
     min-height: 400px;
     > div {
-                  &#countries-cell {
-                      display:flex;
-                      flex-wrap: wrap;
-                      >div {
-                          flex-grow: 1;
-                          width:50%;
-                      }
-                  }
-                  > div {
-                      vertical-align: top;
-                      cursor: pointer;
-                      span {
-                          font-size: 75%;
+        &#countries-cell {
+            // countries are in two columns
+            display:flex;
+            flex-wrap: wrap;
+            >div {
+                flex-grow: 1;
+                width:50%;
+            }
+        }
+        > div {
+            vertical-align: top;
+            cursor: pointer;
+            span {
+                font-size: 75%;
 
-                          // icon of eye and checkmark
-                          &:nth-of-type(2), &:nth-of-type(3), &:nth-of-type(4) {
-                              /*color: @color_on;*/
-                              border-radius: 10px;
-                              padding: 2px;
-                              background-color: @color_on;
-                              &:nth-of-type(2), &:nth-of-type(4) {
-                                  background-color: yellow;;
-                                  border: 1px solid black;
-                              }
+                // icon of eye and checkmark
+                &:nth-of-type(2), &:nth-of-type(3), &:nth-of-type(4) {
+                    /*color: @color_on;*/
+                    border-radius: 10px;
+                    padding: 2px;
+                    background-color: @color_on;
+                    &:nth-of-type(2), &:nth-of-type(4) {
+                        background-color: yellow;;
+                        border: 1px solid black;
+                    }
 
-                              &.off {
-                                  /*color: @color_on;*/
-                                  background-color: @color_off;
-                                  &:nth-of-type(2), &:nth-of-type(4) {
-                                      background-color: unset;
-                                      border: 1px solid white;
-                                  }
-                              }
-                          }
-                      }
-                      i { // population
-                          font-size: 75%;
-                          color: gray;
-                          font-style: italic;
-                      }
-                  }}}
+                    &.off {
+                        /*color: @color_on;*/
+                        background-color: @color_off;
+                        &:nth-of-type(2), &:nth-of-type(4) {
+                            background-color: unset;
+                            border: 1px solid white;
+                        }
+                    }
+                }
+            }
+            i { // population
+                font-size: 75%;
+                color: gray;
+                font-style: italic;
+            }
+        }}}
 
 #territories-legend{
     div:first-of-type {

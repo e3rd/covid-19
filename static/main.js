@@ -1,6 +1,7 @@
 // definitions
 var ready_to_refresh = false;
-var url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-';
+//var url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-';
+var url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_';
 var just_stored_hash = ""; // determine if hash change is in progress
 
 $(function () {
@@ -48,7 +49,7 @@ $(function () {
     // disabling outbreak will disable its range
     $("#outbreak-on").change(function () {
         $("#outbreak-threshold, #outbreak-value, #outbreak-mode").parent().toggle($(this).prop("checked"));
-    });
+    }).change();
 
     // refresh on input change
     // every normal input change will redraw chart
@@ -163,10 +164,20 @@ $(function () {
     $("#help-switch").change(function () {
         if ($(this).prop("toggled")) {
             let aaa = $('[title]').tooltipster();
-            console.log("ZDEEEEEE", aaa);
+            console.log("check mee", aaa); // XXX
         } else {
 
         }
+    });
+
+    // refresh share menu
+    $("#share-menu-button").click(() => {
+        export_thumbnail();
+        $("#share-facebook").attr("href", "http://www.facebook.com/sharer.php?u=" + window.location.href);
+    });
+    $("#share-facebook").click(function () {
+        window.open(this.href, 'facebookwindow', 'left=20,top=20,width=600,height=700,toolbar=0,resizable=1');
+        return false;
     });
 
     // copy input
@@ -179,9 +190,9 @@ $(function () {
 
     // runtime
     $.when(// we need to build Territory objects from CSV first
-            $.get(url_pattern + "Confirmed.csv", (data) => Territory.build(data, "confirmed")),
-            $.get(url_pattern + "Deaths.csv", (data) => Territory.build(data, "deaths")),
-            $.get(url_pattern + "Recovered.csv", (data) => Territory.build(data, "recovered")),
+            $.get(url_pattern + "confirmed_global.csv", (data) => Territory.build(data, "confirmed")),
+            $.get(url_pattern + "deaths_global.csv", (data) => Territory.build(data, "deaths")),
+            $.get(url_pattern + "recovered_global.csv", (data) => Territory.build(data, "recovered")),
             ).then(() => {
 
         // setup options according to data boundaries
@@ -249,6 +260,11 @@ $(function () {
             console.log("HASH change event");
             load_hash();
         }, false);
+        window.onpopstate = function () {
+            console.log("POPSTATE change event");
+            load_hash();
+            //alert(`location: ${document.location}, state: ${JSON.stringify(event.state)}`);
+        };
         refresh_setup(false);
         load_hash();
 
@@ -265,7 +281,6 @@ $(function () {
             Plot.plots[0].focus();
         }
         refresh(set_ready = true);
-        //Figure.chart_size();
 
         // loading effect
         $("main").show();
@@ -283,12 +298,15 @@ function load_hash() {
     console.log("Load hash trying ...");
     try {
         let hash = "{" + decodeURI(window.location.hash.substr(1)) + "}";
-        //console.log("Hash", hash, just_stored_hash, " (having plot: ", setup["plot"]);
+        console.log("Hash", /*hash, just_stored_hash, */" (having val: ", setup["outbreak-value"]);
         if (hash === just_stored_hash || hash === "{}") {
+            console.log("... just stored.");
             return;
         }
+        just_stored_hash = hash;
         setup = JSON.parse(hash);
     } catch (e) {
+        console.warn("... cannot parse");
         return;
     }
     console.log("... load hash now!", setup);
@@ -336,7 +354,7 @@ function load_hash() {
     }
 //    console.log("Refresh!");
     ready_to_refresh = original;
-    refresh();
+    refresh(false);
 }
 
 
@@ -372,8 +390,11 @@ function refresh_setup(allow_window_hash_change = true) {
         // save to hash
         setup["plots"] = Plot.serialize();
         let s = just_stored_hash = JSON.stringify(setup);
-        window.location.hash = s.substring(1, s.length - 1);
-        //console.log("Hash stored with plot: ", setup["plot"]);
+        let state = s.substring(1, s.length - 1);
+        state_hash = hashFnv32a(state, true);
+        history.pushState(null, "", "chart=" + state_hash + "#" + state);
+//        window.location.hash = s.substring(1, s.length - 1); XX
+        console.log("Hash stored with val: ", setup["outbreak-value"]);
 }
 }
 
@@ -387,7 +408,6 @@ function refresh_setup(allow_window_hash_change = true) {
  * @returns {Boolean}
  */
 function refresh(event = null) {
-    console.log("REFRESH CALLED", event);
     // pass only when ready
     if (event === true) {
         ready_to_refresh = true;
@@ -396,6 +416,7 @@ function refresh(event = null) {
     }
     // assure `setup` is ready
     let can_redraw_sliders = event !== false;
+//    console.log("REFRESH CALLED", event, can_redraw_sliders);
     refresh_setup(can_redraw_sliders);
     $("#export-data").html(""); // reset export-data, will be refreshed in Figure.refresh/Figure.prepare_export
 
@@ -463,4 +484,17 @@ function set_slider($slider, val, init_position = null) {
     }
 //    console.log("Updating", $slider.attr("id"), o);
     r.update(o);
+}
+
+function export_thumbnail() {
+    // resize the canvas and upload to the server
+
+    // XXX when clicked on copy link
+
+    console.log("Exporting thumbnail");
+    $.ajax({
+        url: window.location.pathname + "/upload", // /chart=HASH/upload
+        method: "post",
+        data: {"png": exportCanvasAsPNG(make_thumbnail($("canvas")[0]))}
+    });
 }

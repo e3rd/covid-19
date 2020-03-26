@@ -8,7 +8,7 @@ let DATASET_BORDER = {
 class Figure {
     constructor(id) {
         this.chart = null;
-        this.id = id;
+        this.id = id * 1;
 
         Figure.figures[id] = this;
         this.plots = [];
@@ -338,6 +338,16 @@ class Figure {
                                 //this.enabled = false;
                                 console.log(`I was zoomed!!!`);
                             }
+                        }
+                    }
+                },
+                animation: {
+                    onComplete: () => {
+                        if (this.id === 1 && REFRESH_THUMBNAIL === state_hash) {
+                            // chartjs animation finshed, we can alter the image.
+                            // But only if state_hash would not change meanwhile (we did not move sliders)
+                            REFRESH_THUMBNAIL = 0;
+                            export_thumbnail();
                         }
                     }
                 }
