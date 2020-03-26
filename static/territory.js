@@ -195,7 +195,7 @@ class Territory {
     get_html() {
         let v = this.shown ? "" : " style='display:none'";
         let disabled = this.data["confirmed"].filter(d => d !== "0").length ? "" : " (zero)";
-        let s = "<div " + v + "id='" + this.id + "' data-sort='"+this.get_name()+"'>";
+        let s = "<div " + v + "id='" + this.id + "' data-sort='" + this.get_name() + "'>";
         s += "<input type=checkbox />";
         s += "<span>" + this.get_name() + "</span>" + disabled;
         s += " <span class='off'>☆</span> ";
@@ -315,7 +315,10 @@ class Territory {
         if (headers.length && headers[headers.length - 1] === "") {
             headers.slice(0, -1); // strip last empty field
         }
-        Territory.header = headers;
+        // data sheets have sometimes different length but start at the same day. We pick the longest.
+        if (headers.length > Territory.header.length) {
+            Territory.header = headers;
+        }
         let default_territory = Territory.get("Other", Territory.CONTINENT); // here comes countries that are not stated in mapping.js
 
         for (let i = 1; i < lines.length; i++) {
@@ -328,15 +331,16 @@ class Territory {
                 data.slice(0, -1); // strip last empty field
             }
             let t = Territory.get(line[1], Territory.COUNTRY);
-            if (line[0]) {
-                let ch = Territory.get(line[0], Territory.STATE);
-                t.add_child(ch);
-                ch.add_data(data, type);
-            }
+            let ch = Territory.get(line[0] ? line[0] : line[1], Territory.STATE);
+//            console.log("LINE", line[0] ? line[0] : line[1], line[0]);
+            t.add_child(ch);
+            ch.add_data(data, type);
+
+            // unknown continent
             if (!t.parents.length) {
                 default_territory.add_child(t);
             }
-            t.add_data(data, type);
+            //t.add_data(data, type);
             t.parents.forEach(p => p.add_data(data));
         }
     }

@@ -263,7 +263,7 @@ class Plot {
                             ((outbreak_population && C[j] >= outbreak_threshold * t.population / 100000) // outbreak determined by population
                                     || (!outbreak_population && C[j] >= outbreak_threshold) // outbreak determined by constant number of casesz
                                     )
-                            ){
+                            ) {
                         outbreak_start = j;
                         ignore = false;
                     }
@@ -342,7 +342,11 @@ class Plot {
 //                        console.log("Numeral" , numeral);
 //                        let result = Calculation.calculate(numeral.join(""));
 //                        console.log("CALC", vars, p.express(vars));
-                        let result = Calculation.calculate(p.express(vars));
+                        let result = p.express(vars);
+                        if (isNaN(result)) { // ex: data missing for this day
+                            continue;
+                        }
+                        result = Calculation.calculate(result);
                         $("#plot-alert").hide();
                         if (typeof (result) === "string") { // error encountered
                             if (p.expression.trim()) {
@@ -351,13 +355,11 @@ class Plot {
                             p.valid = false;
                             break;
                         } else {
-                            if (!isNaN(result)) {
-                                boundaries = [
-                                    Math.min(result, boundaries[0]),
-                                    Math.max(result, boundaries[1]),
-                                    t.population
-                                ];
-                            }
+                            boundaries = [
+                                Math.min(result, boundaries[0]),
+                                Math.max(result, boundaries[1]),
+                                t.population
+                            ];
 //                            outbreak_data.push(Math.round(result * 10000) / 10000);
                             chart_data.push(Math.round(result));
                         }
