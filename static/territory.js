@@ -99,7 +99,7 @@ class Territory {
     }
 
     /**
-     * Tell the parent this territory is/not active.
+     * Child tells its parent that one of its children becomes (not) active.
      * @param {type} set
      * @returns {undefined}
      */
@@ -112,9 +112,9 @@ class Territory {
         }
         if (off !== null) {
             this.$child_activate_button.toggleClass("off", off);
-        }
+    }
 
-        this.parents.forEach(p => p.some_children_active(set));
+    //this.parents.forEach(p => p.some_children_active(set));
     }
 
     /**
@@ -155,18 +155,26 @@ class Territory {
      * @returns {undefined}
      */
     hide() {
-        let just_hidden = this.children.sum(ch => ch.hide());
-        if (just_hidden) {
-            this.eye(false);
-        }
+//        if (this.parents.indexOf(Territory.get("Europe", Territory.CONTINENT)) > -1) {
+        let just_hidden = false;
 
-        if (!this.is_active && !this.parents.some(p => p.is_eye_on && p.shown)) {
+        if (this.shown && !this.is_active && !this.parents.some(p => p.is_eye_on && p.shown)) {
             // hide only if it is not active
             // and if there are no visible parent with its eye icon in the on state
             this.shown = false;
             this.$element.hide(1000);
             just_hidden = true;
         }
+
+        let eye_on = this.is_eye_on;
+        this.is_eye_on = false;
+        if (this.children.sum(ch => ch.hide())) {
+            this.eye(false);
+            return true;
+        } else {
+            this.is_eye_on = eye_on;
+        }
+
         return just_hidden;
     }
 

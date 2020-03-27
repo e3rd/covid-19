@@ -73,16 +73,16 @@ function splitCsv(str) {
 
 
 /**
- * Sum array elements. If callback is given, we first filter the elements.
+ * Sum array elements. If callback is given, we first map the elements to the given condition.
  * Ex: [1,2,3].sum() => 6
- *     [1,2,3].sum(x => x === 3) => 3
+ *     [1,2,3].sum(x => x > 2) => 1
  * @returns {int}
  */
 Object.defineProperty(Array.prototype, "sum", {
     value: function (fn = null) {
         let array = this;
         if(fn) {
-            array = this.filter(fn);
+            array = this.map(fn);
         }
         return array.reduce((a, b) => a + b, 0);
     }});

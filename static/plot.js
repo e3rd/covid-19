@@ -395,7 +395,7 @@ class Plot {
                 title.push(p.get_title());
             }
         }
-        console.log("Plot data: ", result);
+//        console.log("Plot data: ", result);
         return [result, boundaries, title];
     }
 
