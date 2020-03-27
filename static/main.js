@@ -194,7 +194,7 @@ $(function () {
             $.get(url_pattern + "deaths_global.csv", (data) => Territory.build(data, "deaths")),
             $.get(url_pattern + "recovered_global.csv", (data) => Territory.build(data, "recovered")),
             ).then(() => {
-                Territory.finalize();
+        Territory.finalize();
 
         // setup options according to data boundaries
         $("#day-range").data("ionRangeSlider").update({max: Territory.header.length});
@@ -332,6 +332,10 @@ function load_hash() {
         }
         if ((r = $el.data("ionRangeSlider"))) {
             if (r.options.type === "double") {
+                if (key === "day-range" && val[2] === val[1]) {
+                    // if we shared day range till 10 and that was the maximum day, use current maximum day
+                    val[1] = Number.POSITIVE_INFINITY;
+                }
                 r.update({from: val[0], to: val[1]});
             } else if ($el.data("bound-input")) {
 //                console.log("load hash ion set input", $el.attr("id"));
@@ -374,9 +378,13 @@ function refresh_setup(allow_window_hash_change = true) {
         let val;
         if ((r = $el.data("ionRangeSlider"))) {
             if (r.options.type === "double") {
-                val = [r.result.from, r.result.to];
+                if (key === "day-range") {
+                    // add maximum day so that we are able to update maximum day when shared
+                    val = [r.result.from, r.result.to, r.options.max];
+                } else {
+                    val = [r.result.from, r.result.to];
+                }
             } else {
-                // val = r.options.values ? r.options.values[r.result.from] : r.result.from;
                 val = r.result.from;
             }
         } else if ($el.attr("type") === "checkbox" || $el.attr("type") === "radio") {
@@ -396,7 +404,7 @@ function refresh_setup(allow_window_hash_change = true) {
         state_hash = hashFnv32a(state, true);
         history.pushState(null, "", "chart=" + state_hash + "#" + state);
 //        window.location.hash = s.substring(1, s.length - 1); XX
-        console.log("Hash stored with val: ", setup["outbreak-value"]);
+//        console.log("Hash stored with val: ", setup["outbreak-value"]);
 }
 }
 
@@ -489,7 +497,7 @@ function set_slider($slider, val, init_position = null) {
 }
 
 function export_thumbnail() {
-    // resize the canvas and upload to the server    
+    // resize the canvas and upload to the server
     console.log("Exporting thumbnail");
     $.ajax({
         url: window.location.pathname + "/upload", // /chart=HASH/upload

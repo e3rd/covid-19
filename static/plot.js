@@ -252,7 +252,6 @@ class Plot {
                 let C = t.data["confirmed"]; // the length of C must be the same as of Territory.header
                 let R = t.data["recovered"];
                 let D = t.data["deaths"];
-                console.log("ZDEE", C, R, D);
                 let chart_data = [];
                 let outbreak_start = null;
                 let ignore = true;
@@ -345,10 +344,19 @@ class Plot {
 //                        console.log("Numeral" , numeral);
 //                        let result = Calculation.calculate(numeral.join(""));
 //                        console.log("CALC", vars, p.express(vars));
-                        let result = p.express(vars);
-                        if (isNaN(result)) { // ex: data missing for this day
-                            continue;
+                        let result;
+                        try {
+                            result = p.express(vars, true);
+                        } catch (e) {
+                            if (e instanceof NaNException) {
+                                // any of the variables was replaced by NaN
+                                // ex: data missing for this day
+                                continue;
+                            } else {
+                                throw e; // something other happened
+                            }
                         }
+
                         result = Calculation.calculate(result);
                         $("#plot-alert").hide();
                         if (typeof (result) === "string") { // error encountered
@@ -387,14 +395,29 @@ class Plot {
                 title.push(p.get_title());
             }
         }
-        //console.log("Plot data: ", result);
+        console.log("Plot data: ", result);
         return [result, boundaries, title];
     }
 
-    express(vars) {
-        return this.expression.replace(/(dNC)|(dND)|(dNR)|(dC)|(NC)|(ND)|(NR)|[CRDPkM]/g, m => vars[m]);
+    /**
+     * Replace variables in the expression string by vars.
+     * (Note that in JS isNaN("1000") === false and isNaN("1000+1") === true. So when resolving an expression we have to compare every replacement apart.)
+     * @param {type} vars
+     * @param {type} check_NaN If true, we instist every variable should be number.
+     * @returns {String}
+     */
+    express(vars, check_NaN=false) {
+        return this.expression.replace(/(dNC)|(dND)|(dNR)|(dC)|(NC)|(ND)|(NR)|[CRDPkM]/g, m => {
+            let v = vars[m];
+            if (check_NaN && isNaN(v)) {
+                throw new NaNException();
+            }
+            return v;
+        });
     }
 }
+
+function NaNException() {}
 
 /**
  *

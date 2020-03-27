@@ -35,7 +35,7 @@ class Territory {
      */
     add_data(data, type) {
 //        if (this.name === "United Kingdom" || (this.parents.some(p => p.name === "United Kingdom"))) {
-//            console.log("Sčítám", this.name, this.data[type], data);
+//            console.log("Adding", this.name, this.data[type], data);
 //        }
         data = data.map(d => parseInt(d));
         if (!this.data[type].length) {
@@ -414,16 +414,9 @@ class Territory {
         Object.values(Territory.regions).forEach(r => {
             let mainland = Territory.countries[r.name];
 
-            if (r.name.indexOf("ted Kin") > -1) {
-                console.log("r.name", r.name, r.data.confirmed[r.data.confirmed.length - 2]);
-            }
             if (mainland) { // mainland UK Country exists for UK Region (but no US Country)
                 r.add_child(mainland);
                 r.mainland = mainland;
-            }
-
-            if (r.name.indexOf("ted Kin") > -1) {
-                console.log("r.name2", r.name, r.data.confirmed[r.data.confirmed.length - 2]);
             }
         });
 
