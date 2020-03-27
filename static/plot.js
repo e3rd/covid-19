@@ -371,8 +371,7 @@ class Plot {
                                 Math.max(result, boundaries[1]),
                                 t.population
                             ];
-//                            outbreak_data.push(Math.round(result * 10000) / 10000);
-                            chart_data.push(Math.round(result));
+                            chart_data.push(result);
                         }
 
                     }

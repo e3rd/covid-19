@@ -232,12 +232,12 @@ class Figure {
                                 labelString: i === 1 ? "Total cases" : 'Axe ' + i
                             },
                             ticks: {
-//                                callback: function (value, index, values) {
-//                                    return Math.round(value * 100) / 100;
-//                                }
+                                callback: function (value, index, values) {
+                                    return Math.round(value * 1000) / 1000;
+                                }
                             }
-                        }
-                    }),
+                        };
+                    })
                 },
                 plugins: {
                     zoom: {
