@@ -252,6 +252,7 @@ class Plot {
                 let C = t.data["confirmed"]; // the length of C must be the same as of Territory.header
                 let R = t.data["recovered"];
                 let D = t.data["deaths"];
+                console.log("ZDEE", C, R, D);
                 let chart_data = [];
                 let outbreak_start = null;
                 let ignore = true;
@@ -260,9 +261,11 @@ class Plot {
                 for (let j = 0; j < Territory.header.length; j++) {
                     // append the data starting with threshold (while threshold can be number of confirmed cases totally or confirmed cases in population
                     if (ignore && // we have not yet passed outbreak
-                            ((outbreak_population && C[j] >= outbreak_threshold * t.population / 100000) // outbreak determined by population
-                                    || (!outbreak_population && C[j] >= outbreak_threshold) // outbreak determined by constant number of casesz
-                                    )
+                            (!outbreak_threshold // there is no outbreak
+                                    ||
+                                    ((outbreak_population && C[j] >= outbreak_threshold * t.population / 100000) // outbreak determined by population
+                                            || (!outbreak_population && C[j] >= outbreak_threshold) // outbreak determined by constant number of casesz
+                                            ))
                             ) {
                         outbreak_start = j;
                         ignore = false;

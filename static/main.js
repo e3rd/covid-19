@@ -194,6 +194,7 @@ $(function () {
             $.get(url_pattern + "deaths_global.csv", (data) => Territory.build(data, "deaths")),
             $.get(url_pattern + "recovered_global.csv", (data) => Territory.build(data, "recovered")),
             ).then(() => {
+                Territory.finalize();
 
         // setup options according to data boundaries
         $("#day-range").data("ionRangeSlider").update({max: Territory.header.length});
@@ -209,6 +210,7 @@ $(function () {
         };
         td(0, Territory.states);
         td(1, Territory.countries);
+        td(1, Territory.regions);
         td(2, Territory.continents);
         world.eye(); // world starts toggled
         $("> div", $territories).on("click", "> div", function (event) {
@@ -487,10 +489,7 @@ function set_slider($slider, val, init_position = null) {
 }
 
 function export_thumbnail() {
-    // resize the canvas and upload to the server
-
-    // XXX when clicked on copy link
-
+    // resize the canvas and upload to the server    
     console.log("Exporting thumbnail");
     $.ajax({
         url: window.location.pathname + "/upload", // /chart=HASH/upload

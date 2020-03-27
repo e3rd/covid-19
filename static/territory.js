@@ -12,6 +12,7 @@ class Territory {
         this.toggled = false;
         this.shown = this.type === Territory.CONTINENT;  // by default, every countries are hidden
         this.is_starred = false;
+        this.is_eye_on = null;
         this.id = "t" + (++counter);
         this.data = {"confirmed": [], "deaths": [], "recovered": []};
         this.population = null;
@@ -20,12 +21,19 @@ class Territory {
         this.parents = [];
         /** @type {Territory[]} */
         this.children = [];
+        this.mainland = null; // COUNTRY United Kingdom has its mainland STATE United Kingdom
 
         Territory.id_list.push(this);
         Territory[type][name] = this; // store to ex: Territory.states
     }
 
-    add_data(data, type = "confirmed") {
+    /**
+     * Add this data to the territory and all of its parents.
+     * @param {type} data
+     * @param {type} type
+     * @returns {undefined}
+     */
+    add_data(data, type) {
 //        if (this.name === "United Kingdom" || (this.parents.some(p => p.name === "United Kingdom"))) {
 //            console.log("Sčítám", this.name, this.data[type], data);
 //        }
@@ -41,15 +49,20 @@ class Territory {
         this.parents.forEach(p => p.add_data(data, type));
     }
 
+    add_data_all(data) {
+        ["confirmed", "deaths", "recovered"].forEach(type => {
+            if (data[type].length) {
+                this.add_data(data[type], type);
+            }
+        });
+    }
+
     /**
      * @returns {String} Name of the territory. (Possible quotes around the name stripped.)
      */
     get_name(hightlightable = false) {
         let s = this.name;
-        if (s.substring && s.substring(0, 1) === '"' && s.substring(-1, 1) === '"') {
-            s = s.substr(1, s.length - 2);
-        }
-        if (this.type === Territory.COUNTRY && this.children.length && this.children.some((ch) => ch.name === s)) {
+        if (this.type === Territory.REGION && this.mainland) {
             s += " (Region)";
         }
         if (hightlightable && this.is_starred) {
@@ -137,16 +150,24 @@ class Territory {
     }
 
     /**
-     * Hide the territory (if not checked) and its descendants
+     * Hide the territory's descendants and the territory itself if it is not checked ( = active) and all of the parents tell this should be hidden.
+     * Example: United Kingdom Region tells its children to hide but United Kingdom Country remains visible if other European countries remain (Europe eye is on and Europe is shown).
      * @returns {undefined}
      */
     hide() {
-        if (!this.is_active) {
+        let just_hidden = this.children.sum(ch => ch.hide());
+        if (just_hidden) {
+            this.eye(false);
+        }
+
+        if (!this.is_active && !this.parents.some(p => p.is_eye_on && p.shown)) {
+            // hide only if it is not active
+            // and if there are no visible parent with its eye icon in the on state
             this.shown = false;
             this.$element.hide(1000);
+            just_hidden = true;
         }
-        this.eye(false);
-        this.children.forEach(ch => ch.hide());
+        return just_hidden;
     }
 
     /**
@@ -194,7 +215,7 @@ class Territory {
 
     get_html() {
         let v = this.shown ? "" : " style='display:none'";
-        let disabled = this.data["confirmed"].filter(d => d !== "0").length ? "" : " (zero)";
+        let disabled = Object.values(this.data).filter(d => d !== "0").length ? "" : " (zero)";
         let s = "<div " + v + "id='" + this.id + "' data-sort='" + this.get_name() + "'>";
         s += "<input type=checkbox />";
         s += "<span>" + this.get_name() + "</span>" + disabled;
@@ -210,11 +231,30 @@ class Territory {
         return s;
     }
 
-    add_child(t) {
+    /**
+     * Add population number to this and its parents.
+     * @param {type} n
+     * @returns {undefined}
+     */
+    add_population(n) {
+        this.population += n;
+        this.parents.forEach(p => p.add_population(n));
+    }
+
+    /**
+     * Add this territory as a child and add its population.
+     * @param {Territory} t
+     * @param {bool} propagate_data If true, we add data of the child to our data.
+     * @returns {Territory}
+     */
+    add_child(t, propagate_data = true) {
         if (this.children.indexOf(t) === -1) { // not already added
             this.children.push(t);
             this.population += t.population;
             t.parents.push(this);
+        }
+        if (propagate_data) {
+            this.add_data_all(t.data);
         }
         return this;
     }
@@ -236,13 +276,15 @@ class Territory {
      * @returns {undefined}
      */
     toggle_children_visibility() {
-        let off;
         if (this.any_hidden_child()) {
-            off = false;
+            this.is_eye_on = true;
             this.children.forEach(ch => ch.show());
         } else {
-            off = true;
-            this.children.forEach(ch => ch.hide());
+            this.is_eye_on = false;
+            if (!this.children.sum(ch => ch.hide())) {
+                // no child was hidden, they are all active or have another eye-on parent
+                this.is_eye_on = true;
+            }
         }
 //
 //        // is there any visible descendant that is not checked
@@ -255,7 +297,7 @@ class Territory {
 //            off = false;
 //            this.children.forEach((child) => child.show());
 //        }
-        this.eye(!off);
+        this.eye(this.is_eye_on);
     }
 
     /**
@@ -272,7 +314,19 @@ class Territory {
         Plot.current_plot.refresh_html();
     }
 
+    /**
+     *
+     * @param {type} name
+     * @param {type} type
+     * @param {type} population
+     * @returns {Territory}
+     */
     static get(name, type, population = null) {
+        // strip possible CSV quotes: "Korea, South" -> Korea, South
+        if (name.substring && name.substring(0, 1) === '"' && name.substring(-1, 1) === '"') {
+            name = name.substr(1, name.length - 2);
+        }
+
         let key = name + "_" + type;
         if (!(key in Territory.territories)) {
             Territory.territories[key] = new Territory(name, type);
@@ -319,7 +373,7 @@ class Territory {
         if (headers.length > Territory.header.length) {
             Territory.header = headers;
         }
-        let default_territory = Territory.get("Other", Territory.CONTINENT); // here comes countries that are not stated in mapping.js
+
 
         for (let i = 1; i < lines.length; i++) {
             if (!lines[i]) {
@@ -330,36 +384,100 @@ class Territory {
             if (data.length && data[data.length - 1] === "") {
                 data.slice(0, -1); // strip last empty field
             }
-            let t = Territory.get(line[1], Territory.COUNTRY);
-            let ch = Territory.get(line[0] ? line[0] : line[1], Territory.STATE);
-//            console.log("LINE", line[0] ? line[0] : line[1], line[0]);
-            t.add_child(ch);
-            ch.add_data(data, type);
 
-            // unknown continent
-            if (!t.parents.length) {
-                default_territory.add_child(t);
+            let t;
+            if (!line[0]) { // this is country
+                t = Territory.get(line[1], Territory.COUNTRY);
+                t.add_data(data, type);
+            } else { // this is state & region
+                t = Territory.get(line[1], Territory.REGION);
+                let ch = Territory.get(line[0], Territory.STATE);
+                t.add_child(ch, false);
+                ch.add_data(data, type);
             }
-            //t.add_data(data, type);
-            t.parents.forEach(p => p.add_data(data));
         }
     }
 
+    /**
+     *
+     * Call this when all sources were built.
+     * 1. This connects REGION to mainland COUNTRIES.
+     * 2. Map continents and population to REGION/COUNTRIES.
+     *
+     * Ex: In the USA REGION: NY STATE, there is no COUNTRY USA.
+     *     In the UK REGION: UK COUNTRY (mainland), Isle of Man STATE
+     *
+     * @returns {undefined}
+     */
+    static finalize() {
+        // connect regions to its mainland countries
+        Object.values(Territory.regions).forEach(r => {
+            let mainland = Territory.countries[r.name];
+
+            if (r.name.indexOf("ted Kin") > -1) {
+                console.log("r.name", r.name, r.data.confirmed[r.data.confirmed.length - 2]);
+            }
+            if (mainland) { // mainland UK Country exists for UK Region (but no US Country)
+                r.add_child(mainland);
+                r.mainland = mainland;
+            }
+
+            if (r.name.indexOf("ted Kin") > -1) {
+                console.log("r.name2", r.name, r.data.confirmed[r.data.confirmed.length - 2]);
+            }
+        });
+
+        // build continents
+        territories.forEach(el => {
+            let continent = Territory.get(el.continent, Territory.CONTINENT);
+            el.countries.forEach(el => {
+                let region = Territory.regions[el.name];
+                let country = Territory.countries[el.name];
+                let territory = country || region;
+
+                // check if country has been found in the datasheets
+                if (territory) {
+                    if (el.pop !== "") {
+                        // add population preferably to the country that will propagate it to its region if its mainland (UK)
+                        // or to the region if no mainland (USA)
+                        territory.add_population(parseInt(el.pop));
+                    }
+
+                    if (region && country) {
+                        continent.add_child(region); // add the region to the continent and add its data
+                        continent.add_child(country, false); // will not add its data to the continent, already done by the region
+                    } else {
+                        continent.add_child(territory); // add the data to the continent
+                    }
+                }
+            });
+            world.add_child(continent); // add continent data to the world
+        });
+
+        // other continent
+        Object.values(Territory.territories).filter(t => !t.parents.length && t.type !== Territory.CONTINENT).forEach(t => default_territory.add_child(t));
+    }
 }
 
 // static attributes ("static" keyword not yet supported in FF)
 
 Territory.STATE = "states";
 Territory.COUNTRY = "countries";
+Territory.REGION = "regions";
 Territory.CONTINENT = "continents";
 
-Territory.territories = {};
+Territory.territories = {}; // [name_type => object]
 Territory.id_list = []; // sorted by id
-Territory.states = {}; // ex:Czechia, Texas
-Territory.countries = {}; // ex: USA, China
+Territory.states = {}; // ex: Isle of Man, Texas
+Territory.countries = {}; // ex: Czechia, United Kingdom (mainland w/o provinces), not USA
+Territory.regions = {}; // ex: United Kingdom, USA, China
 Territory.continents = {};
 Territory.parent_freeze = false;
 Territory.loading_freeze = false;
 Territory.header = [];
 
 
+
+
+var world = Territory.get("World", Territory.CONTINENT);
+var default_territory = Territory.get("Other", Territory.CONTINENT); // here comes countries that are not stated in mapping.js

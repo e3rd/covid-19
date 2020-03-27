@@ -661,18 +661,6 @@ let territories = [
     }
 ];
 
-var world = Territory.get("World", Territory.CONTINENT);
-
-// build continents
-territories.forEach((cont) => {
-    let t = Territory.get(cont.continent, Territory.CONTINENT);
-    cont.countries.forEach((country) => {
-        t.add_child(Territory.get(country.name, Territory.COUNTRY, (country.pop !== "") ? parseInt(country.pop) : null));
-    });
-    world.add_child(t);
-});
-
-
 
 // Country categorising
 var european_countries = [
