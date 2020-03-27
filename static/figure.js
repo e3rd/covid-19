@@ -343,9 +343,9 @@ class Figure {
                 },
                 animation: {
                     onComplete: () => {
-                        if (this.id === 1 && REFRESH_THUMBNAIL === state_hash) {
+                        if (this.id === 1 && REFRESH_THUMBNAIL === chart_id && show_menu) {
                             // chartjs animation finshed, we can alter the image.
-                            // But only if state_hash would not change meanwhile (we did not move sliders)
+                            // But only if chart_id would not change meanwhile (we did not move sliders)
                             REFRESH_THUMBNAIL = 0;
                             export_thumbnail();
                         }
@@ -444,7 +444,7 @@ class Figure {
         } else {
             this.chart.options.title.text = title.join(", ");
         }
-        this.chart.options.scales.xAxes[0].scaleLabel.labelString = setup["outbreak-mode"] ? `Days count since confirmed cases >= (${setup["outbreak-value"]} * population/100 000)` : `Days count since confirmed cases >= ${setup["outbreak-value"]}`;
+        this.chart.options.scales.xAxes[0].scaleLabel.labelString = setup["outbreak-on"] ? (setup["outbreak-mode"] ? `Days count since confirmed cases >= (${setup["outbreak-value"]} * population/100 000)` : `Days count since confirmed cases >= ${setup["outbreak-value"]}`) : "";
         //y_axes.forEach(axe => {this.chart.options.scales.yAxes[parseInt(axe)].type = setup["log-switch"] ? "logarithmic" : "linear"});
         this.chart.options.scales.yAxes.forEach(axe => {
             axe.type = setup["log-switch"] ? "logarithmic" : "linear";

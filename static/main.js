@@ -5,6 +5,19 @@ var url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/mas
 var just_stored_hash = ""; // determine if hash change is in progress
 
 $(function () {
+    // Show show cases or editor
+    if (!chart_id) {
+        show_menu = false;
+        $("#showcases").fadeIn(500).on("click","a",function(){
+            $("#showcases").hide();
+            $("main").fadeIn(2000);
+            history.pushState(null, "", $(this).attr("href"));
+            load_hash();
+            return false;
+        });
+    }
+
+
     // DOM configuration
 
     // canvas configuration
@@ -285,8 +298,9 @@ $(function () {
         refresh(set_ready = true);
 
         // loading effect
-        $("main").show();
-        //$("main").fadeIn(1000); XXX
+        if (show_menu) { // show cases are shown instead of the editor
+            $("main").fadeIn(2000);
+        }
     });
 });
 
@@ -333,8 +347,13 @@ function load_hash() {
         if ((r = $el.data("ionRangeSlider"))) {
             if (r.options.type === "double") {
                 if (key === "day-range" && val[2] === val[1]) {
-                    // if we shared day range till 10 and that was the maximum day, use current maximum day
-                    val[1] = Number.POSITIVE_INFINITY;
+                    // if we shared day range till 10 and that was the maximum day, use current maximum day and shift the "from" day
+                    if (val[0] !== 0) {
+                        // ex: "from" day was "7 days ago" when link bookmarked, restore this to be "7 days ago" too
+                        // XX I am not sure this is the expected behaviour. Sometimes you just want your chart to start the 1st Mar or something.
+                        val[0] += r.options.max - val[1];
+                    }
+                    val[1] = r.options.max;
                 }
                 r.update({from: val[0], to: val[1]});
             } else if ($el.data("bound-input")) {
@@ -399,12 +418,19 @@ function refresh_setup(allow_window_hash_change = true) {
     if (allow_window_hash_change) {
         // save to hash
         setup["plots"] = Plot.serialize();
+
+        // ignore day-range from unique hash -> day-range can very but thumbnail will stay the same
+        // Default day-range (all days) is longer every day and the hash for the same chart would vary.
+        let day_range = setup["day-range"];
+        delete setup["day-range"];
+        chart_id = hashFnv32a(JSON.stringify(setup), true);
+        setup["day-range"] = day_range;
+
         let s = just_stored_hash = JSON.stringify(setup);
         let state = s.substring(1, s.length - 1);
-        state_hash = hashFnv32a(state, true);
-        history.pushState(null, "", "chart=" + state_hash + "#" + state);
+        history.pushState(null, "", "chart=" + chart_id + "#" + state);
 //        window.location.hash = s.substring(1, s.length - 1); XX
-//        console.log("Hash stored with val: ", setup["outbreak-value"]);
+        console.log("Hash stored with val: ", setup["outbreak-value"]);
 }
 }
 
@@ -427,7 +453,7 @@ function refresh(event = null) {
     // assure `setup` is ready
     let can_redraw_sliders = event !== false;
 //    console.log("REFRESH CALLED", event, can_redraw_sliders);
-    refresh_setup(can_redraw_sliders);
+    refresh_setup(typeof(event) !== "boolean"); // refresh window.location.hash only if we came here through a DOM event, not through load (event === false || true). We want to conserve chart_id in the hash till the thumbnail can be exported if needed.
     $("#export-data").html(""); // reset export-data, will be refreshed in Figure.refresh/Figure.prepare_export
 
 

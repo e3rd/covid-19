@@ -23,3 +23,4 @@
 * possible outbreak depending on population
 * chart outbreak tooltip days
 * export menu, data table
+* thumbnail image

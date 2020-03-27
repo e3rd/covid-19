@@ -380,6 +380,7 @@ class Territory {
         // data sheets have sometimes different length but start at the same day. We pick the longest.
         if (headers.length > Territory.header.length) {
             Territory.header = headers;
+            //Territory.header.length=10; X shorten header to debug day-range
         }
 
 

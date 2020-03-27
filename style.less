@@ -1,23 +1,30 @@
 body {
     > main { // we need to override rebot scss, hence the inheritance
              min-width: 800px;  // important for mobile view
-             // XXX loading effect       display:none;
+             display:none; // loading effect
     }
 }
 
 #showcases {
-    display:none; // XXX
+    display:none;
 
     max-width: 800px;
     margin:0 auto;
     > .row {
         .card { // card
+                min-height: 254px;
                 margin-bottom: 15px;
                 img { // XXX
                       width: 200px;
                 }
 
         }
+    }
+}
+
+header {
+    a {
+        color: unset;
     }
 }
 
