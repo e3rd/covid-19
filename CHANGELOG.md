@@ -24,3 +24,5 @@
 * chart outbreak tooltip days
 * export menu, data table
 * thumbnail image
+* interpretation examples
+* possibility to write `C%` instead of `C*%`

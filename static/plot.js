@@ -17,12 +17,18 @@ let variables = {
     "dNC": "newly confirmed derivation",
     "dND": "newly deceased derivation",
     "dNR": "newly recovered derivation",
+    "%": "100",
     "k": "1 000",
     "M": "1 000 000"
 };
 for (let v in variables) {
     variables[v] = " " + variables[v] + " ";
 }
+let units = {// since calculate.js cannot parse two paranthesis `(C)(100)` as multiplication, we have to manually define all shorthands
+    "C%": "C*10^2", "Ck": "C*10^3", "CM": "C*10^6",
+    "R%": "R*10^2", "Rk": "R*10^3", "RM": "R*10^6",
+    "D%": "D*10^2", "Dk": "D*10^3", "DM": "D*10^6"
+};
 
 
 class Plot {
@@ -405,14 +411,16 @@ class Plot {
      * @param {type} check_NaN If true, we instist every variable should be number.
      * @returns {String}
      */
-    express(vars, check_NaN=false) {
-        return this.expression.replace(/(dNC)|(dND)|(dNR)|(dC)|(NC)|(ND)|(NR)|[CRDPkM]/g, m => {
-            let v = vars[m];
-            if (check_NaN && isNaN(v)) {
-                throw new NaNException();
-            }
-            return v;
-        });
+    express(vars, check_NaN = false) {
+        return this.expression
+                .replace(/(C%)|(Ck)|(CM)/g, m => units[m]) // first replace units ex: `C% => C * 100` because calculation.js cannot multiply by default when parsing `(C)(100)`
+                .replace(/(dNC)|(dND)|(dNR)|(dC)|(NC)|(ND)|(NR)|[CRDPkM]/g, m => {
+                    let v = vars[m];
+                    if (check_NaN && isNaN(v)) {
+                        throw new NaNException();
+                    }
+                    return v;
+                });
     }
 }
 
