@@ -8,7 +8,7 @@ $(function () {
     // Show show cases or editor
     if (!chart_id) {
         show_menu = false;
-        $("#showcases").fadeIn(500).on("click","a",function(){
+        $("#showcases").fadeIn(500).on("click", "a", function () {
             $("#showcases").hide();
             $("main").fadeIn(2000);
             history.pushState(null, "", $(this).attr("href"));
@@ -36,12 +36,12 @@ $(function () {
         onChange: Figure.chart_size
     });
 
-     $("#plot-type").ionRangeSlider({
+    $("#plot-type").ionRangeSlider({
         skin: "big",
         grid: false,
         from: 1,
         values: ["line", "bar", "stacked by plot", "stacked by territory"]
-        //onChange: Figure.chart_size
+                //onChange: Figure.chart_size
     });
 
     $("#day-range").ionRangeSlider({
@@ -82,7 +82,7 @@ $(function () {
         let opt = $(this).data("ionRangeSlider").options;
         if ($(this).closest(".custom-handler").length) {
             // we are in the view menu DOM context
-            opt.onFinish = refresh_setup; // each change in the view menu should be remembered (note that its onFinish event is rewritten)
+            opt.onFinish = refresh; // each change in the view menu should be remembered (note that its onFinish event is rewritten)
             return;
         }
 
@@ -423,6 +423,13 @@ function refresh_setup(allow_window_hash_change = true) {
         setup[key] = val;
     });
 
+    // convert global input fields to plot attributes
+    if (Plot.current_plot) {
+        Plot.current_plot.type = setup["plot-type"];
+    }
+    delete setup["plot-type"];
+
+
     if (allow_window_hash_change) {
         // save to hash
         setup["plots"] = Plot.serialize();
@@ -461,7 +468,7 @@ function refresh(event = null) {
     // assure `setup` is ready
     let can_redraw_sliders = event !== false;
 //    console.log("REFRESH CALLED", event, can_redraw_sliders);
-    refresh_setup(typeof(event) !== "boolean"); // refresh window.location.hash only if we came here through a DOM event, not through load (event === false || true). We want to conserve chart_id in the hash till the thumbnail can be exported if needed.
+    refresh_setup(typeof (event) !== "boolean"); // refresh window.location.hash only if we came here through a DOM event, not through load (event === false || true). We want to conserve chart_id in the hash till the thumbnail can be exported if needed.
     $("#export-data").html(""); // reset export-data, will be refreshed in Figure.refresh/Figure.prepare_export
 
 

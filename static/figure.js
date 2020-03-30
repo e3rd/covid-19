@@ -380,7 +380,6 @@ class Figure {
             let chosen_data = [];
             let [name, label, starred, id] = plot.territory_info(territory);
             let color = adjust("#" + intToRGB(hashCode(name)), plot.hash);
-            //console.log("Dataset", label, starred, id);
             for (let i = setup["day-range"][0]; i < data.length && i < setup["day-range"][1]; i++) {
                 chosen_data.push(data[i]);
             }
@@ -395,7 +394,7 @@ class Figure {
             }
             // push new dataset
             let dataset = {
-                type: 'line',
+                type: plot.type ? 'bar' : 'line', //XXX
                 borderColor: color,
                 label: label + (plots.length > 1 ? " (" + plot.expression + ")" : ""),
                 data: chosen_data,
@@ -410,6 +409,7 @@ class Figure {
             y_axes.add(parseInt(plot.y_axis));
             this.datasets_used[id] = {plot: plot, territory: territory, star: false, outbreak_start: outbreak_start};
             datasets[id] = dataset;
+            console.log("Dataset", dataset);
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }
         let r = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
@@ -427,6 +427,7 @@ class Figure {
             for (let o of this.chart.data.datasets) {
                 if (o.id in datasets) { // update changes
                     let d = datasets[o.id];
+                    o.type = d.type;
                     o.data = d.data;
                     o.borderWidth = d.borderWidth;
                     o.label = d.label;

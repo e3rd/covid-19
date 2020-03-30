@@ -32,7 +32,7 @@ let units = {// since calculate.js cannot parse two paranthesis `(C)(100)` as mu
 
 
 class Plot {
-    constructor(expression = "", active = true, figure_id = null, y_axis = 1, checked_names = [], starred_names = []) {
+    constructor(expression = "", active = true, figure_id = null, y_axis = 1, checked_names = [], starred_names = [], type = 0) {
         /**
          * @property {Territory[]} chosen territories to be processed
          */
@@ -57,6 +57,8 @@ class Plot {
         this.y_axis = y_axis;
 
         this.build_html();
+
+        this.type = type; // line, bar, stacked by plot, territory
         /*        if (add_to_stack) {
          this.$element.show();
          //this.assure_stack();
@@ -70,7 +72,9 @@ class Plot {
                 p.figure.id,
                 p.y_axis,
                 p.checked.map(t => t.get_name()),
-                p.starred.map(t => t.get_name())];
+                p.starred.map(t => t.get_name()),
+                p.type
+            ];
         });
     }
 
@@ -116,6 +120,7 @@ class Plot {
         }
         Territory.plot = Plot.current_plot = this;
         $plot.val(this.expression);
+        $("#plot-type").data("ionRangeSlider").update({from: this.type});
         if (this.$element) {
             this.$element.addClass("edited");
         }
@@ -441,3 +446,7 @@ function NaNException() {}
 Plot.current_plot = null;
 Plot.plots = [];
 
+Plot.TYPE_LINE = 0;
+Plot.TYPE_BAR = 1;
+Plot.TYPE_STACKED_PLOT = 2;
+Plot.TYPE_STACKED_TERRITORY = 3;
