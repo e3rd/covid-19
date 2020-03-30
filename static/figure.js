@@ -205,8 +205,11 @@ class Figure {
                             }
                             label += Math.round(el.yLabel * 10000) / 10000;
                             if (setup["outbreak-on"]) {
-                                let day = Territory.header[parseInt(ctx.meta(el.datasetIndex).outbreak_start) + parseInt(el.xLabel)];
-                                label += " (" + (new Date(day).toYMD()) + ")";
+                                let start = ctx.meta(el.datasetIndex).outbreak_start;
+                                if (start) { // if aggregating, outbreak_start is not known
+                                    let day = Territory.header[parseInt(start) + parseInt(el.xLabel)];
+                                    label += " (" + (new Date(day).toYMD()) + ")";
+                                }
                             }
 
                             return label;
@@ -376,7 +379,7 @@ class Figure {
             }
             let chosen_data = [];
             let [name, label, starred, id] = plot.territory_info(territory);
-            let color = "#" + intToRGB(hashCode(name));
+            let color = adjust("#" + intToRGB(hashCode(name)), plot.hash);
             //console.log("Dataset", label, starred, id);
             for (let i = setup["day-range"][0]; i < data.length && i < setup["day-range"][1]; i++) {
                 chosen_data.push(data[i]);

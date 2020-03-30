@@ -81,10 +81,14 @@ form {
         flex: 1;
     }
 
-    &#chart-size-wrapper .irs{ // hide max min at the chart-size range
-                               .irs-min, .irs-max {
-                                   display:none;
-                               }
+    &.range-hide-legend .irs{ // hide max min at the chart-size range
+                              .irs-min, .irs-max {
+                                  display:none;
+                              }
+    }
+    &#plot-type-wrapper {
+        display:inline-flex;
+        width:100px;
     }
 }
 

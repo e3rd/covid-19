@@ -53,7 +53,7 @@
                     <label class="custom-control-label" for="help-switch">Help cursor</label>
                 </div>-->
 
-        <div class="range-container custom-handler" id="chart-size-wrapper">
+        <div class="range-container custom-handler range-hide-legend">
             <label for="chart-size">Figure size:</label>
             <div>
                 <input type="range" id="chart-size" min="33" max="150"  value="85" />  <!-- default value should be the same as in style.less -->
@@ -102,9 +102,17 @@
             <label for="sum-territories">Sum territories into single curve</label>
         </div>
 
-        Plot expression: <input type="text" id="plot" placeholder="NR+ND" value="C"/>
-        <a id="plot-new" class="btn btn-light">+</a>
-        <div id="plot-stack"></div>
+        <div>
+
+            Plot expression: <input type="text" id="plot" placeholder="NR+ND" value="C"/>
+            <div class="range-container custom-handler range-hide-legend" id="plot-type-wrapper">
+                <div>
+                    <input type="range" id="plot-type" min="1" max="4"  value="1" />
+                </div>
+            </div>
+            <a id="plot-new" class="btn btn-light">+</a>
+            <div id="plot-stack"></div>
+        </div>
         <p id="plot-hint">
             Put any arithmetic expression using <code>C</code>/<code>R</code>/<code>D</code> (confirmed/recovered/death),
             <code>NC</code>/<code>NR</code>/<code>ND</code> (newly confirmed/recovered/death cases),

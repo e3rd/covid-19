@@ -26,3 +26,4 @@
 * thumbnail image
 * interpretation examples
 * possibility to write `C%` instead of `C*%`
+* slightly change colour depending on the plot function expression, so that we have a chance to distinguish different lines plotting the same territory

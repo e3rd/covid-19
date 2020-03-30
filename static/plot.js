@@ -42,7 +42,9 @@ class Plot {
          * @property {Territory[]} chosen
          */
         this.starred = starred_names.map(name => Territory.get_by_name(name));
-        this.expression = expression;
+        this.expression; // current function
+        this.hash; // small hash of the function, used to modify plot colour a little bit
+        this.set_expression(expression);
         this._valid = null; // check if this expression is valid
         this.active = active;
         this.$element = null;
@@ -131,7 +133,7 @@ class Plot {
             } else {
                 // we cannot remove the last plot, just clear the text
                 $plot.val("").focus();
-                this.expression = "";
+                this.set_expression("");
                 this.refresh_html();
                 return;
             }
@@ -142,6 +144,14 @@ class Plot {
         this.$element.hide(500, function () {
             $(this).remove();
         });
+    }
+
+    set_expression(expression) {
+        if (expression !== null) {
+            this.expression = expression;
+            // 'C' is the default plot, let the colour be as I am used to
+            this.hash = (expression === "C") ? 0 : hashCode(expression) % 20;
+        }
     }
 
     /**
@@ -157,9 +167,7 @@ class Plot {
     }
 
     refresh_html(expression = null) {
-        if (expression !== null) {
-            this.expression = expression;
-        }
+        this.set_expression(expression);
 //        if (!this.$element) {
 //            return;
 //        }
@@ -394,7 +402,7 @@ class Plot {
                 p.valid = true;
             }
             if (setup["sum-territories"]) {
-                result.push([p, null, aggregated, outbreak_start]);
+                result.push([p, null, aggregated, null]); // if aggregated, we do not tell outbreak_start since every agg. country has different
                 title.push("Sum of " + p.get_title());
             } else {
                 title.push(p.get_title());

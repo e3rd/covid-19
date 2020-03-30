@@ -24,6 +24,16 @@ function intToRGB(i) {
 }
 
 /**
+ * Adjust color a litle bit. Thanks to: https://stackoverflow.com/a/57401891/2036148
+ * @param {type} color
+ * @param {type} amount
+ * @returns {String}
+ */
+function adjust(color, amount) {
+    return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+}
+
+/**
  * Python range function thanks to https://stackoverflow.com/a/8273091/2036148
  * @param {type} start
  * @param {type} stop
@@ -81,7 +91,7 @@ function splitCsv(str) {
 Object.defineProperty(Array.prototype, "sum", {
     value: function (fn = null) {
         let array = this;
-        if(fn) {
+        if (fn) {
             array = this.map(fn);
         }
         return array.reduce((a, b) => a + b, 0);

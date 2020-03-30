@@ -36,6 +36,14 @@ $(function () {
         onChange: Figure.chart_size
     });
 
+     $("#plot-type").ionRangeSlider({
+        skin: "big",
+        grid: false,
+        from: 1,
+        values: ["line", "bar", "stacked by plot", "stacked by territory"]
+        //onChange: Figure.chart_size
+    });
+
     $("#day-range").ionRangeSlider({
         skin: "big",
         type: "double",
