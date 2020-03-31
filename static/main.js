@@ -22,7 +22,7 @@ $(function () {
 
     // canvas configuration
     $("#canvas-container").on("mouseleave", "canvas", function () {
-        Figure.get($(this).attr("id").substr("figure-".length)).mouse_leave(); // unhighlight dataset on mouse leave
+        $(this).data("figure").mouse_leave(); // unhighlight dataset on mouse leave
     });
 
     // init sliders
@@ -42,18 +42,14 @@ $(function () {
         from: 1,
         values: ["line", "bar", "stacked by plot", "stacked by territory"]
     });
-//    $("#x-axis-type").ionRangeSlider({
-//        skin: "big",
-//        grid: false,
-//        from: 1,
-//        values: ["linear / time" , "log / time", "log / dataset"]
-//    });
-//    $("#outbreak-temp").ionRangeSlider({
-//        skin: "big",
-//        grid: false,
-//        from: 1,
-//        values: ["-" , "outbreak ~ cases", "outbreak ~ population"]
-//    });
+    $("#x-axis-type").ionRangeSlider({
+        skin: "big",
+        grid: false,
+        from: 1,
+        values: ["linear / time", "log / time", "log / dataset"],
+
+//        hide_from_to: true,    // show/hide FROM and TO labels
+    });
 
     $("#day-range").ionRangeSlider({
         skin: "big",
@@ -69,14 +65,15 @@ $(function () {
         skin: "big",
         grid: true,
         from: 1,
-        values: [1] //Xrange(101)
-    }).data("bound-input", $("#outbreak-value"));
+        values: [1]
+    });// XXX.data("bound-$input", $("#outbreak-value"));
 
-    $("#outbreak-value").change(function () {
-        // update corresponding slider to have to nearest value possible
-        //console.log("Outbreak value change to VAL:", $(this).val());
-        set_slider($("#outbreak-threshold"), $(this).val());
-    });
+//    $("#outbreak-value").change(function () {
+//        // update corresponding slider to have to nearest value possible
+//        //console.log("Outbreak value change to VAL:", $(this).val());
+//        alert("55");
+//        set_slider($("#outbreak-threshold"), $(this).val());
+//    });
 
     // disabling outbreak will disable its range
     $("#outbreak-on").change(function () {
@@ -90,6 +87,7 @@ $(function () {
 
     // sliders input change
     $("#setup input.irs-hidden-input").each(function () {
+        let ion = $(this).data("ionRangeSlider");
         let opt = $(this).data("ionRangeSlider").options;
         if ($(this).closest("#view-menu").length) {
             // we are in the view menu DOM context
@@ -98,21 +96,27 @@ $(function () {
         }
 
         // we are in the main application DOM context
-        let $input = $(this).data("bound-input");
-        if ($input) {
-            $input.data("bound-slider", $(this));
+//        let $input = $(this).data("bound-$input"); // bound input to the slider
+        let $legend = $($(this).attr("data-legend"));
+        let $input = $($(this).attr("data-input")); // bound input to the slider
+        $(this).data("has-bound-input", $input.length > 0);
+
+        if ($legend.length) {
+            ion.update({hide_from_to: true}); // stop current value being shown at the top
         }
 
         opt.onFinish = refresh;
         // do not change window hash when moving input slider
         opt.onChange = () => {
-            if ($input) {
+            if ($input.length || $legend.length) {
                 let r = $(this).data("ionRangeSlider").result;
                 let val = opt.values.length ? opt.values[r.from] : r.from;
-                $input.val(val);
+                $input.val(val);  // if there is a bound input, change its value accordingly
+                $legend.html(val);
             }
             refresh(false);
         };
+        opt.onChange();
     });
     // refresh on plot change
     $plot.keyup(function () {
@@ -126,7 +130,7 @@ $(function () {
     // place plot on a different figure
     $("#plot-stack").on("change", ".plot-figure", function () {
         let plot = $(this).parent().data("plot").focus();
-        plot.set_figure(Figure.get($(this).val()));
+        plot.set_figure(Figure.get($(this).val() * 1));
         refresh(false);
     });
     // place plot on a different Y axe
@@ -302,6 +306,11 @@ $(function () {
 
 
         // start plotting
+        if (!Figure.figures.length) {
+            (new Figure()).focus();
+        } else {
+            Figure.figures[0].focus();
+        }
         if (!Plot.plots.length) {
             console.debug("Plot.current -> creating new", setup["plot"], setup);
             (new Plot(setup["plot"])).focus(); // current plot
@@ -352,9 +361,8 @@ function load_hash() {
         let val = setup[key];
 
         // handle keys that `refresh` does not handle: plots and chart-size
-        if (key === "plots") {
-            Plot.deserialize(val);
-            continue;
+        if (key === "plots" || key === "figures") {
+            continue; // will be handled later since it is important figures are deserialized earlier
         } else if (key === "chart-size") {
             Figure.chart_size({"from": val});
         }
@@ -376,15 +384,12 @@ function load_hash() {
                     val[1] = r.options.max;
                 }
                 r.update({from: val[0], to: val[1]});
-            } else if ($el.data("bound-input")) {
-//                console.log("load hash ion set input", $el.attr("id"));
-//                set_slider($el, $el.data("bound-input").val(), val);
-                continue; // we will not trigger $el.change event because bound-input will trigger it for us
             } else {
-                //   val = r.options.values.length ? r.options.values[r.result.from] : r.result.from;
-                r.update({from: val});
-                continue;
-
+                if (!$el.data("has-bound-input")) {
+                    //   val = r.options.values.length ? r.options.values[r.result.from] : r.result.from;
+                    r.update({from: val});
+                }
+                continue; // we will not trigger $el.change event because bound-$input will trigger it for us
             }
         } else if ($el.attr("type") === "checkbox" || $el.attr("type") === "radio") {
             $el.prop("checked", val);
@@ -397,6 +402,17 @@ function load_hash() {
 //        }
         $el.change();
     }
+
+    // process parameters whose order is important
+    let val;
+    if ((val = setup["figures"])) {
+        Figure.deserialize(val);
+    }
+    if ((val = setup["plots"])) {
+        Plot.deserialize(val);
+    }
+
+
 //    console.log("Refresh!");
     ready_to_refresh = original;
     refresh(false);
@@ -436,15 +452,28 @@ function refresh_setup(allow_window_hash_change = true) {
     });
 
     // convert global input fields to plot attributes
+    if (Figure.current) {
+        let show = true;
+        if (((Figure.current.type = setup["x-axis-type"]) === Figure.TYPE_LOG_DATASET)) {
+            setup["plot-type"] = 0;
+            show = false;
+        }
+        // only if we are not in Figure.TYPE_LOG_DATASET mode we can change from line to bar etc.
+        $("#plot-type").closest(".range-container").toggle(show);
+    }
+    delete setup["x-axis-type"];
+
     if (Plot.current_plot) {
         Plot.current_plot.type = setup["plot-type"];
     }
     delete setup["plot-type"];
 
 
+
     if (allow_window_hash_change) {
         // save to hash
         setup["plots"] = Plot.serialize();
+        setup["figures"] = Figure.serialize();
 
         // ignore day-range from unique hash -> day-range can very but thumbnail will stay the same
         // Default day-range (all days) is longer every day and the hash for the same chart would vary.

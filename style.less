@@ -15,7 +15,7 @@ body {
                 min-height: 254px;
                 margin-bottom: 15px;
                 img {
-                      width: 200px;
+                    width: 200px;
                 }
 
         }
@@ -66,8 +66,14 @@ form {
     overflow-x: scroll;
 }
 
+#axes-options{
+    /*display:inline-flex;*/
+    /*flex-wrap: wrap;*/
+}
+
 .range-container{
     display: flex;
+    flex: 1;
     align-items: center;
     label {
         /*width: 100px;*/
@@ -89,7 +95,15 @@ form {
     &.range-short {
         display:inline-flex;
         width:100px;
+        .irs--big { // compensation so that they are inline
+                    height: 23px;
+                    top: -23px;
+        }
     }
+}
+.range-legend {
+    /*    display: inline-block;
+        width: 110px;*/
 }
 
 // territory cell styling

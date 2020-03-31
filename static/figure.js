@@ -6,14 +6,18 @@ let DATASET_BORDER = {
 
 
 class Figure {
-    constructor(id) {
-        this.chart = null;
-        this.id = id * 1;
+    constructor(type = 0) {
+        this.type = type;
+        this.last_type = null;
 
-        Figure.figures[id] = this;
+        this.chart = null;
+//        this.id = id * 1;
+
+        Figure.figures.push(this);
+        this.id = Figure.figures.length;
         this.plots = [];
 
-        this.$element = $("<canvas />", {id: "figure-" + id}).appendTo($("#canvas-container")).data("figure", this);
+        this.$element = $("<canvas />", {id: "figure-" + this.id}).appendTo($("#canvas-container")).data("figure", this);
         console.log("MULTIPLE", Figure.figures.length > 1);
         this.check_canvas_container();
         $("#canvas-container").sorting("> canvas");
@@ -21,6 +25,23 @@ class Figure {
         this.hovered_dataset;
         this.datasets_used;
         Figure.chart_size();
+    }
+
+    static serialize() {
+        return Object.values(Figure.figures).map(p => {
+            return [p.type];
+        });
+    }
+
+    static deserialize(data) {
+        data.forEach((d) => new Figure(...d));
+        if (Figure.figures.length) {
+            Figure.figures[0].focus();
+        }
+    }
+
+    focus() {
+        Figure.current = this;
     }
 
     check_canvas_container() {
@@ -42,17 +63,18 @@ class Figure {
      * @returns {Figure}
      */
     static get(id) {
+        id -= 1;
         let f;
         if (id in Figure.figures) {
             f = Figure.figures[id];
         } else {
-            f = new Figure(id);
+            f = new Figure();
         }
         return f;
     }
 
     /*
-     *
+     * Change size of all the figures.
      * @param {Object} e.from => value
      */
     static chart_size(e) {
@@ -180,12 +202,21 @@ class Figure {
                 tooltips: {
                     mode: 'index', // mode: 'x' when scatter
                     intersect: false,
-                    itemSort: (a, b, data) => b.yLabel - a.yLabel, // sort by value
+                    itemSort: (a, b, data) => b.yLabel - a.yLabel, // sort by value XXX make this togglable
+//                    itemSort:  (a, b, data) => data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? 1:-1, // sort by dataset name
+//                    itemSort: (a, b, data) => { // sort by plot name, then by dataset name
+//                        console.log("HU", data.datasets[b.datasetIndex], ctx.meta(b.datasetIndex).plot.expression);
+//                        let [i, j] = [ctx.meta(b.datasetIndex).plot.expression, ctx.meta(a.datasetIndex).plot.expression];
+//                        if (i === j) {
+//                            return data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1;
+//                        }
+//                        return i > j ? 1 : -1;
+//                    },
                     callbacks: {
                         title: function (el) {
                             if (setup["outbreak-on"]) {
                                 if (setup["outbreak-mode"]) {
-                                    return "Population outbreak day " + el[0].xLabel;
+                                    return "Population outbreak day " + el[0].xLabel; // XXX replace by label
                                 }
                                 return "Confirmed case outbreak day " + el[0].xLabel;
                             } else {
@@ -198,8 +229,8 @@ class Figure {
                                 label = "→ " + label;
                             }
 
-                            if (scatter) { // Absolute numbers axe X
-                                label += ` (${el.xLabel}, ${el.yLabel})`;
+                            if (this.type === Figure.TYPE_LOG_DATASET) { // Absolute numbers axe X
+                                label += ` (${el.xLabel}, ${el.yLabel})`; // XXX replace by yLabel => value
                             } else {
                                 // Timeline axe X
                                 if (label) {
@@ -239,7 +270,7 @@ class Figure {
                             id: i,
                             scaleLabel: {
                                 display: true,
-                                labelString: i === 1 ? "Total cases" : 'Axe ' + i
+                                labelString: i === 1 ? "Cases" : 'Axe ' + i
                             },
                             ticks: {
                                 callback: function (value, index, values) {
@@ -403,16 +434,16 @@ class Figure {
             // push new dataset
             let dataset = {
                 type: plot.type ? 'bar' : 'line',
-                borderColor: color,
+//                borderColor: color,
 //                borderColor: adjust(color, -100),
-//                borderColor: 'rgba(0,0,0,0.1)',
+                borderColor: plot.type === Plot.TYPE_STACKED_TERRITORY ? 'rgba(0,0,0,1)' : color, // colours of the same territory are hardly distinguishable
                 label: label + (plots.length > 1 ? " (" + plot.expression + ")" : ""),
                 data: chosen_data,
                 borderWidth: DATASET_BORDER[starred],
                 fill: false,
                 backgroundColor: color,
                 id: id,
-                xAxisID: scatter || plot.type <= Plot.TYPE_BAR ? "normal" : "stacked",
+                xAxisID: this.type === Figure.TYPE_LOG_DATASET || plot.type <= Plot.TYPE_BAR ? "normal" : "stacked",
                 stack: plot.type > Plot.TYPE_BAR ? (plot.type === Plot.TYPE_STACKED_TERRITORY ? (territory ? territory.id : null) : plot.id) : id,
                 yAxisID: parseInt(plot.y_axis)
             };
@@ -420,11 +451,22 @@ class Figure {
             this.datasets_used[id] = {plot: plot, territory: territory, star: false, outbreak_start: outbreak_start, type: plot.type};
             datasets[id] = dataset;
 //            console.log("Dataset color", id , label, color,plot.hash);
-            console.log("Dataset", label, chosen_data);
+//            console.log("Dataset", label, chosen_data);
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }
         let r = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
-        let labels = scatter ? null : setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)]);
+        let labels = this.type === Figure.TYPE_LOG_DATASET ? null : (setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)]));
+//        let labels = setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)]);
+//        console.log("LABELS", this.type === Figure.TYPE_LOG_DATASET, this.type, labels);
+
+        // destroy current chart if needed
+//        if (this.last_type === Figure.TYPE_LOG_DATASET && this.type !== this.last_type) {
+//            // (probably) due to a bug in ChartJS, if labels are
+//            this.chart.destroy(); //
+//            console.log("DESTROY", this.chart);
+//            this.chart = null;
+//        } XXX
+//        this.last_type = this.type;
 
         // update chart data
         if (!this.chart) {
@@ -469,18 +511,28 @@ class Figure {
             this.chart.options.title.text = title.join(", ");
         }
 
-        // change label when scattered XXX
-        this.chart.options.scales.xAxes[0].scaleLabel.labelString = setup["outbreak-on"] ? (setup["outbreak-mode"] ? `Days count since confirmed cases >= (${setup["outbreak-value"]} * population/100 000)` : `Days count since confirmed cases >= ${setup["outbreak-value"]}`) : "";
-        //y_axes.forEach(axe => {this.chart.options.scales.yAxes[parseInt(axe)].type = setup["log-switch"] ? "logarithmic" : "linear"});
-        this.chart.options.scales.xAxes[0].type = scatter ? "logarithmic" : null;
+        // Axis X label and type
+        let axe_title;
+        if (this.type === Figure.TYPE_LOG_DATASET) {
+            axe_title = "Confirmed cases";
+            if (setup["outbreak-on"]) {
+                axe_title += setup["outbreak-mode"] ? ` since >= (${setup["outbreak-value"]} * population/100 000)` : ` since >= ${setup["outbreak-value"]}`;
+            }
+            ;
+        } else {
+            axe_title = setup["outbreak-on"] ? (setup["outbreak-mode"] ? `Days count since confirmed cases >= (${setup["outbreak-value"]} * population/100 000)` : `Days count since confirmed cases >= ${setup["outbreak-value"]}`) : "";
+        }
+        this.chart.options.scales.xAxes[0].scaleLabel.labelString = axe_title;
+        this.chart.options.scales.xAxes[0].type = this.type === Figure.TYPE_LOG_DATASET ? "logarithmic" : "category";
+        this.chart.options.tooltips.mode = this.type === Figure.TYPE_LOG_DATASET ? "x" : "index";
 
-        this.chart.options.tooltips.mode = scatter ? "x" : "index";
-
+        // Axis Y
         this.chart.options.scales.yAxes.forEach(axe => {
-            axe.type = setup["log-switch"] ? "logarithmic" : "linear";
+            axe.type = this.type > Figure.TYPE_LINEAR_TIME ? "logarithmic" : "linear";
             axe.display = y_axes.has(axe.id);
         });
 
+        // Submit changes
         this.chart.update();
         this.prepare_export();
         return boundaries;
@@ -491,13 +543,13 @@ class Figure {
         let rows = [];
 
         // insert header
-        if (!scatter) {
+        if (!this.type === Figure.TYPE_LOG_DATASET) {
             rows.push(['"' + ch.options.scales.xAxes[0].scaleLabel.labelString + '"', ...ch.data.labels]);
         }
         // insert values
 
         ch.data.datasets.forEach(d => {
-            rows.push([d.label, ...d.data.map(JSON.stringify)]); // XX when using scatter, {x: ..., y: ...} is printed in the cell. This is not nice, it should be in header.
+            rows.push([d.label, ...d.data.map(JSON.stringify)]); // XX when using Figure.TYPE_LOG_DATASET, {x: ..., y: ...} is printed in the cell. This is not nice, it should be in header.
         });
 
         this.$element.data("prepared_export", [ch.options.title.text + ".csv", rows.join("\n")]);
@@ -513,7 +565,16 @@ class Figure {
 
 
 $(function () {
-    Figure.figures = {};
+    Figure.figures = [];
     Figure.default_size = null;
-    Figure.get(1); // create the default figure
+
+    Figure.TYPE_LINEAR_TIME = 0;
+    Figure.TYPE_LOG_TIME = 1;
+    Figure.TYPE_LOG_DATASET = 2;
+
+    /**
+     *
+     * @type Figure
+     */
+    Figure.current = null;
 });

@@ -391,8 +391,8 @@ class Plot {
                                 Math.max(result, boundaries[1]),
                                 t.population
                             ];
-                            if (scatter) {
-                                chart_data.push({x: C[j], y: result}); //XXXX
+                            if (p.figure.type === Figure.TYPE_LOG_DATASET) {
+                                chart_data.push({x: C[j], y: result});
                             } else {
                                 chart_data.push(result);
                             }

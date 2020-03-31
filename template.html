@@ -63,6 +63,7 @@
 
 
     <div id="axes-options">
+
         <div class="range-container">
             <label for="day-range">Days visible:</label>
             <div>
@@ -70,12 +71,20 @@
             </div>
         </div>
 
-        <div>
-            <input class="refresh" type="checkbox"  id="log-switch" value="on" checked>
-            <label for="log-switch">Log scale</label>
+        <div class="range-container range-hide-legend range-short">
+            Axes:
+            <div>
+                <input type="range" id="x-axis-type" data-legend="#x-axis-type-legend"/>
+            </div>
         </div>
+        <span class="range-legend" id="x-axis-type-legend"></span>
+        <!--        <div> XXX
+                    <input class="refresh" type="checkbox"  id="log-switch" value="on" checked>
+                    <label for="log-switch">Log scale</label>
+                </div>-->
+    </div>
 
-        <div class="range-container" id="outbreak-container">
+    <div class="range-container" id="outbreak-container">
             <div>
                 <input class="refresh" type="checkbox"  id="outbreak-on" value="off">
                 <label for="outbreak-on">Outbreak</label>
@@ -89,39 +98,21 @@
                                 <label><input type="radio" name="outbreak-mode" id="outbreak-population" value="2"/> 1/100 000 of population</label>-->
             </div>
             <div id="outbreak-threshold-container">
-                <input type="range" id="outbreak-threshold" value="1">
+                <input type="range" id="outbreak-threshold" value="1" data-input="#outbreak-value">
             </div>
         </div>
-<!--        <div class="range-container range-hide-legend range-short">
-            Axes:
-            <div>
-                <input type="range" id="x-axis-type" />
-            </div>
-        </div>
-        <div class="range-container range-hide-legend range-short">
-            Shift:
-            <div>
-                <input type="range" id="outbreak-temp" />
-            </div>
-        </div>-->
-
-    </div>
 
     <div id="plot-options">
-
-        <div>
-            <input class="refresh" type="checkbox"  id="sum-territories" value="off">
-            <label for="sum-territories">Sum territories into single curve</label>
-        </div>
-
         <div>
 
             Plot expression: <input type="text" id="plot" placeholder="NR+ND" value="C"/>
             <div class="range-container range-hide-legend range-short">
                 <div>
-                    <input type="range" id="plot-type" min="1" max="4"  value="1" />
+                    <input type="range" id="plot-type" />
                 </div>
             </div>
+            <input class="refresh" type="checkbox"  id="sum-territories" value="off" title="Sum territories into single curve">
+            <label for="sum-territories">aggregate</label>
             <a id="plot-new" class="btn btn-light">+</a>
             <div id="plot-stack"></div>
         </div>
