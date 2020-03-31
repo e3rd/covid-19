@@ -41,8 +41,19 @@ $(function () {
         grid: false,
         from: 1,
         values: ["line", "bar", "stacked by plot", "stacked by territory"]
-                //onChange: Figure.chart_size
     });
+//    $("#x-axis-type").ionRangeSlider({
+//        skin: "big",
+//        grid: false,
+//        from: 1,
+//        values: ["linear / time" , "log / time", "log / dataset"]
+//    });
+//    $("#outbreak-temp").ionRangeSlider({
+//        skin: "big",
+//        grid: false,
+//        from: 1,
+//        values: ["-" , "outbreak ~ cases", "outbreak ~ population"]
+//    });
 
     $("#day-range").ionRangeSlider({
         skin: "big",

@@ -92,8 +92,7 @@ class Figure {
      */
     mouse_leave() {
         if (this.hovered_dataset !== null && this.chart) {
-            console.log("Mouse leave, unhovering", this.hovered_dataset);
-             this.chart.data.datasets[this.hovered_dataset].borderWidth = DATASET_BORDER[this.meta(this.hovered_dataset).star];
+            this.chart.data.datasets[this.hovered_dataset].borderWidth = DATASET_BORDER[this.meta(this.hovered_dataset).star];
             this.hovered_dataset = null;
             this.chart.update();
             this.chart.update();  // ChartJS 2.9.3 bug: when changing bar chart, it gets reflected on the second `update` call
@@ -179,13 +178,9 @@ class Figure {
                     text: "Empty"
                 },
                 tooltips: {
-                    //enabled: false,
-                    mode: 'index',
-//                    mode: 'nearest',
+                    mode: 'index', // mode: 'x' when scatter
                     intersect: false,
                     itemSort: (a, b, data) => b.yLabel - a.yLabel, // sort by value
-//                    itemSort:  (a, b, data) => data.datasets[b.datasetIndex].label - data.datasets[a.datasetIndex].label
-                    // sort by name
                     callbacks: {
                         title: function (el) {
                             if (setup["outbreak-on"]) {
@@ -203,24 +198,26 @@ class Figure {
                                 label = "→ " + label;
                             }
 
-                            if (label) {
-                                label += ': ';
-                            }
-                            label += Math.round(el.yLabel * 10000) / 10000;
-                            if (setup["outbreak-on"]) {
-                                let start = ctx.meta(el.datasetIndex).outbreak_start;
-                                if (start) { // if aggregating, outbreak_start is not known
-                                    let day = Territory.header[parseInt(start) + parseInt(el.xLabel)];
-                                    label += " (" + (new Date(day).toYMD()) + ")";
+                            if (scatter) { // Absolute numbers axe X
+                                label += ` (${el.xLabel}, ${el.yLabel})`;
+                            } else {
+                                // Timeline axe X
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += Math.round(el.yLabel * 10000) / 10000;
+                                if (setup["outbreak-on"]) {
+                                    let start = ctx.meta(el.datasetIndex).outbreak_start;
+                                    if (start) { // if aggregating, outbreak_start is not known
+                                        let day = Territory.header[parseInt(start) + parseInt(el.xLabel)];
+                                        label += " (" + (new Date(day).toYMD()) + ")";
+                                    }
                                 }
                             }
 
                             return label;
                         }
                     }
-//                    custom: function(a,b,c,d) {
-//                        console.log("CUSTOM", a,b,c,d);
-//                    }
                 },
                 scales: {
                     xAxes: [{
@@ -415,21 +412,19 @@ class Figure {
                 fill: false,
                 backgroundColor: color,
                 id: id,
-                xAxisID: plot.type <= Plot.TYPE_BAR ? "normal" : "stacked",
+                xAxisID: scatter || plot.type <= Plot.TYPE_BAR ? "normal" : "stacked",
                 stack: plot.type > Plot.TYPE_BAR ? (plot.type === Plot.TYPE_STACKED_TERRITORY ? (territory ? territory.id : null) : plot.id) : id,
                 yAxisID: parseInt(plot.y_axis)
-                        //,
-                        //territory: territory
             };
             y_axes.add(parseInt(plot.y_axis));
             this.datasets_used[id] = {plot: plot, territory: territory, star: false, outbreak_start: outbreak_start, type: plot.type};
             datasets[id] = dataset;
 //            console.log("Dataset color", id , label, color,plot.hash);
-//            console.log("Dataset", dataset.stack, id, (territory ? territory.id : null), plot.id);
+            console.log("Dataset", label, chosen_data);
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }
         let r = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
-        let labels = setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)]);
+        let labels = scatter ? null : setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)]);
 
         // update chart data
         if (!this.chart) {
@@ -440,7 +435,6 @@ class Figure {
             this.chart.data.labels = labels;
             let removable = [];
             // update changed
-            let smooth_change = false;
             for (let i in this.chart.data.datasets) { // for each current dataset
                 let o = this.chart.data.datasets[i];
                 if (o.id in datasets) { // check if there if current dataset still present
@@ -474,8 +468,14 @@ class Figure {
         } else {
             this.chart.options.title.text = title.join(", ");
         }
+
+        // change label when scattered XXX
         this.chart.options.scales.xAxes[0].scaleLabel.labelString = setup["outbreak-on"] ? (setup["outbreak-mode"] ? `Days count since confirmed cases >= (${setup["outbreak-value"]} * population/100 000)` : `Days count since confirmed cases >= ${setup["outbreak-value"]}`) : "";
         //y_axes.forEach(axe => {this.chart.options.scales.yAxes[parseInt(axe)].type = setup["log-switch"] ? "logarithmic" : "linear"});
+        this.chart.options.scales.xAxes[0].type = scatter ? "logarithmic" : null;
+
+        this.chart.options.tooltips.mode = scatter ? "x" : "index";
+
         this.chart.options.scales.yAxes.forEach(axe => {
             axe.type = setup["log-switch"] ? "logarithmic" : "linear";
             axe.display = y_axes.has(axe.id);
@@ -491,12 +491,13 @@ class Figure {
         let rows = [];
 
         // insert header
-        rows.push(['"' + ch.options.scales.xAxes[0].scaleLabel.labelString + '"', ...ch.data.labels]);
-
-
+        if (!scatter) {
+            rows.push(['"' + ch.options.scales.xAxes[0].scaleLabel.labelString + '"', ...ch.data.labels]);
+        }
         // insert values
+
         ch.data.datasets.forEach(d => {
-            rows.push([d.label, ...d.data]);
+            rows.push([d.label, ...d.data.map(JSON.stringify)]); // XX when using scatter, {x: ..., y: ...} is printed in the cell. This is not nice, it should be in header.
         });
 
         this.$element.data("prepared_export", [ch.options.title.text + ".csv", rows.join("\n")]);

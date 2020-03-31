@@ -155,7 +155,7 @@ class Plot {
         if (expression !== null) {
             this.expression = expression;
             // 'C' is the default plot, let the colour be as I am used to
-            this.hash = (expression === "C") ? 0 : hashCode(expression) % 20  * 5;
+            this.hash = (expression === "C") ? 0 : hashCode(expression) % 20 * 5;
 //            console.log("Color",expression, this.hash, hashCode(expression));
         }
     }
@@ -391,7 +391,11 @@ class Plot {
                                 Math.max(result, boundaries[1]),
                                 t.population
                             ];
-                            chart_data.push(result);
+                            if (scatter) {
+                                chart_data.push({x: C[j], y: result}); //XXXX
+                            } else {
+                                chart_data.push(result);
+                            }
                         }
 
                     }
