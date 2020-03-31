@@ -80,7 +80,7 @@ $(function () {
     // sliders input change
     $("#setup input.irs-hidden-input").each(function () {
         let opt = $(this).data("ionRangeSlider").options;
-        if ($(this).closest(".custom-handler").length) {
+        if ($(this).closest("#view-menu").length) {
             // we are in the view menu DOM context
             opt.onFinish = refresh; // each change in the view menu should be remembered (note that its onFinish event is rewritten)
             return;
@@ -207,8 +207,6 @@ $(function () {
     });
 
 
-
-
     // runtime
     $.when(// we need to build Territory objects from CSV first
             $.get(url_pattern + "confirmed_global.csv", (data) => Territory.build(data, "confirmed")),
@@ -235,7 +233,7 @@ $(function () {
         td(2, Territory.continents);
         world.eye(); // world starts toggled
         $("> div", $territories).on("click", "> div", function (event) {
-            let t = Territory.get_id($(this).attr("id"));
+            let t = Territory.get_by_dom_id($(this).attr("id"));
             if (event.target === $("span:eq(1)", $(this))[0]) { // un/star all
                 if (t.set_star(null) && !t.is_active) {
                     t.set_active();
@@ -308,6 +306,9 @@ $(function () {
         // loading effect
         if (show_menu) { // show cases are shown instead of the editor
             $("main").fadeIn(2000);
+            ready_to_refresh = false;
+            $("#view-menu input").change(); // even though all input triggered change event in load_hash, if `main` is invisible, this had no effect (ex: #view-menu child is not displayed if off even though its parent is on)
+            ready_to_refresh = true;
         }
     });
 });
@@ -445,7 +446,7 @@ function refresh_setup(allow_window_hash_change = true) {
         let state = s.substring(1, s.length - 1);
         history.pushState(null, "", "chart=" + chart_id + "#" + state);
 //        window.location.hash = s.substring(1, s.length - 1); XX
-        console.log("Hash stored with val: ", setup["outbreak-value"]);
+//        console.log("Hash stored with val: ", setup["outbreak-value"]);
 }
 }
 

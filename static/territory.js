@@ -13,7 +13,8 @@ class Territory {
         this.shown = this.type === Territory.CONTINENT;  // by default, every countries are hidden
         this.is_starred = false;
         this.is_eye_on = null;
-        this.id = "t" + (++counter);
+        this.id = ++counter;
+        this.dom_id = "t" + (this.id);
         this.data = {"confirmed": [], "deaths": [], "recovered": []};
         this.population = null;
 
@@ -190,7 +191,7 @@ class Territory {
     }
 
     get $element() {
-        return $("#" + this.id);
+        return $("#" + this.dom_id);
     }
 
     get $child_activate_button() {
@@ -224,7 +225,7 @@ class Territory {
     get_html() {
         let v = this.shown ? "" : " style='display:none'";
         let disabled = Object.values(this.data).filter(d => d !== "0").length ? "" : " (zero)";
-        let s = "<div " + v + "id='" + this.id + "' data-sort='" + this.get_name() + "'>";
+        let s = "<div " + v + "id='" + this.dom_id + "' data-sort='" + this.get_name() + "'>";
         s += "<input type=checkbox />";
         s += "<span>" + this.get_name() + "</span>" + disabled;
         s += " <span class='off'>☆</span> ";
@@ -360,10 +361,10 @@ class Territory {
 
     /**
      * Get territory by its id.
-     * @param {String} id (Territory.id), ex: t15 -> will return 15th territory
+     * @param {String} id (Territory.dom_id), ex: t15 -> will return 15th territory
      * @returns {Territory}
      */
-    static get_id(id) {
+    static get_by_dom_id(id) {
         return Territory.id_list[parseInt(id.substr(1)) - 1];
     }
 

@@ -92,9 +92,11 @@ class Figure {
      */
     mouse_leave() {
         if (this.hovered_dataset !== null && this.chart) {
-            this.chart.data.datasets[this.hovered_dataset].borderWidth = DATASET_BORDER[this.meta(this.hovered_dataset).star];
+            console.log("Mouse leave, unhovering", this.hovered_dataset);
+             this.chart.data.datasets[this.hovered_dataset].borderWidth = DATASET_BORDER[this.meta(this.hovered_dataset).star];
             this.hovered_dataset = null;
             this.chart.update();
+            this.chart.update();  // ChartJS 2.9.3 bug: when changing bar chart, it gets reflected on the second `update` call
         }
     }
 
@@ -129,6 +131,7 @@ class Figure {
         this.hovered_dataset = i;
         this.chart.data.datasets[i].borderWidth = 10;
         this.chart.update();
+        this.chart.update(); // ChartJS 2.9.3 bug: when changing bar chart, it gets reflected on the second `update` call
     }
 
     init_chart() {
@@ -224,8 +227,15 @@ class Figure {
                             display: true,
                             scaleLabel: {
                                 display: true
-                            }
-                        }],
+                            },
+                            stacked: false,
+                            id: "normal"
+                        }, {
+                            display: false, // this axis is invisible but allows the bars to be stacked
+                            stacked: true,
+                            id: "stacked"
+                        }
+                    ],
                     yAxes: range(1, 6).map(i => { // create 5 available axes
                         return {
                             display: false,
@@ -361,6 +371,7 @@ class Figure {
     refresh() {
         let longest_data = 0;
         let datasets = {};
+        let datasets_used_last = this.datasets_used;
         this.datasets_used = {};
 
         let plots = this.plots.filter(p => p.active);
@@ -394,22 +405,27 @@ class Figure {
             }
             // push new dataset
             let dataset = {
-                type: plot.type ? 'bar' : 'line', //XXX
+                type: plot.type ? 'bar' : 'line',
                 borderColor: color,
+//                borderColor: adjust(color, -100),
+//                borderColor: 'rgba(0,0,0,0.1)',
                 label: label + (plots.length > 1 ? " (" + plot.expression + ")" : ""),
                 data: chosen_data,
                 borderWidth: DATASET_BORDER[starred],
                 fill: false,
                 backgroundColor: color,
                 id: id,
+                xAxisID: plot.type <= Plot.TYPE_BAR ? "normal" : "stacked",
+                stack: plot.type > Plot.TYPE_BAR ? (plot.type === Plot.TYPE_STACKED_TERRITORY ? (territory ? territory.id : null) : plot.id) : id,
                 yAxisID: parseInt(plot.y_axis)
                         //,
                         //territory: territory
             };
             y_axes.add(parseInt(plot.y_axis));
-            this.datasets_used[id] = {plot: plot, territory: territory, star: false, outbreak_start: outbreak_start};
+            this.datasets_used[id] = {plot: plot, territory: territory, star: false, outbreak_start: outbreak_start, type: plot.type};
             datasets[id] = dataset;
-            console.log("Dataset", dataset);
+//            console.log("Dataset color", id , label, color,plot.hash);
+//            console.log("Dataset", dataset.stack, id, (territory ? territory.id : null), plot.id);
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }
         let r = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
@@ -424,15 +440,25 @@ class Figure {
             this.chart.data.labels = labels;
             let removable = [];
             // update changed
-            for (let o of this.chart.data.datasets) {
-                if (o.id in datasets) { // update changes
+            let smooth_change = false;
+            for (let i in this.chart.data.datasets) { // for each current dataset
+                let o = this.chart.data.datasets[i];
+                if (o.id in datasets) { // check if there if current dataset still present
                     let d = datasets[o.id];
-                    o.type = d.type;
-                    o.data = d.data;
-                    o.borderWidth = d.borderWidth;
-                    o.label = d.label;
+                    let last = datasets_used_last[o.id];
+                    if (last && last.type > Plot.TYPE_LINE && last.type !== this.datasets_used[o.id].plot.type) { // if plot.type changed from the last type to a non-line, hard update
+                        // (probably) due to a bug in ChartJS, if (ex.) bar changes to stacked smoothly, the change is not visible, it remains non-stacked,
+                        // do a hard update of the dataset (not smooth movement)
+                        this.chart.data.datasets[i] = d;
+                    } else {
+                        // even though we change all current dataset properties but without swapping the object itself,
+                        // smooth change will not re-render plot-create animation
+                        for (const [key, prop] of Object.entries(d)) {
+                            o[key] = prop;
+                        }
+                    }
                     delete datasets[o.id];
-                } else {
+                } else { // current dataset is no more listed
                     removable.push(o);
                 }
             }
@@ -454,6 +480,7 @@ class Figure {
             axe.type = setup["log-switch"] ? "logarithmic" : "linear";
             axe.display = y_axes.has(axe.id);
         });
+
         this.chart.update();
         this.prepare_export();
         return boundaries;

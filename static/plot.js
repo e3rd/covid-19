@@ -155,7 +155,8 @@ class Plot {
         if (expression !== null) {
             this.expression = expression;
             // 'C' is the default plot, let the colour be as I am used to
-            this.hash = (expression === "C") ? 0 : hashCode(expression) % 20;
+            this.hash = (expression === "C") ? 0 : hashCode(expression) % 20  * 5;
+//            console.log("Color",expression, this.hash, hashCode(expression));
         }
     }
 
@@ -224,7 +225,7 @@ class Plot {
                 territory.get_name(),
                 territory.get_name(true),
                 this.starred.indexOf(territory) > -1,
-                this.id + "" + territory.id];
+                this.id + "" + territory.dom_id];
         } else {
             return [this.get_name(), this.get_name(), false, this.id];
     }
