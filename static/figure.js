@@ -454,29 +454,18 @@ class Figure {
                 backgroundColor: color,
                 id: id,
                 xAxisID: this.type === Figure.TYPE_LOG_DATASET || plot.type <= Plot.TYPE_BAR ? "normal" : "stacked",
-                stack: plot.type > Plot.TYPE_BAR ? (plot.type === Plot.TYPE_STACKED_TERRITORY ? (territory ? territory.id : null) : "p"+plot.id) : id,
+                stack: plot.type > Plot.TYPE_BAR ? (plot.type === Plot.TYPE_STACKED_TERRITORY ? (territory ? territory.id : null) : "p" + plot.id) : id,
                 yAxisID: parseInt(plot.y_axis)
             };
             y_axes.add(parseInt(plot.y_axis));
             this.datasets_used[id] = {plot: plot, territory: territory, star: false, outbreak_start: outbreak_start, type: plot.type};
             datasets[id] = dataset;
 //            console.log("Dataset color", id , label, dataset.stack);
-//            console.log("Dataset", label, chosen_data);
+            console.log("Dataset", label, chosen_data);
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }
         let r = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
         let labels = this.type === Figure.TYPE_LOG_DATASET ? null : (setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)]));
-//        let labels = setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)]);
-//        console.log("LABELS", this.type === Figure.TYPE_LOG_DATASET, this.type, labels);
-
-        // destroy current chart if needed
-//        if (this.last_type === Figure.TYPE_LOG_DATASET && this.type !== this.last_type) {
-//            // (probably) due to a bug in ChartJS, if labels are
-//            this.chart.destroy(); //
-//            console.log("DESTROY", this.chart);
-//            this.chart = null;
-//        } XXX
-//        this.last_type = this.type;
 
         // update chart data
         if (!this.chart) {
@@ -559,7 +548,7 @@ class Figure {
         // insert values
 
         ch.data.datasets.forEach(d => {
-            rows.push([d.label, ...d.data.map(JSON.stringify)]); // XX when using Figure.TYPE_LOG_DATASET, {x: ..., y: ...} is printed in the cell. This is not nice, it should be in header.
+            rows.push([d.label, ...d.data.map(JSON.stringify)]); // XX when using Figure.TYPE_LOG_DATASET, {x: ..., y: ...} is printed in the cell. This is not nice, it should be in header. However they can export in JSON.
         });
 
         this.$element.data("prepared_export", [ch.options.title.text + ".csv", rows.join("\n")]);
@@ -570,6 +559,15 @@ class Figure {
             table.push("<tr><td>", r.join("</td><td>"), "</td></tr>");
         });
         $("#export-data").append(table.join(""));
+    }
+
+    export_json() {
+        let ch = this.chart;
+        let result = {"labels": ch.data.labels};
+        ch.data.datasets.forEach(d => {
+            result[d.label] = d.data;
+        });
+        return JSON.stringify(result);
     }
 }
 

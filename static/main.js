@@ -195,6 +195,13 @@ $(function () {
             downloadFile(...$(this).data("prepared_export"));
         });
     });
+    // download JSON
+    $("#export-json").click(() => {
+        $("canvas").each(function () {
+            let f = $(this).data("figure");
+            downloadFile(f.chart.options.title.text + ".json", f.export_json());
+        });
+    });
 
     // uncheck all
     $("#uncheck-all").click(() => {
