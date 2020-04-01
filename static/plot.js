@@ -30,9 +30,8 @@ let units = {// since calculate.js cannot parse two paranthesis `(C)(100)` as mu
     "D%": "D*10^2", "Dk": "D*10^3", "DM": "D*10^6"
 };
 
-
 class Plot {
-    constructor(expression = "", active = true, figure_id = null, y_axis = 1, checked_names = [], starred_names = [], type = 0) {
+    constructor(expression = "", active = true, figure_id = null, y_axis = 1, checked_names = [], starred_names = [], type = 0, aggregate = false) {
         /**
          * @property {Territory[]} chosen territories to be processed
          */
@@ -59,10 +58,7 @@ class Plot {
         this.build_html();
 
         this._type = type; // line, bar, stacked by plot, territory
-        /*        if (add_to_stack) {
-         this.$element.show();
-         //this.assure_stack();
-         }*/
+        this.aggregate = aggregate;
     }
 
     static serialize() {
@@ -73,7 +69,8 @@ class Plot {
                 p.y_axis,
                 p.checked.map(t => t.get_name()),
                 p.starred.map(t => t.get_name()),
-                p._type
+                p._type,
+                p.aggregate
             ];
         });
     }
@@ -109,7 +106,7 @@ class Plot {
      * @returns {Plot}
      */
     focus(clean = true) {
-        let cp = Plot.current_plot;
+        let cp = Plot.current;
         if (clean && cp && cp !== this) { // kick out the old plot
             if (cp.checked && cp.expression) { // show only if it is worthy
                 cp.$element.removeClass("edited");
@@ -118,19 +115,27 @@ class Plot {
                 cp.remove(false);
             }
         }
-        Territory.plot = Plot.current_plot = this;
+        Territory.plot = Plot.current = this;
         $plot.val(this.expression);
         $("#plot-type").data("ionRangeSlider").update({from: this.type});
         if (this.$element) {
             this.$element.addClass("edited");
         }
+        $("#sum-territories").prop("checked", this.aggregate);
         return this;
+    }
+
+    dom_setup() {
+        Plot.current.type = setup["plot-type"];
+        Plot.current.aggregate = setup["sum-territories"];
+        delete setup["plot-type"];
+        delete setup["sum-territories"];
     }
 
     remove(focus_next = true) {
         let without_me = Plot.plots.filter(p => p !== this);
 
-        if (this === Plot.current_plot) {
+        if (this === Plot.current) {
             if (without_me.length) {
                 if (focus_next) {
                     without_me[0].focus(false);
@@ -410,7 +415,7 @@ class Plot {
 
                     }
                 }
-                if (setup["sum-territories"]) {
+                if (p.aggregate) {
                     aggregated = aggregated.sumTo(chart_data);
                 } else {
                     result.push([p, t, chart_data, outbreak_start]);
@@ -421,7 +426,7 @@ class Plot {
             } else {
                 p.valid = true;
             }
-            if (setup["sum-territories"]) {
+            if (p.aggregate) {
                 result.push([p, null, aggregated, null]); // if aggregated, we do not tell outbreak_start since every agg. country has different
                 title.push("Sum of " + p.get_title());
             } else {
@@ -458,7 +463,7 @@ function NaNException() {}
  *
  * @type Plot
  */
-Plot.current_plot = null;
+Plot.current = null;
 Plot.plots = [];
 
 Plot.TYPE_LINE = 0;

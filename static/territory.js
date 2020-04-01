@@ -86,7 +86,7 @@ class Territory {
             }
             if (!Territory.parent_freeze) {
                 this.parents.forEach(p => p.some_children_active(check));
-                Plot.current_plot.refresh_html();
+                Plot.current.refresh_html();
             }
         }
         return this;
@@ -203,7 +203,7 @@ class Territory {
     }
 
     get plot() {
-        return Plot.current_plot;
+        return Plot.current;
     }
 
     static set plot(plot) {
@@ -320,7 +320,7 @@ class Territory {
         this.children.forEach((child) => child.set_active(any_unchecked_check_all));
         $("> span:eq(3)", this.$element).toggleClass("off", !any_unchecked_check_all);
         Territory.parent_freeze = false;
-        Plot.current_plot.refresh_html();
+        Plot.current.refresh_html();
     }
 
     /**

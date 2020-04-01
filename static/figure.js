@@ -45,6 +45,14 @@ class Figure {
         $("#x-axis-type").data("ionRangeSlider").update({from: this.type});
     }
 
+    dom_setup() {
+        let hide = (((Figure.current.type = setup["x-axis-type"]) === Figure.TYPE_LOG_DATASET));
+
+        // only if we are not in Figure.TYPE_LOG_DATASET mode we can change from line to bar etc.
+        $("#plot-type").closest(".range-container").toggle(!hide);
+        delete setup["x-axis-type"];
+    }
+
     check_canvas_container() {
         $("#canvas-container").toggleClass("multiple", Object.keys(Figure.figures).length > 1);
     }
@@ -445,13 +453,13 @@ class Figure {
                 backgroundColor: color,
                 id: id,
                 xAxisID: this.type === Figure.TYPE_LOG_DATASET || plot.type <= Plot.TYPE_BAR ? "normal" : "stacked",
-                stack: plot.type > Plot.TYPE_BAR ? (plot.type === Plot.TYPE_STACKED_TERRITORY ? (territory ? territory.id : null) : plot.id) : id,
+                stack: plot.type > Plot.TYPE_BAR ? (plot.type === Plot.TYPE_STACKED_TERRITORY ? (territory ? territory.id : null) : "p"+plot.id) : id,
                 yAxisID: parseInt(plot.y_axis)
             };
             y_axes.add(parseInt(plot.y_axis));
             this.datasets_used[id] = {plot: plot, territory: territory, star: false, outbreak_start: outbreak_start, type: plot.type};
             datasets[id] = dataset;
-//            console.log("Dataset color", id , label, color,plot.hash);
+//            console.log("Dataset color", id , label, dataset.stack);
 //            console.log("Dataset", label, chosen_data);
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }

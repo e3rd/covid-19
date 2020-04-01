@@ -1,3 +1,10 @@
+/**
+ * Input field DOM
+ *  * `dom_setup` method will register it to the `setup` variable
+ *  * rewritten in (Plot|Figure).focus()
+ *
+ */
+
 // definitions
 var ready_to_refresh = false;
 //var url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-';
@@ -107,7 +114,7 @@ $(function () {
         // do not change window hash when moving input slider
         let clb = opt.onChange;
         opt.onChange = () => {
-            clb ? clb() : null;
+            clb ? clb() : null; // keep previously defined callback
             if ($input.length || $legend.length) {
                 let r = $(this).data("ionRangeSlider").result;
                 let val = opt.values.length ? opt.values[r.from] : r.from;
@@ -122,7 +129,7 @@ $(function () {
     $plot.keyup(function () {
         let v = $(this).val();
         if ($(this).data("last") !== v) {
-            Plot.current_plot.refresh_html(v);
+            Plot.current.refresh_html(v);
             refresh();
             $(this).data("last", v);
         }
@@ -147,13 +154,13 @@ $(function () {
     });
     // possibility to add a new plot
     $("#plot-new").click(() => {
-        let cp = Plot.current_plot;
+        let cp = Plot.current;
         if (!cp.valid) {
             alert("This plot expression is invalid");
             $plot.focus();
             return;
         }
-        //Plot.current_plot.assure_stack();
+        //Plot.current.assure_stack();
         $plot.val("");
         let p = new Plot();
         p.checked = Object.assign(cp.checked);
@@ -301,7 +308,7 @@ $(function () {
             load_hash();
             //alert(`location: ${document.location}, state: ${JSON.stringify(event.state)}`);
         };
-        refresh_setup(false);
+        dom_setup(false);
         load_hash();
 
 
@@ -425,22 +432,12 @@ function load_hash() {
  * @param {type} allow_window_hash_change
  * @returns {undefined}
  */
-function refresh_setup(allow_window_hash_change = true) {
-//    // memorize previous values
-//    if (setup_prev["plot-type"] !== setup["plot-type"]) {
-//        setup_prev["plot-type"] = setup["plot-type"];
-//    }
-//
+function dom_setup(allow_window_hash_change = true) {
     // read all DOM input fields
     $("#setup input:not(.nohash)").each(function () {
         // Load value from the $el to setup.
         $el = $(this);
         let key = $el.attr("id");
-//        if (["x-axis-type"].indexOf(key) > -1) { XXX
-//            // these parameters were handled by their respective change events and moved
-//            // more over, there is no need to save them in hash, they are reconstructed on (Figure|Plot).focus
-//            return;
-//        }
         let val;
         if ((r = $el.data("ionRangeSlider"))) {
             if (r.options.type === "double") {
@@ -463,19 +460,15 @@ function refresh_setup(allow_window_hash_change = true) {
     });
 
     // convert global input fields to plot attributes
-    if (Plot.current_plot) {
-        Plot.current_plot.type = setup["plot-type"];
+    // these parameters were handled by their respective object
+    // more over, there is no need to save them in hash, they are reconstructed on (Figure|Plot).focus
+    if (Plot.current) {
+        Plot.current.dom_setup();
     }
-    delete setup["plot-type"];
 
     if (Figure.current) {
-        let hide = (((Figure.current.type = setup["x-axis-type"]) === Figure.TYPE_LOG_DATASET));
-
-        // only if we are not in Figure.TYPE_LOG_DATASET mode we can change from line to bar etc.
-        $("#plot-type").closest(".range-container").toggle(!hide);
+        Figure.current.dom_setup();
     }
-    delete setup["x-axis-type"];
-
 
     if (allow_window_hash_change) {
         // save to hash
@@ -516,7 +509,7 @@ function refresh(event = null) {
     // assure `setup` is ready
     let can_redraw_sliders = event !== false;
 //    console.log("REFRESH CALLED", event, can_redraw_sliders);
-    refresh_setup(typeof (event) !== "boolean"); // refresh window.location.hash only if we came here through a DOM event, not through load (event === false || true). We want to conserve chart_id in the hash till the thumbnail can be exported if needed.
+    dom_setup(typeof (event) !== "boolean"); // refresh window.location.hash only if we came here through a DOM event, not through load (event === false || true). We want to conserve chart_id in the hash till the thumbnail can be exported if needed.
     $("#export-data").html(""); // reset export-data, will be refreshed in Figure.refresh/Figure.prepare_export
 
 
