@@ -18,7 +18,7 @@ class Figure {
         this.plots = [];
 
         this.$element = $("<canvas />", {id: "figure-" + this.id}).appendTo($("#canvas-container")).data("figure", this);
-        console.log("MULTIPLE", Figure.figures.length > 1);
+
         this.check_canvas_container();
         $("#canvas-container").sorting("> canvas");
 
@@ -28,7 +28,7 @@ class Figure {
     }
 
     static serialize() {
-        setup["figure"] = Figure.current.id;
+//        setup["figure"] = Figure.current.id;
         return Object.values(Figure.figures).map(p => {
             return [p.type];
         });
@@ -36,19 +36,19 @@ class Figure {
 
     static deserialize(data) {
         data.forEach((d) => new Figure(...d));
-        if (Figure.figures.length) {
-            Figure.figures[setup["figure"]-1 || 0].focus();
-        }
+//        if (Figure.figures.length) {
+//            Figure.figures[setup["figure"]-1 || 0].focus();
+//        }
     }
 
     focus() {
         Figure.current = this;
         $("#x-axis-type").data("ionRangeSlider").update({from: this.type});
+        return this;
     }
 
     dom_setup() {
         let hide = (((Figure.current.type = setup["x-axis-type"]) === Figure.TYPE_LOG_DATASET));
-
         // only if we are not in Figure.TYPE_LOG_DATASET mode we can change from line to bar etc.
         $("#plot-type").closest(".range-container").toggle(!hide);
         delete setup["x-axis-type"];

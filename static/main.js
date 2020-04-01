@@ -135,7 +135,7 @@ $(function () {
     // place plot on a different figure
     $("#plot-stack").on("change", ".plot-figure", function () {
         let plot = $(this).parent().data("plot").focus();
-        plot.set_figure(Figure.get($(this).val() * 1));
+        plot.set_figure(Figure.get($(this).val() * 1).focus());
         refresh(false);
     });
     // place plot on a different Y axe
@@ -311,9 +311,9 @@ $(function () {
 
 
         // start plotting
-        if (!Figure.current) {
-            (new Figure()).focus();
-        }
+//        if (!Figure.current) {
+//            (new Figure()).focus();
+//        }
         if (!Plot.current) {
             console.debug("Plot.current -> creating new", setup["plot"], setup);
             (new Plot(setup["plot-expression"])).focus(); // initialize a plot and give it initial math expression from DOM
@@ -508,7 +508,7 @@ function refresh(event = null) {
 
     // build chart data
     // process each country
-    let boundaries = Object.values(Figure.figures).map(f => f.refresh());
+    let boundaries = Object.values(Figure.figures).map(f => f.refresh()); // XX we may refresh current figure only if not loading. But that imply we have to set Outbreak and Days range independent.
 
     // XX all figures have the same outbreak and day range, this is not ideal
     if (can_redraw_sliders) {

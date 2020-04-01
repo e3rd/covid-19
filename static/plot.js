@@ -36,7 +36,7 @@ class Plot {
          * @property {Territory[]} chosen territories to be processed
          */
         this.checked = checked_names.map(name => Territory.get_by_name(name));
-        console.log("Plot", this.checked, checked_names);
+        //console.log("Plot", this.checked, checked_names);
         /**
          * @property {Territory[]} chosen
          */
@@ -62,9 +62,7 @@ class Plot {
     }
 
     static serialize() {
-        console.log("PRED", setup["plot"]);
         setup["plot"] = Plot.current.id;
-        console.log("PO", setup["plot"]);
         return Plot.plots.map(p => {
             return [p.expression,
                 p.active,
@@ -125,6 +123,7 @@ class Plot {
             this.$element.addClass("edited");
         }
         $("#sum-territories").prop("checked", this.aggregate);
+        this.figure.focus();
         return this;
     }
 
