@@ -25,6 +25,8 @@ class Figure {
         this.hovered_dataset;
         this.datasets_used;
         Figure.chart_size();
+
+        this.is_line;  // if any "line" present = "line"
     }
 
     static serialize() {
@@ -91,11 +93,7 @@ class Figure {
         if (e) {
             this.default_size = e.from;
         }
-        //$("#canvas-container").css("width", {5: 150, 4: 100, 3: 75, 2: 50, 1: 33}[e.from] + "%");
-        console.log("Settings size to", this.default_size);
         $("#canvas-container").css("width", this.default_size + "%");
-        //$("#canvas-container > .canvas-wrapper").css("width", this.default_size + "%");
-        //$("#canvas-container").toggleClass("big", $("#big-chart").prop("checked"));
         Object.values(Figure.figures).forEach(f => f.chart && f.chart.resize());
     }
 
@@ -124,7 +122,7 @@ class Figure {
      */
     mouse_leave() {
         if (this.hovered_dataset !== null && this.chart) {
-            this.chart.data.datasets[this.hovered_dataset].borderWidth = DATASET_BORDER[this.meta(this.hovered_dataset).star];
+            this.unhighlight(this.hovered_dataset);
             this.hovered_dataset = null;
             this.chart.update();
             this.chart.update();  // ChartJS 2.9.3 bug: when changing bar chart, it gets reflected on the second `update` call
@@ -145,8 +143,13 @@ class Figure {
      * @param {type} dataset_id
      * @returns {undefined}
      */
-    reset_border_width(dataset_id) {
-        this.chart.data.datasets[dataset_id].borderWidth = DATASET_BORDER[this.meta(dataset_id).star];
+    unhighlight(dataset_id) {
+        let m = this.meta(dataset_id);
+        Object.assign(this.chart.data.datasets[dataset_id], {
+            borderWidth: DATASET_BORDER[m.star],
+            borderColor: m.borderColor,
+            backgroundColor: m.backgroundColor
+        });
     }
 
     hover(i) {
@@ -155,20 +158,24 @@ class Figure {
             return;
         } else if (this.hovered_dataset !== null) {
             // unhover old dataset
-            this.reset_border_width(this.hovered_dataset);
+            this.unhighlight(this.hovered_dataset);
         }
 
         // hightlight new dataset
         this.hovered_dataset = i;
-        this.chart.data.datasets[i].borderWidth = 10;
+        let m = this.meta(i);
+        Object.assign(this.chart.data.datasets[i], {
+            borderWidth: this.is_line ? 10 : 5,
+            borderColor: this.is_line ? m.highlightColor : "red",
+            backgroundColor: m.highlightColor
+        });
         this.chart.update();
         this.chart.update(); // ChartJS 2.9.3 bug: when changing bar chart, it gets reflected on the second `update` call
     }
 
-    init_chart(type="line") {
+    init_chart(type = "line") {
         let ctx = this;
         this.hovered_dataset = null;
-        console.log("SETTIN TYPE", type);
         return this.chart = new Chart(this.$element, {
             type: type, // changed to bar if there is no line plot
             data: {},
@@ -194,7 +201,7 @@ class Figure {
                             label = dst.plot.get_name(star);
                         }
                         dst.star = star;
-                        ctx.reset_border_width(i);
+                        ctx.unhighlight(i);
                         this.data.datasets[i].label = label;
                         this.update();
                     }
@@ -267,12 +274,12 @@ class Figure {
                             scaleLabel: {
                                 display: true
                             },
-                            stacked: false,
-                            id: "normal"
-                        }, {
-                            display: false, // this axis is invisible but allows the bars to be stacked
                             stacked: true,
-                            id: "stacked"
+                            id: "normal"
+//                        }, { // Xfor unknown reasons, this is not needed
+//                            display: false, // this axis is invisible but allows the bars to be stacked
+//                            stacked: false,
+//                            id: "stacked"
                         }
                     ],
                     yAxes: range(1, 6).map(i => { // create 5 available axes
@@ -442,26 +449,35 @@ class Figure {
             if (!chosen_data.length) {
                 continue;
             }
+            let border_color = plot.type === Plot.TYPE_STACKED_TERRITORY ? 'rgba(0,0,0,1)' : color; // colours of the same territory are hardly distinguishable
             // push new dataset
-            let dataset = {
+            let dataset = datasets[id] = {
                 type: plot.type ? 'bar' : 'line',
 //                borderColor: color,
 //                borderColor: adjust(color, -100),
-                borderColor: plot.type === Plot.TYPE_STACKED_TERRITORY ? 'rgba(0,0,0,1)' : color, // colours of the same territory are hardly distinguishable
                 label: label + (plots.length > 1 ? " (" + plot.expression + ")" : ""),
                 data: chosen_data,
-                borderWidth: DATASET_BORDER[starred],
                 fill: false,
-                backgroundColor: color,
                 id: id,
-                xAxisID: this.type === Figure.TYPE_LOG_DATASET || plot.type <= Plot.TYPE_BAR ? "normal" : "stacked",
+                xAxisID: "normal", // Xfor unknown reason, this is not needed this.type === Figure.TYPE_LOG_DATASET || plot.type <= Plot.TYPE_BAR ? "normal" : "stacked",
                 stack: plot.type > Plot.TYPE_BAR ? (plot.type === Plot.TYPE_STACKED_TERRITORY ? (territory ? territory.id : null) : "p" + plot.id) : id,
-                yAxisID: parseInt(plot.y_axis)
+                yAxisID: parseInt(plot.y_axis),
+                borderWidth: DATASET_BORDER[starred],
+                borderColor: border_color,
+                backgroundColor: color
+            };
+            this.datasets_used[id] = {// available through this.meta(i)
+                plot: plot,
+                territory: territory,
+                star: false,
+                outbreak_start: outbreak_start,
+                type: plot.type,
+                backgroundColor: color,
+                borderColor: border_color,
+                highlightColor: adjust(color, +40)
             };
             y_axes.add(parseInt(plot.y_axis));
-            this.datasets_used[id] = {plot: plot, territory: territory, star: false, outbreak_start: outbreak_start, type: plot.type};
-            datasets[id] = dataset;
-//            console.log("Dataset color", id , label, dataset.stack);
+//            console.log("Dataset color", id, label, color, adjust(color, 40), adjust(color, -40));
 //            console.log("Dataset", label, chosen_data);
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }
@@ -472,16 +488,14 @@ class Figure {
 
         // destroy current chart if needed
         // ChartJS cannot dynamically change line type (dataset letf align) to bar (centered)
-        let chart_type = Object.values(datasets).some(d => d.type === "line") ? "line" : "bar";
-        if (this.chart && this.chart.config.type !== chart_type) {
-            console.log("CHTYPE", this.chart.config.type);
+        this.is_line = Object.values(datasets).some(d => d.type === "line");
+        if (this.chart && this.chart.config.type !== this.is_line) {
             this.chart = this.chart.destroy();
         }
 
         // update chart data
         if (!this.chart) {
-            this.chart = this.init_chart(chart_type);
-            console.log("TYPE set", this.chart.config.type);
+            this.chart = this.init_chart(this.is_line ? "line" : "bar");
             this.chart.data = {datasets: Object.values(datasets), labels: labels};
         } else {
             // update just some datasets, do not replace them entirely (smooth movement)
@@ -535,7 +549,7 @@ class Figure {
         }
         this.chart.options.scales.xAxes[0].scaleLabel.labelString = axe_title;
         this.chart.options.scales.xAxes[0].type = this.type === Figure.TYPE_LOG_DATASET ? "logarithmic" : "category";
-        this.chart.options.tooltips.mode = this.type === Figure.TYPE_LOG_DATASET ? "x" : "index";
+        this.chart.options.tooltips.mode = this.is_line ? (this.type === Figure.TYPE_LOG_DATASET ? "x" : "index") : "x";
 
         // Axis Y
         this.chart.options.scales.yAxes.forEach(axe => {
