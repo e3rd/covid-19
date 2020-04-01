@@ -45,15 +45,27 @@ class Figure {
 
     focus() {
         Figure.current = this;
-        $("#x-axis-type").data("ionRangeSlider").update({from: this.type});
+        let ion = $("#axes-type").data("ionRangeSlider");
+        ion.update({from: this.type});
+        ion.options.onChange(); // on load time, make this write aloud the legend (ex: "log/time")
         return this;
     }
 
     dom_setup() {
-        let hide = (((Figure.current.type = setup["x-axis-type"]) === Figure.TYPE_LOG_DATASET));
+        let v = Figure.current.type = setup["axes-type"];
+        let hide = [Figure.TYPE_LOG_DATASET, Figure.TYPE_PERCENT_TIME].indexOf(v) > -1;
+
         // only if we are not in Figure.TYPE_LOG_DATASET mode we can change from line to bar etc.
+        // XX Disable this functionality too for Figure.TYPE_PERCENT_TIME. Here we should still have the possibility to change between STACKED_PLOT|TERRITORY.
         $("#plot-type").closest(".range-container").toggle(!hide);
-        delete setup["x-axis-type"];
+        this.plots.forEach(p => p.refresh_html()); // XX this is not so elegant; we want to refresh all plots (icon might have changed) but Plot.current has already been refreshed
+//
+//        $("#plot-type").data("ionRangeSlider").update({
+//            from_fixed: false
+//        });
+//        this.plots.forEach(p=> p.refresh_html()); // refresh icon
+
+        delete setup["axes-type"];
     }
 
     check_canvas_container() {
@@ -173,16 +185,18 @@ class Figure {
         this.chart.update(); // ChartJS 2.9.3 bug: when changing bar chart, it gets reflected on the second `update` call
     }
 
-    init_chart(type = "line") {
-        let ctx = this;
+    init_chart(type = "line", percentage = false) {
+        let figure = this;
+        Chart.plugins.unregister(ChartDataLabels); // XX line should be remove since ChartDataLabels 1.0
         this.hovered_dataset = null;
         return this.chart = new Chart(this.$element, {
             type: type, // changed to bar if there is no line plot
             data: {},
+            plugins: [ChartDataLabels],
             options: {
                 legend: {
                     onHover: function (_, item) {
-                        ctx.hover(item.datasetIndex);
+                        figure.hover(item.datasetIndex);
                     }
                 },
                 onClick: function (evt) {
@@ -191,7 +205,7 @@ class Figure {
                     let e = this.getElementAtEvent(evt);
                     if (e.length) {
                         let i = e[0]._datasetIndex;
-                        let dst = ctx.meta(i);
+                        let dst = figure.meta(i);
                         let star, label;
                         if (dst.territory) {
                             star = dst.plot.set_star(dst.territory);
@@ -201,7 +215,7 @@ class Figure {
                             label = dst.plot.get_name(star);
                         }
                         dst.star = star;
-                        ctx.unhighlight(i);
+                        figure.unhighlight(i);
                         this.data.datasets[i].label = label;
                         this.update();
                     }
@@ -210,7 +224,7 @@ class Figure {
                     // highlight hovered line
                     let e = this.getElementAtEvent(evt);
                     if (e.length) {
-                        ctx.hover(e[0]._datasetIndex);
+                        figure.hover(e[0]._datasetIndex);
                     }
                 },
                 title: {
@@ -243,7 +257,7 @@ class Figure {
                         },
                         label: function (el, data) {
                             let label = data.datasets[el.datasetIndex].label || '';
-                            if (el.datasetIndex === ctx.hovered_dataset) {
+                            if (el.datasetIndex === figure.hovered_dataset) {
                                 label = "→ " + label;
                             }
 
@@ -256,7 +270,7 @@ class Figure {
                                 }
                                 label += Math.round(el.yLabel * 10000) / 10000;
                                 if (setup["outbreak-on"]) {
-                                    let start = ctx.meta(el.datasetIndex).outbreak_start;
+                                    let start = figure.meta(el.datasetIndex).outbreak_start;
                                     if (start) { // if aggregating, outbreak_start is not known
                                         let day = Territory.header[parseInt(start) + parseInt(el.xLabel)];
                                         label += " (" + (new Date(day).toYMD()) + ")";
@@ -292,6 +306,9 @@ class Figure {
                             },
                             ticks: {
                                 callback: function (value, index, values) {
+                                    if (figure.type === Figure.TYPE_PERCENT_TIME) {
+                                        return value + " %";
+                                    }
                                     return Math.round(value * 1000) / 1000;
                                 }
                             }
@@ -398,6 +415,31 @@ class Figure {
                                 console.log(`I was zoomed!!!`);
                             }
                         }
+                    },
+                    datalabels: {
+                        display: false,
+                        color: 'white',
+                        backgroundColor: function ( {dataset}) {
+                            return dataset.backgroundColor;
+                        },
+                        borderRadius: 4,
+                        font: {
+                            weight: 'bold'
+                        },
+                        formatter: function (value, item) {
+                            if (figure.type === Figure.TYPE_LOG_DATASET) {
+                                return "";
+                            }
+                            try {
+                                return figure.is_line ? value : item.dataset.label;
+                            } catch (e) {
+
+                            }
+                        }
+                    },
+                    stacked100: {
+                        enable: percentage,
+                        replaceTooltipLabel: false
                     }
                 },
                 animation: {
@@ -437,8 +479,15 @@ class Figure {
             let chosen_data = [];
             let [name, label, starred, id] = plot.territory_info(territory);
             let color = adjust("#" + intToRGB(hashCode(name)), plot.hash);
-            for (let i = setup["day-range"][0]; i < data.length && i < setup["day-range"][1]; i++) {
-                chosen_data.push(data[i]);
+
+            // XX we may save performance if we pass day-range to Plot.get_data.
+            //  However, this might change the calculation of the outbreak start.
+            if (setup["single-day"]) {
+                chosen_data.push(data[setup["day-range"]]);
+            } else {
+                for (let i = setup["day-range"][0]; i < data.length && i < setup["day-range"][1]; i++) {
+                    chosen_data.push(data[i]);
+                }
             }
 
             longest_data = Math.max(longest_data, setup["day-range"][0] + chosen_data.length);
@@ -487,15 +536,18 @@ class Figure {
 
 
         // destroy current chart if needed
-        // ChartJS cannot dynamically change line type (dataset letf align) to bar (centered)
-        this.is_line = Object.values(datasets).some(d => d.type === "line");
-        if (this.chart && this.chart.config.type !== this.is_line) {
+        this.is_line = Object.values(datasets).some(d => d.type === "line");// ChartJS cannot dynamically change line type (dataset left align) to bar (centered)
+        let percentage = this.type === Figure.TYPE_PERCENT_TIME; // Stacked percentage if at least one plot has it
+        if (this.chart && (
+                this.chart.config.type !== this.is_line ||
+                this.chart.config.options.plugins.stacked100.enabled !== percentage
+                )) {
             this.chart = this.chart.destroy();
         }
 
         // update chart data
         if (!this.chart) {
-            this.chart = this.init_chart(this.is_line ? "line" : "bar");
+            this.chart = this.init_chart(this.is_line ? "line" : "bar", percentage);
             this.chart.data = {datasets: Object.values(datasets), labels: labels};
         } else {
             // update just some datasets, do not replace them entirely (smooth movement)
@@ -553,9 +605,22 @@ class Figure {
 
         // Axis Y
         this.chart.options.scales.yAxes.forEach(axe => {
-            axe.type = this.type > Figure.TYPE_LINEAR_TIME ? "logarithmic" : "linear";
+            switch (this.type) {
+                case Figure.TYPE_LOG_DATASET:
+                case Figure.TYPE_LOG_TIME:
+                    axe.type = "logarithmic";
+                    break;
+                case Figure.TYPE_LINEAR_TIME:
+                case Figure.TYPE_PERCENT_TIME:
+                default:
+                    axe.type = "linear";
+                    break;
+            }
             axe.display = y_axes.has(axe.id);
         });
+
+        // Show datasets
+        Figure.current.chart.options.plugins.datalabels.display = !(this.type === Figure.TYPE_LOG_DATASET);
 
         // Submit changes
         this.chart.update();
@@ -604,7 +669,8 @@ $(function () {
 
     Figure.TYPE_LINEAR_TIME = 0;
     Figure.TYPE_LOG_TIME = 1;
-    Figure.TYPE_LOG_DATASET = 2;
+    Figure.TYPE_PERCENT_TIME = 2;
+    Figure.TYPE_LOG_DATASET = 3;
 
     /**
      *

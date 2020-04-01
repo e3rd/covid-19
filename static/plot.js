@@ -50,15 +50,16 @@ class Plot {
 
         Plot.plots.push(this);
 
-        // we need to implement this method because of sum-territories that may return Plot to refresh function (that want id)
         this.id = Plot.plots.length;
         this.set_figure(Figure.get(figure_id || 1));
         this.y_axis = y_axis;
 
-        this.build_html();
 
         this._type = type; // line, bar, stacked by plot, territory
         this.aggregate = aggregate;
+//        this.percentage = percentage; // the stack should be seen as percentage
+
+        this.build_html();
     }
 
     static serialize() {
@@ -72,6 +73,7 @@ class Plot {
                 p.starred.map(t => t.get_name()),
                 p._type,
                 p.aggregate
+//                p.percentage
             ];
         });
     }
@@ -80,7 +82,7 @@ class Plot {
         Plot.plots = [];
         data.forEach((d) => new Plot(...d));
         if (Plot.plots.length) {
-            Plot.plots[setup["plot"]-1 || 0].focus();
+            Plot.plots[setup["plot"] - 1 || 0].focus();
         }
     }
 
@@ -123,15 +125,23 @@ class Plot {
             this.$element.addClass("edited");
         }
         $("#sum-territories").prop("checked", this.aggregate);
+        //$("#percentage").prop("checked", this.percentage);
         this.figure.focus();
+        this.refresh_html();
         return this;
     }
 
     dom_setup() {
-        Plot.current.type = setup["plot-type"];
-        Plot.current.aggregate = setup["sum-territories"];
+        Object.assign(Plot.current, {
+            type: setup["plot-type"],
+            aggregate: setup["sum-territories"]
+            //percentage: setup["percentage"]
+        });
+        //$("#percentage").parent().toggle(setup["plot-type"] >= Plot.TYPE_STACKED_PLOT); // show/hide percentage checkbox if the plot uses stacked bar
         delete setup["plot-type"];
         delete setup["sum-territories"];
+        //delete setup["percentage"];
+        this.refresh_html();
     }
 
     remove(focus_next = true) {
@@ -162,6 +172,9 @@ class Plot {
         if (this.figure.type === Figure.TYPE_LOG_DATASET) {
             return Plot.TYPE_LINE;
         }
+        if (this.figure.type === Figure.TYPE_PERCENT_TIME && this._type === Figure.TYPE_LINEAR_TIME) {
+            return Plot.TYPE_STACKED_PLOT;
+        }
         return this._type;
     }
     set type(v) {
@@ -189,13 +202,27 @@ class Plot {
         this.refresh_html();
     }
 
+    icon() {
+        switch (this.type) {
+            case Plot.TYPE_BAR:
+                return "<span title='bars displayed'> ❘ </span>";
+            case Plot.TYPE_STACKED_PLOT:
+                return "<span title='stacked by plot'> ☰ ";
+            case Plot.TYPE_STACKED_TERRITORY:
+                return "<span title='stacked by territory'> 🏳 </span>";
+            case Plot.TYPE_LINE:
+            default:
+                return "";
+        }
+    }
+
     refresh_html(expression = null) {
         this.set_expression(expression);
 //        if (!this.$element) {
 //            return;
 //        }
 
-        let name = this.expression + " (" + this.checked.length + " countries)";
+        let name = this.expression + this.icon() + " (" + (this.aggregate ? "∑ " : "") + this.checked.length + " countries)";
         $("> .name", this.$element).html(name);
         if (this.active) {
             this.$element.addClass("active");

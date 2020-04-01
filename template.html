@@ -69,38 +69,36 @@
             <div>
                 <input type="range" id="day-range" max="25"/>
             </div>
+            <input class="refresh" type="checkbox"  id="single-day">
+            <label for="single-day">Single day</label>
         </div>
 
         <div class="range-container range-hide-legend range-short">
             Axes:
             <div>
-                <input type="range" id="x-axis-type" data-legend="#x-axis-type-legend"/>
+                <input type="range" id="axes-type" data-legend="#axes-type-legend"/>
             </div>
         </div>
-        <span class="range-legend" id="x-axis-type-legend"></span>
-        <!--        <div> XXX
-                    <input class="refresh" type="checkbox"  id="log-switch" value="on" checked>
-                    <label for="log-switch">Log scale</label>
-                </div>-->
+        <span class="range-legend" id="axes-type-legend"></span>
     </div>
 
     <div class="range-container" id="outbreak-container">
-            <div>
-                <input class="refresh" type="checkbox"  id="outbreak-on" value="off">
-                <label for="outbreak-on">Outbreak</label>
-            </div>
-            <div>
-                <label><input type="checkbox"  id="outbreak-mode" value="off">~ population</label>
-            </div>
-            <div>
-                <input type="number" min="1" id="outbreak-value" value="1" />
-                <!--                <label><input type="radio" name="outbreak-mode" id="outbreak-confirmed" value="1"/> confirmed cases</label>
-                                <label><input type="radio" name="outbreak-mode" id="outbreak-population" value="2"/> 1/100 000 of population</label>-->
-            </div>
-            <div id="outbreak-threshold-container">
-                <input type="range" id="outbreak-threshold" value="1" data-input="#outbreak-value">
-            </div>
+        <div>
+            <input class="refresh" type="checkbox"  id="outbreak-on" value="off">
+            <label for="outbreak-on">Outbreak</label>
         </div>
+        <div>
+            <label><input type="checkbox"  id="outbreak-mode" value="off">~ population</label>
+        </div>
+        <div>
+            <input type="number" min="1" id="outbreak-value" value="1" />
+            <!--                <label><input type="radio" name="outbreak-mode" id="outbreak-confirmed" value="1"/> confirmed cases</label>
+                            <label><input type="radio" name="outbreak-mode" id="outbreak-population" value="2"/> 1/100 000 of population</label>-->
+        </div>
+        <div id="outbreak-threshold-container">
+            <input type="range" id="outbreak-threshold" value="1" data-input="#outbreak-value">
+        </div>
+    </div>
 
     <div id="plot-options">
         <div>
@@ -111,6 +109,10 @@
                     <input type="range" id="plot-type" />
                 </div>
             </div>
+<!--            <span>
+                <input class="refresh" type="checkbox"  id="percentage" value="off" title="Stack on 100 %">
+                <label for="percentage">percent</label>
+            </span>-->
             <input class="refresh" type="checkbox"  id="sum-territories" value="off" title="Sum territories into single curve">
             <label for="sum-territories">aggregate</label>
             <a id="plot-new" class="btn btn-light">+</a>

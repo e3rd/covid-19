@@ -48,10 +48,10 @@ $(function () {
         grid: false,
         values: ["line", "bar", "stacked by plot", "stacked by territory"]
     });
-    $("#x-axis-type").ionRangeSlider({
+    $("#axes-type").ionRangeSlider({
         skin: "big",
         grid: false,
-        values: ["linear / time", "log / time", "log / dataset"]
+        values: ["linear / time", "log / time", "percent / time", "log / dataset"]
     });
 
     $("#day-range").ionRangeSlider({
@@ -77,6 +77,11 @@ $(function () {
 //        alert("55");
 //        set_slider($("#outbreak-threshold"), $(this).val());
 //    });
+
+    // single day switch
+    $("#single-day").change(function () {
+        $("#day-range").data("ionRangeSlider").update({type: $(this).prop("checked") ? "single" : "double"});
+    }).change();
 
     // disabling outbreak will disable its range
     $("#outbreak-on").change(function () {
@@ -108,20 +113,28 @@ $(function () {
             ion.update({hide_from_to: true}); // stop current value being shown at the top
         }
 
-        opt.onFinish = refresh;
+        opt.onFinish = dom_setup;
         // do not change window hash when moving input slider
-        let clb = opt.onChange;
+        let clb = opt.onChange; // keep previously defined callback
+        let old_val = null;
         opt.onChange = () => {
-            clb ? clb() : null; // keep previously defined callback
+            let {from, to} = $(this).data("ionRangeSlider").result;
+
+            clb ? clb() : null; // call another callback
             if ($input.length || $legend.length) {
-                let r = $(this).data("ionRangeSlider").result;
-                let val = opt.values.length ? opt.values[r.from] : r.from;
+                let val = opt.values.length ? opt.values[from] : from;
                 $input.val(val);  // if there is a bound input, change its value accordingly
                 $legend.html(val);
             }
+
+            // ignore if not changed
+            if (old_val && old_val + "" === [from, to] + "") { // when dragging mouse, just clicking on the slider would cause this to be fired
+                return;
+            }
+            old_val = [from, to];
             refresh(false);
         };
-        opt.onChange();
+
     });
     // refresh on plot change
     $plot.keyup(function () {
@@ -169,16 +182,18 @@ $(function () {
     // clicking on a plot stack curve label
     $("#plot-stack").on("click", "> div", function (event) {
         let plot = $(this).data("plot");
-        if (event.target === $("span.name", $(this))[0]) { // re-edit
-            plot.focus();
+        if (event.target === $("span.remove", $(this))[0]) { // delete plot
+            $(this).data("plot").remove();
+        } else if (event.target === $("span.shown", $(this))[0]) { // toggle hide
+            $(this).toggleClass("active", plot.active = !plot.active);
         } else {
-            if (event.target === $("span.remove", $(this))[0]) { // delete plot
-                $(this).data("plot").remove();
-            } else if (event.target === $("span.shown", $(this))[0]) { // toggle hide
-                $(this).toggleClass("active", plot.active = !plot.active);
-            }
-            refresh();
+            plot.focus();
+//                if (event.target === $("span.name", $(this))[0]) { // re-edit
+//            plot.focus();
+//        }
+            return;
         }
+        refresh();
     });
     //reset zoom ready
     $("#reset-zoom").on("click", "a", Figure.reset_zoom);
@@ -379,22 +394,22 @@ function load_hash() {
         if (!key in setup || !$el.length) {
             continue;
         }
-        if ((r = $el.data("ionRangeSlider"))) {
-            if (r.options.type === "double") {
+        if ((ion = $el.data("ionRangeSlider"))) {
+            if (ion.options.type === "double") {
                 if (key === "day-range" && val[2] === val[1]) {
                     // if we shared day range till 10 and that was the maximum day, use current maximum day and shift the "from" day
                     if (val[0] !== 0) {
                         // ex: "from" day was "7 days ago" when link bookmarked, restore this to be "7 days ago" too
                         // XX I am not sure this is the expected behaviour. Sometimes you just want your chart to start the 1st Mar or something.
-                        val[0] += r.options.max - val[1];
+                        val[0] += ion.options.max - val[1];
                     }
-                    val[1] = r.options.max;
+                    val[1] = ion.options.max;
                 }
-                r.update({from: val[0], to: val[1]});
+                ion.update({from: val[0], to: val[1]});
             } else {
                 if (!$el.data("has-bound-input")) {
                     //   val = r.options.values.length ? r.options.values[r.result.from] : r.result.from;
-                    r.update({from: val});
+                    ion.update({from: val});
                 }
                 continue; // we will not trigger $el.change event because bound-$input will trigger it for us
             }
@@ -439,16 +454,16 @@ function dom_setup(allow_window_hash_change = true) {
         $el = $(this);
         let key = $el.attr("id");
         let val;
-        if ((r = $el.data("ionRangeSlider"))) {
-            if (r.options.type === "double") {
+        if ((ion = $el.data("ionRangeSlider"))) {
+            if (ion.options.type === "double") {
                 if (key === "day-range") {
                     // add maximum day so that we are able to update maximum day when shared
-                    val = [r.result.from, r.result.to, r.options.max];
+                    val = [ion.result.from, ion.result.to, ion.options.max];
                 } else {
-                    val = [r.result.from, r.result.to];
+                    val = [ion.result.from, ion.result.to];
                 }
             } else {
-                val = r.result.from;
+                val = ion.result.from;
             }
         } else if ($el.attr("type") === "checkbox" || $el.attr("type") === "radio") {
             val = $el.prop("checked") ? 1 : 0;
