@@ -6,7 +6,7 @@ let DATASET_BORDER = {
 
 
 class Figure {
-    constructor(type = 0) {
+    constructor(type = Figure.TYPE_LOG_TIME) {
         this.type = type;
         this.last_type = null;
 
@@ -28,6 +28,7 @@ class Figure {
     }
 
     static serialize() {
+        setup["figure"] = Figure.current.id;
         return Object.values(Figure.figures).map(p => {
             return [p.type];
         });
@@ -36,7 +37,7 @@ class Figure {
     static deserialize(data) {
         data.forEach((d) => new Figure(...d));
         if (Figure.figures.length) {
-            Figure.figures[0].focus();
+            Figure.figures[setup["figure"]-1 || 0].focus();
         }
     }
 

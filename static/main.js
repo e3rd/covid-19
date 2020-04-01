@@ -46,13 +46,11 @@ $(function () {
     $("#plot-type").ionRangeSlider({
         skin: "big",
         grid: false,
-        from: 1,
         values: ["line", "bar", "stacked by plot", "stacked by territory"]
     });
     $("#x-axis-type").ionRangeSlider({
         skin: "big",
         grid: false,
-        from: 1,
         values: ["linear / time", "log / time", "log / dataset"]
     });
 
@@ -313,20 +311,15 @@ $(function () {
 
 
         // start plotting
-        if (!Figure.figures.length) {
+        if (!Figure.current) {
             (new Figure()).focus();
-        } else {
-            Figure.figures[0].focus();
         }
-        if (!Plot.plots.length) {
+        if (!Plot.current) {
             console.debug("Plot.current -> creating new", setup["plot"], setup);
-            (new Plot(setup["plot"])).focus(); // current plot
+            (new Plot(setup["plot-expression"])).focus(); // initialize a plot and give it initial math expression from DOM
             for (let country of ["Czechia", "Italy"]) { // X ["Czechia", "United Kingdom"] european_countries
                 Territory.get_by_name(country, Territory.COUNTRY).set_active().show();
             }
-        } else {
-            console.debug("Plot.current -> using old");
-            Plot.plots[0].focus();
         }
         refresh(set_ready = true);
 
@@ -486,7 +479,7 @@ function dom_setup(allow_window_hash_change = true) {
         let state = s.substring(1, s.length - 1);
         history.pushState(null, "", "chart=" + chart_id + "#" + state);
 //        window.location.hash = s.substring(1, s.length - 1); XX
-//        console.log("Hash stored with val: ", setup["outbreak-value"]);
+        //console.log("Hash stored with val: ", setup["outbreak-value"]);
 }
 }
 

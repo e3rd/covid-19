@@ -31,7 +31,7 @@ let units = {// since calculate.js cannot parse two paranthesis `(C)(100)` as mu
 };
 
 class Plot {
-    constructor(expression = "", active = true, figure_id = null, y_axis = 1, checked_names = [], starred_names = [], type = 0, aggregate = false) {
+    constructor(expression = "", active = true, figure_id = null, y_axis = 1, checked_names = [], starred_names = [], type = Plot.TYPE_LINE, aggregate = false) {
         /**
          * @property {Territory[]} chosen territories to be processed
          */
@@ -62,6 +62,9 @@ class Plot {
     }
 
     static serialize() {
+        console.log("PRED", setup["plot"]);
+        setup["plot"] = Plot.current.id;
+        console.log("PO", setup["plot"]);
         return Plot.plots.map(p => {
             return [p.expression,
                 p.active,
@@ -79,7 +82,7 @@ class Plot {
         Plot.plots = [];
         data.forEach((d) => new Plot(...d));
         if (Plot.plots.length) {
-            Plot.plots[0].focus();
+            Plot.plots[setup["plot"]-1 || 0].focus();
         }
     }
 
