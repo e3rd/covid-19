@@ -165,11 +165,12 @@ class Figure {
         this.chart.update(); // ChartJS 2.9.3 bug: when changing bar chart, it gets reflected on the second `update` call
     }
 
-    init_chart() {
+    init_chart(type="line") {
         let ctx = this;
         this.hovered_dataset = null;
+        console.log("SETTIN TYPE", type);
         return this.chart = new Chart(this.$element, {
-            type: 'line',
+            type: type, // changed to bar if there is no line plot
             data: {},
             options: {
                 legend: {
@@ -461,15 +462,26 @@ class Figure {
             this.datasets_used[id] = {plot: plot, territory: territory, star: false, outbreak_start: outbreak_start, type: plot.type};
             datasets[id] = dataset;
 //            console.log("Dataset color", id , label, dataset.stack);
-            console.log("Dataset", label, chosen_data);
+//            console.log("Dataset", label, chosen_data);
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }
         let r = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
         let labels = this.type === Figure.TYPE_LOG_DATASET ? null : (setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)]));
 
+
+
+        // destroy current chart if needed
+        // ChartJS cannot dynamically change line type (dataset letf align) to bar (centered)
+        let chart_type = Object.values(datasets).some(d => d.type === "line") ? "line" : "bar";
+        if (this.chart && this.chart.config.type !== chart_type) {
+            console.log("CHTYPE", this.chart.config.type);
+            this.chart = this.chart.destroy();
+        }
+
         // update chart data
         if (!this.chart) {
-            this.chart = this.init_chart();
+            this.chart = this.init_chart(chart_type);
+            console.log("TYPE set", this.chart.config.type);
             this.chart.data = {datasets: Object.values(datasets), labels: labels};
         } else {
             // update just some datasets, do not replace them entirely (smooth movement)
