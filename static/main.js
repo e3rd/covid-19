@@ -46,9 +46,7 @@ $(function () {
         skin: "big",
         grid: false,
         from: 1,
-        values: ["linear / time", "log / time", "log / dataset"],
-
-//        hide_from_to: true,    // show/hide FROM and TO labels
+        values: ["linear / time", "log / time", "log / dataset"]
     });
 
     $("#day-range").ionRangeSlider({
@@ -107,7 +105,9 @@ $(function () {
 
         opt.onFinish = refresh;
         // do not change window hash when moving input slider
+        let clb = opt.onChange;
         opt.onChange = () => {
+            clb ? clb() : null;
             if ($input.length || $legend.length) {
                 let r = $(this).data("ionRangeSlider").result;
                 let val = opt.values.length ? opt.values[r.from] : r.from;
@@ -426,10 +426,21 @@ function load_hash() {
  * @returns {undefined}
  */
 function refresh_setup(allow_window_hash_change = true) {
+//    // memorize previous values
+//    if (setup_prev["plot-type"] !== setup["plot-type"]) {
+//        setup_prev["plot-type"] = setup["plot-type"];
+//    }
+//
+    // read all DOM input fields
     $("#setup input:not(.nohash)").each(function () {
         // Load value from the $el to setup.
         $el = $(this);
         let key = $el.attr("id");
+//        if (["x-axis-type"].indexOf(key) > -1) { XXX
+//            // these parameters were handled by their respective change events and moved
+//            // more over, there is no need to save them in hash, they are reconstructed on (Figure|Plot).focus
+//            return;
+//        }
         let val;
         if ((r = $el.data("ionRangeSlider"))) {
             if (r.options.type === "double") {
@@ -452,22 +463,18 @@ function refresh_setup(allow_window_hash_change = true) {
     });
 
     // convert global input fields to plot attributes
-    if (Figure.current) {
-        let show = true;
-        if (((Figure.current.type = setup["x-axis-type"]) === Figure.TYPE_LOG_DATASET)) {
-            setup["plot-type"] = 0;
-            show = false;
-        }
-        // only if we are not in Figure.TYPE_LOG_DATASET mode we can change from line to bar etc.
-        $("#plot-type").closest(".range-container").toggle(show);
-    }
-    delete setup["x-axis-type"];
-
     if (Plot.current_plot) {
         Plot.current_plot.type = setup["plot-type"];
     }
     delete setup["plot-type"];
 
+    if (Figure.current) {
+        let hide = (((Figure.current.type = setup["x-axis-type"]) === Figure.TYPE_LOG_DATASET));
+
+        // only if we are not in Figure.TYPE_LOG_DATASET mode we can change from line to bar etc.
+        $("#plot-type").closest(".range-container").toggle(!hide);
+    }
+    delete setup["x-axis-type"];
 
 
     if (allow_window_hash_change) {

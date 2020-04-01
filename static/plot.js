@@ -58,7 +58,7 @@ class Plot {
 
         this.build_html();
 
-        this.type = type; // line, bar, stacked by plot, territory
+        this._type = type; // line, bar, stacked by plot, territory
         /*        if (add_to_stack) {
          this.$element.show();
          //this.assure_stack();
@@ -73,7 +73,7 @@ class Plot {
                 p.y_axis,
                 p.checked.map(t => t.get_name()),
                 p.starred.map(t => t.get_name()),
-                p.type
+                p._type
             ];
         });
     }
@@ -149,6 +149,16 @@ class Plot {
         this.$element.hide(500, function () {
             $(this).remove();
         });
+    }
+
+    get type() {
+        if (this.figure.type === Figure.TYPE_LOG_DATASET) {
+            return Plot.TYPE_LINE;
+        }
+        return this._type;
+    }
+    set type(v) {
+        this._type = v;
     }
 
     set_expression(expression) {

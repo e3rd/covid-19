@@ -42,6 +42,7 @@ class Figure {
 
     focus() {
         Figure.current = this;
+        $("#x-axis-type").data("ionRangeSlider").update({from: this.type});
     }
 
     check_canvas_container() {
