@@ -334,6 +334,7 @@ class Plot {
                         ignore = false;
                     }
                     if (!ignore) {
+//                        setup["average"]; XXXXXXx
 
                         // value calculation
                         let vars = {

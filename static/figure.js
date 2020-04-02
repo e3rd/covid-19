@@ -539,8 +539,8 @@ class Figure {
         this.is_line = !setup["single-day"] && Object.values(datasets).some(d => d.type === "line");// ChartJS cannot dynamically change line type (dataset left align) to bar (centered). We have bar if single day (centered) and if there is no line plot.
         let percentage = this.type === Figure.TYPE_PERCENT_TIME; // Stacked percentage if at least one plot has it
         if (this.chart && (
-                this.chart.config.type !== this.is_line ||
-                this.chart.config.options.plugins.stacked100.enabled !== percentage
+                (this.chart.config.type === "line") !== this.is_line || // cannot change dynamically line to bar
+                this.chart.config.options.plugins.stacked100.enable !== percentage // cannot turn on/off stacked100 plugin dynamically
                 )) {
             this.chart = this.chart.destroy();
         }
