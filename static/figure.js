@@ -536,7 +536,7 @@ class Figure {
 
 
         // destroy current chart if needed
-        this.is_line = Object.values(datasets).some(d => d.type === "line");// ChartJS cannot dynamically change line type (dataset left align) to bar (centered)
+        this.is_line = !setup["single-day"] && Object.values(datasets).some(d => d.type === "line");// ChartJS cannot dynamically change line type (dataset left align) to bar (centered). We have bar if single day (centered) and if there is no line plot.
         let percentage = this.type === Figure.TYPE_PERCENT_TIME; // Stacked percentage if at least one plot has it
         if (this.chart && (
                 this.chart.config.type !== this.is_line ||
@@ -589,17 +589,7 @@ class Figure {
         }
 
         // Axis X label and type
-        let axe_title;
-        if (this.type === Figure.TYPE_LOG_DATASET) {
-            axe_title = "Confirmed cases";
-            if (setup["outbreak-on"]) {
-                axe_title += setup["outbreak-mode"] ? ` since >= (${setup["outbreak-value"]} * population/100 000)` : ` since >= ${setup["outbreak-value"]}`;
-            }
-            ;
-        } else {
-            axe_title = setup["outbreak-on"] ? (setup["outbreak-mode"] ? `Days count since confirmed cases >= (${setup["outbreak-value"]} * population/100 000)` : `Days count since confirmed cases >= ${setup["outbreak-value"]}`) : "";
-        }
-        this.chart.options.scales.xAxes[0].scaleLabel.labelString = axe_title;
+        this.chart.options.scales.xAxes[0].scaleLabel.labelString = this.axe_x_title();
         this.chart.options.scales.xAxes[0].type = this.type === Figure.TYPE_LOG_DATASET ? "logarithmic" : "category";
         this.chart.options.tooltips.mode = this.is_line ? (this.type === Figure.TYPE_LOG_DATASET ? "x" : "index") : "x";
 
@@ -659,6 +649,20 @@ class Figure {
             result[d.label] = d.data;
         });
         return JSON.stringify(result);
+    }
+
+    axe_x_title() {
+        let axe_title = setup["single-day"] ? "Day: " + (setup["outbreak-on"] ? setup["day-range"]: Territory.header[setup["day-range"]])  + " ": "";
+        if (this.type === Figure.TYPE_LOG_DATASET) {
+            axe_title += "Confirmed cases";
+            if (setup["outbreak-on"]) {
+                axe_title += setup["outbreak-mode"] ? ` since >= (${setup["outbreak-value"]} * population/100 000)` : ` since >= ${setup["outbreak-value"]}`;
+            }
+            ;
+        } else {
+            axe_title += setup["outbreak-on"] ? (setup["outbreak-mode"] ? `Days count since confirmed cases >= (${setup["outbreak-value"]} * population/100 000)` : `Days count since confirmed cases >= ${setup["outbreak-value"]}`) : "";
+        }
+        return axe_title;
     }
 }
 

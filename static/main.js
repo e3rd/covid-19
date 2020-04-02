@@ -80,7 +80,26 @@ $(function () {
 
     // single day switch
     $("#single-day").change(function () {
-        $("#day-range").data("ionRangeSlider").update({type: $(this).prop("checked") ? "single" : "double"});
+        // it is more intuitive "to" value becomes the single day
+        let ion = $("#day-range").data("ionRangeSlider");
+        let single = $(this).prop("checked");
+        let was_single = ion.options.type === "single";
+        if(single !== was_single) {
+            let o ={type: single ? "single" : "double"};
+            let c = ion.result;
+            if(single) { // changing to single day
+                o._from = c.from;
+                o.from = c.to;
+            } else { // changing to multiple day
+                o.from = ion.options._from;
+                o.to = c.from;
+                if(o.to <= o.from) { // we have moved "to" value before previously stored "from" value, reset it
+                    o.from = 0;
+                }
+            }
+            ion.update(o);
+        }
+
     }).change();
 
     // disabling outbreak will disable its range
