@@ -3,6 +3,10 @@
  *  * `dom_setup` method will register it to the `setup` variable
  *  * rewritten in (Plot|Figure).focus()
  *
+ *
+ *
+ * Editor -> Figure -> Plot -> dataset -> Territory
+ *
  */
 
 // definitions

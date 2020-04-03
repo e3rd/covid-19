@@ -29,3 +29,4 @@
 * slightly change colour depending on the plot function expression, so that we have a chance to distinguish different lines plotting the same territory
 * scatter chart: NC/C
 * JSON export
+* display menu

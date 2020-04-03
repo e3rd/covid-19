@@ -469,6 +469,9 @@ class Figure {
         for (let [plot, territory, data, outbreak_start] of plot_data) {
             // choose only some days in range
             if (!data.length) {
+                if(!plot.valid) {
+                    return false;
+                }
                 continue;
             }
             let chosen_data = [];
@@ -488,8 +491,7 @@ class Figure {
             }
             longest_data = Math.max(longest_data, setup["day-range"][0] + chosen_data.length);
 
-
-
+            // prepare dataset options
             let [name, label, starred, id] = plot.territory_info(territory);
             let color = {
                 "territory + expression": adjust(intToRGB(hashCode(name)), plot.hash),
@@ -501,8 +503,6 @@ class Figure {
             // push new dataset
             let dataset = datasets[id] = {
                 type: plot.type ? 'bar' : 'line',
-//                borderColor: color,
-//                borderColor: adjust(color, -100),
                 label: label + (plots.length > 1 ? " (" + plot.expression + ")" : ""),
                 data: chosen_data,
                 fill: false,
