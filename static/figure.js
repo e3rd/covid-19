@@ -6,9 +6,15 @@ let DATASET_BORDER = {
 
 
 class Figure {
-    constructor(type = Figure.TYPE_LOG_TIME) {
+    constructor(type = Figure.TYPE_LOG_TIME, mouse_drag = null, tooltip_sorting = null, color_style = null, dataset_labels = null) {
         this.type = type;
         this.last_type = null;
+
+        this.mouse_drag = mouse_drag;
+        this.tooltip_sorting = tooltip_sorting;
+        this.color_style = color_style;
+        this.dataset_labels = dataset_labels;
+
 
         this.chart = null;
 //        this.id = id * 1;
@@ -32,7 +38,12 @@ class Figure {
     static serialize() {
 //        setup["figure"] = Figure.current.id;
         return Object.values(Figure.figures).map(p => {
-            return [p.type];
+            return [p.type,
+                p.mouse_drag,
+                p.tooltip_sorting,
+                p.color_style,
+                p.dataset_labels
+            ];
         });
     }
 
@@ -45,27 +56,41 @@ class Figure {
 
     focus() {
         Figure.current = this;
-        let ion = $("#axes-type").data("ionRangeSlider");
-        ion.update({from: this.type});
-        ion.options.onChange(); // on load time, make this write aloud the legend (ex: "log/time")
+
+        // migrate all attributes to DOM input values
+        let f = (key, attribute = null) => {
+            let ion = $("#" + key).data("ionRangeSlider");
+            ion.update({from: this[attribute || key.replace(/-/g, "_")]});
+            ion.options.onChange(); // on load time, make this write aloud the legend (ex: "log/time")
+        };
+
+        f("axes-type", "type");
+        f("mouse-drag");
+        f("tooltip-sorting");
+        f("color-style");
+        f("dataset-labels");
         return this;
     }
 
     dom_setup() {
-        let v = this.type = setup["axes-type"];
-        let hide = [Figure.TYPE_LOG_DATASET, Figure.TYPE_PERCENT_TIME].indexOf(v) > -1;
+        // migrate all DOM input values (stored in `setup`) concerning to the object to the attributes
+        let f = (key, attribute = null) => {
+            this[attribute || key.replace(/-/g, "_")] = setup[key]; // setup["mouse-drag"] => this.mouse_drag
+            delete setup[key];
+        };
+        f("axes-type", "type");
+        f("mouse-drag");
+        f("tooltip-sorting");
+        f("color-style");
+        f("dataset-labels");
+
+        // cascade effect -> show/hide adjacent DOM inputs
+        let hide = [Figure.TYPE_LOG_DATASET, Figure.TYPE_PERCENT_TIME].indexOf(this.type) > -1;
 
         // only if we are not in Figure.TYPE_LOG_DATASET mode we can change from line to bar etc.
         // XX Disable this functionality too for Figure.TYPE_PERCENT_TIME. Here we should still have the possibility to change between STACKED_PLOT|TERRITORY.
         $("#plot-type").closest(".range-container").toggle(!hide);
         this.plots.forEach(p => p.refresh_html()); // XX this is not so elegant; we want to refresh all plots (icon might have changed) but Plot.current has already been refreshed
-//
-//        $("#plot-type").data("ionRangeSlider").update({
-//            from_fixed: false
-//        });
-//        this.plots.forEach(p=> p.refresh_html()); // refresh icon
-
-        delete setup["axes-type"];
     }
 
     check_canvas_container() {
@@ -110,11 +135,12 @@ class Figure {
     }
 
     static reset_zoom() {
-        for (let o of Object.values(Figure.figures)) {
+//        Figure.current.chart.resetZoom();
+        for (let o of Object.values(Figure.figures)) { // XXX this should be for current figure only. The figure should know whether it is zoomed.
             let chart = o.chart;
             chart.resetZoom();
-            chart.config.options.plugins.zoom.pan.enabled = false;
-            chart.config.options.plugins.zoom.zoom.enabled = true;
+//            chart.config.options.plugins.zoom.pan.enabled = false;
+//            chart.config.options.plugins.zoom.zoom.enabled = true;
         }
         $("#reset-zoom").fadeOut(500);
     }
@@ -368,25 +394,8 @@ class Figure {
                         zoom: {
                             // Boolean to enable zooming
                             enabled: true,
-
                             // Enable drag-to-zoom behavior
-//                        drag: true,
-
-//                         Drag-to-zoom effect can be customized
-                            drag: {
-                                borderColor: 'rgba(225,225,225,0.3)',
-                                borderWidth: 5,
-                                backgroundColor: 'rgb(225,225,225)',
-                                animationDuration: 0
-                            },
-
-                            // Zooming directions. Remove the appropriate direction to disable
-                            // Eg. 'y' would only allow zooming in the y direction
-                            // A function that is called as the user is zooming and returns the
-                            // available directions can also be used:
-                            //   mode: function({ chart }) {
-                            //     return 'xy';
-                            //   },
+                            drag: false,
                             mode: 'xy',
 
                             rangeMin: {
@@ -399,26 +408,13 @@ class Figure {
                                 x: null,
                                 y: null
                             },
-
                             // Speed of zoom via mouse wheel
                             // (percentage of zoom on a wheel event)
                             speed: 0.1,
-
                             // On category scale, minimal zoom level before actually applying zoom
                             sensitivity: 3,
-
-                            // Function called while the user is zooming
-                            onZoom: function ( {chart}) {
-                                console.log(`I'm zooming!!!`);
-                            },
-                            // Function called once zooming is completed
                             onZoomComplete: function ( {chart}) {
-                                chart.config.options.plugins.zoom.pan.enabled = true;
-                                chart.config.options.plugins.zoom.zoom.enabled = false;
-
                                 $("#reset-zoom").show(); // XX might work for every chart independently
-                                //this.enabled = false;
-                                console.log(`I was zoomed!!!`);
                             }
                         }
                     },
@@ -586,21 +582,26 @@ class Figure {
             // insert new
             Object.values(datasets).forEach(el => this.chart.data.datasets.push(el));
         }
+
+
+        let opt = this.chart.options;
+
+        // Set figure title
         if (!plot_data.length) { // error when processing plot function formula
-            this.chart.options.title.text = "Empty figure " + this.id;
+            opt.title.text = "Empty figure " + this.id;
         } else if (!this.chart.data.datasets.length) {
-            this.chart.options.title.text = "No data";
+            opt.title.text = "No data";
         } else {
-            this.chart.options.title.text = title.join(", ");
+            opt.title.text = title.join(", ");
         }
 
         // Axis X label and type
-        this.chart.options.scales.xAxes[0].scaleLabel.labelString = this.axe_x_title();
-        this.chart.options.scales.xAxes[0].type = this.type === Figure.TYPE_LOG_DATASET ? "logarithmic" : "category";
-        this.chart.options.tooltips.mode = this.is_line ? (this.type === Figure.TYPE_LOG_DATASET ? "x" : "index") : "x";
+        opt.scales.xAxes[0].scaleLabel.labelString = this.axe_x_title();
+        opt.scales.xAxes[0].type = this.type === Figure.TYPE_LOG_DATASET ? "logarithmic" : "category";
+        opt.tooltips.mode = this.is_line ? (this.type === Figure.TYPE_LOG_DATASET ? "x" : "index") : "x";
 
         // Axis Y
-        this.chart.options.scales.yAxes.forEach(axe => {
+        opt.scales.yAxes.forEach(axe => {
             switch (this.type) {
                 case Figure.TYPE_LOG_DATASET:
                 case Figure.TYPE_LOG_TIME:
@@ -618,10 +619,25 @@ class Figure {
         // Show datasets
         Figure.current.chart.options.plugins.datalabels.display = !(this.type === Figure.TYPE_LOG_DATASET);
 
+        // Set zoom plugin
+        [this.chart.config.options.plugins.zoom.zoom.enabled,
+            this.chart.config.options.plugins.zoom.zoom.drag,
+            this.chart.config.options.plugins.zoom.pan.enabled] = {
+            "off": [false, false, false],
+            "zoom": [true, true, false],
+            "pan": [false, false, true],
+            "pan + wheel zoom": [true, false, true]
+        }[Figure.MOUSE_DRAG[this.mouse_drag]];
+
+
         // Submit changes
         this.chart.update();
         this.prepare_export();
         return boundaries;
+    }
+
+    val2label() {
+
     }
 
     prepare_export() {
@@ -681,6 +697,13 @@ $(function () {
     Figure.TYPE_LOG_TIME = 1;
     Figure.TYPE_PERCENT_TIME = 2;
     Figure.TYPE_LOG_DATASET = 3;
+
+
+    Figure.MOUSE_DRAG = ["off", "zoom", "pan", "pan + wheel zoom"];
+    Figure.TOOLTIP_SORTING = ["off", "by value", "by plot", "by dataset"];
+    Figure.COLOR_STYLE = ["territory + plot", "plot", "static"];
+    Figure.DATASET_LABELS = ["off", "default", "label", "values"];
+
 
     /**
      *

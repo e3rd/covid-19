@@ -47,22 +47,22 @@ $(function () {
     $("#mouse-drag").ionRangeSlider({
         skin: "big",
         grid: false,
-        values: ["off", "zoom", "pan"]
+        values: Figure.MOUSE_DRAG
     });
     $("#tooltip-sorting").ionRangeSlider({
         skin: "big",
         grid: false,
-        values: ["off", "by value", "by plot", "by dataset"]
+        values: Figure.TOOLTIP_SORTING
     });
     $("#color-style").ionRangeSlider({
         skin: "big",
         grid: false,
-        values: ["territory + plot", "plot", "static"]
+        values: Figure.COLOR_STYLE
     });
     $("#dataset-labels").ionRangeSlider({
         skin: "big",
         grid: false,
-        values: ["off", "default", "label", "values"]
+        values: Figure.DATASET_LABELS
     });
 //        * checkbox (wheel zooming) XXXXXXxx
 //               * color menu: default (by territory, slightly different), by plot, by static kontrastní dict [červená, bílá, zelená, ...]
