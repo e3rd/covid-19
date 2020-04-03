@@ -59,10 +59,10 @@ $(function () {
         grid: false,
         values: Figure.COLOR_STYLE
     });
-    $("#dataset-labels").ionRangeSlider({
+    $("#data-labels").ionRangeSlider({
         skin: "big",
         grid: false,
-        values: Figure.DATASET_LABELS
+        values: Figure.DATA_LABELS
     });
 //        * checkbox (wheel zooming) XXXXXXxx
 //               * color menu: default (by territory, slightly different), by plot, by static kontrastní dict [červená, bílá, zelená, ...]

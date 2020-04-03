@@ -276,6 +276,23 @@ class Plot {
     }
 
     /**
+     * Get expression color
+     * @returns {#RGB}
+     */
+    color() {
+        switch (this.expression) {
+            case "C":
+                return "#0000FF";
+            case "R":
+                return "#29AC76";
+            case "D":
+                return "#A11E00";
+            default:
+                return intToRGB(hashCode((this.hash + "").repeat(10)))
+        }
+    }
+
+    /**
      *
      * @param {type} territory
      * @param {type} star If null, star will be toggled.

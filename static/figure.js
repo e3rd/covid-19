@@ -6,14 +6,14 @@ let DATASET_BORDER = {
 
 
 class Figure {
-    constructor(type = Figure.TYPE_LOG_TIME, mouse_drag = null, tooltip_sorting = null, color_style = null, dataset_labels = null) {
+    constructor(type = Figure.TYPE_LOG_TIME, mouse_drag = null, tooltip_sorting = null, color_style = null, data_labels = null) {
         this.type = type;
         this.last_type = null;
 
         this.mouse_drag = mouse_drag;
         this.tooltip_sorting = tooltip_sorting;
         this.color_style = color_style;
-        this.dataset_labels = dataset_labels;
+        this.data_labels = data_labels;
 
 
         this.chart = null;
@@ -42,7 +42,7 @@ class Figure {
                 p.mouse_drag,
                 p.tooltip_sorting,
                 p.color_style,
-                p.dataset_labels
+                p.data_labels
             ];
         });
     }
@@ -68,7 +68,7 @@ class Figure {
         f("mouse-drag");
         f("tooltip-sorting");
         f("color-style");
-        f("dataset-labels");
+        f("data-labels");
         return this;
     }
 
@@ -82,7 +82,7 @@ class Figure {
         f("mouse-drag");
         f("tooltip-sorting");
         f("color-style");
-        f("dataset-labels");
+        f("data-labels");
 
         // cascade effect -> show/hide adjacent DOM inputs
         let hide = [Figure.TYPE_LOG_DATASET, Figure.TYPE_PERCENT_TIME].indexOf(this.type) > -1;
@@ -213,7 +213,7 @@ class Figure {
 
     init_chart(type = "line", percentage = false) {
         let figure = this;
-        Chart.plugins.unregister(ChartDataLabels); // XX line should be remove since ChartDataLabels 1.0
+        Chart.plugins.unregister(ChartDataLabels); // XX line should be removed since ChartDataLabels 1.0
         this.hovered_dataset = null;
         return this.chart = new Chart(this.$element, {
             type: type, // changed to bar if there is no line plot
@@ -260,16 +260,7 @@ class Figure {
                 tooltips: {
                     mode: 'index', // mode: 'x' when scatter
                     intersect: false,
-                    itemSort: (a, b, data) => b.yLabel - a.yLabel, // sort by value XXX make this togglable
-//                    itemSort:  (a, b, data) => data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? 1:-1, // sort by dataset name
-//                    itemSort: (a, b, data) => { // sort by plot name, then by dataset name
-//                        console.log("HU", data.datasets[b.datasetIndex], ctx.meta(b.datasetIndex).plot.expression);
-//                        let [i, j] = [ctx.meta(b.datasetIndex).plot.expression, ctx.meta(a.datasetIndex).plot.expression];
-//                        if (i === j) {
-//                            return data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1;
-//                        }
-//                        return i > j ? 1 : -1;
-//                    },
+                    itemSort: null, // set dynamically
                     callbacks: {
                         title: function (el) {
                             if (setup["outbreak-on"]) {
@@ -429,12 +420,13 @@ class Figure {
                             weight: 'bold'
                         },
                         formatter: function (value, item) {
-                            if (figure.type === Figure.TYPE_LOG_DATASET) {
-                                return "";
-                            }
                             try {
-                                return figure.is_line ? value : item.dataset.label;
-                            } catch (e) {
+                                return ({
+                                    "default": figure.is_line ? null : item.dataset.label, // by default shown on bar type only
+                                    "label": item.dataset.label,
+                                    "values": figure.type === Figure.TYPE_LOG_DATASET ? value.x + " " + value.y : value
+                                }[Figure.DATA_LABELS[figure.data_labels]]);
+                            } catch (e) {// XX I forgot the case when an exception happens
 
                             }
                         }
@@ -468,6 +460,7 @@ class Figure {
         let [plot_data, boundaries, title] = Plot.get_data(plots);
         this.plot_data = plot_data;
         let y_axes = new Set();
+        let static_color_i = 0;
 
         /**
          *
@@ -479,8 +472,6 @@ class Figure {
                 continue;
             }
             let chosen_data = [];
-            let [name, label, starred, id] = plot.territory_info(territory);
-            let color = adjust("#" + intToRGB(hashCode(name)), plot.hash);
 
             // XX we may save performance if we pass day-range to Plot.get_data.
             //  However, this might change the calculation of the outbreak start.
@@ -491,16 +482,22 @@ class Figure {
                     chosen_data.push(data[i]);
                 }
             }
-
-            longest_data = Math.max(longest_data, setup["day-range"][0] + chosen_data.length);
-            //console.log("Longest", territory.name, longest_data, chosen_data.length, chosen_data);
-            //console.log("Territory", territory.name, territory.is_starred);
-
             // hide the country from the figure if it has no data (ex: because of the date range settings)
             if (!chosen_data.length) {
                 continue;
             }
-            let border_color = plot.type === Plot.TYPE_STACKED_TERRITORY ? 'rgba(0,0,0,1)' : color; // colours of the same territory are hardly distinguishable
+            longest_data = Math.max(longest_data, setup["day-range"][0] + chosen_data.length);
+
+
+
+            let [name, label, starred, id] = plot.territory_info(territory);
+            let color = {
+                "territory + expression": adjust(intToRGB(hashCode(name)), plot.hash),
+                "expression": plot.color(),
+                "static": palette[static_color_i++]
+            }[Figure.COLOR_STYLE[this.color_style]];
+            let border_color = (plot.type === Plot.TYPE_STACKED_TERRITORY && Figure.COLOR_STYLE[this.color_style] === "territory + expression") ? 'rgba(0,0,0,1)' : color; // colours of the same territory are hardly distinguishable
+
             // push new dataset
             let dataset = datasets[id] = {
                 type: plot.type ? 'bar' : 'line',
@@ -616,18 +613,37 @@ class Figure {
             axe.display = y_axes.has(axe.id);
         });
 
-        // Show datasets
-        Figure.current.chart.options.plugins.datalabels.display = !(this.type === Figure.TYPE_LOG_DATASET);
+        // Apply other figure settings
+        if (this.mouse_drag !== null) { // if at least one attribute is not null, all of the display-menu related attributes are ready
+            // Set zoom plugin
+            [this.chart.config.options.plugins.zoom.zoom.enabled,
+                this.chart.config.options.plugins.zoom.zoom.drag,
+                this.chart.config.options.plugins.zoom.pan.enabled] = {
+                "off": [false, false, false],
+                "zoom": [true, true, false],
+                "pan": [false, false, true],
+                "pan + wheel zoom": [true, false, true]
+            }[Figure.MOUSE_DRAG[this.mouse_drag]];
 
-        // Set zoom plugin
-        [this.chart.config.options.plugins.zoom.zoom.enabled,
-            this.chart.config.options.plugins.zoom.zoom.drag,
-            this.chart.config.options.plugins.zoom.pan.enabled] = {
-            "off": [false, false, false],
-            "zoom": [true, true, false],
-            "pan": [false, false, true],
-            "pan + wheel zoom": [true, false, true]
-        }[Figure.MOUSE_DRAG[this.mouse_drag]];
+            // Tooltip sorting
+            opt.tooltips.itemSort = {
+                "by value": (a, b, data) => b.yLabel - a.yLabel,
+                "by expression": (a, b, data) => { // sort by plot name, then by dataset name
+                    console.log("HU", data.datasets[b.datasetIndex], this.meta(b.datasetIndex).plot.expression);
+                    let [i, j] = [this.meta(b.datasetIndex).plot.expression, this.meta(a.datasetIndex).plot.expression];
+                    if (i === j) {
+                        return data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1;
+                    }
+                    return i > j ? -1 : 1;
+                },
+                "by territory": (a, b, data) => data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1 // sort by dataset name
+            }[Figure.TOOLTIP_SORTING[this.tooltip_sorting]];
+
+
+            // Data labels are off by default when TYPE_LOG_DATASET used
+            let v = Figure.DATA_LABELS[this.data_labels];
+            Figure.current.chart.options.plugins.datalabels.display = v !== "off" && !(v === "default" && this.type === Figure.TYPE_LOG_DATASET);
+        }
 
 
         // Submit changes
@@ -698,11 +714,12 @@ $(function () {
     Figure.TYPE_PERCENT_TIME = 2;
     Figure.TYPE_LOG_DATASET = 3;
 
-
+    // constants
+    // Change everywhere before renaming a constant, however you can re-order freely. The first one becomes the default.
     Figure.MOUSE_DRAG = ["off", "zoom", "pan", "pan + wheel zoom"];
-    Figure.TOOLTIP_SORTING = ["off", "by value", "by plot", "by dataset"];
-    Figure.COLOR_STYLE = ["territory + plot", "plot", "static"];
-    Figure.DATASET_LABELS = ["off", "default", "label", "values"];
+    Figure.TOOLTIP_SORTING = ["by value", "by expression", "by territory"];
+    Figure.COLOR_STYLE = ["territory + expression", "expression", "static"];
+    Figure.DATA_LABELS = ["default", "label", "values", "off"];
 
 
     /**
