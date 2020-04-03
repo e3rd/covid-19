@@ -52,7 +52,7 @@ class Figure {
     }
 
     dom_setup() {
-        let v = Figure.current.type = setup["axes-type"];
+        let v = this.type = setup["axes-type"];
         let hide = [Figure.TYPE_LOG_DATASET, Figure.TYPE_PERCENT_TIME].indexOf(v) > -1;
 
         // only if we are not in Figure.TYPE_LOG_DATASET mode we can change from line to bar etc.
@@ -284,6 +284,10 @@ class Figure {
                 },
                 scales: {
                     xAxes: [{
+//                            ticks: {
+//                                min: 0,
+//                                max: 10 ** 4
+//                            },
                             display: true,
                             scaleLabel: {
                                 display: true
@@ -305,6 +309,8 @@ class Figure {
                                 labelString: i === 1 ? "Cases" : 'Axe ' + i
                             },
                             ticks: {
+//                                min: 0,
+//                                max: 10 ** 4,
                                 callback: function (value, index, values) {
                                     if (figure.type === Figure.TYPE_PERCENT_TIME) {
                                         return value + " %";
@@ -652,7 +658,7 @@ class Figure {
     }
 
     axe_x_title() {
-        let axe_title = setup["single-day"] ? "Day: " + (setup["outbreak-on"] ? setup["day-range"]: Territory.header[setup["day-range"]])  + " ": "";
+        let axe_title = setup["single-day"] ? "Day: " + (setup["outbreak-on"] ? setup["day-range"] : Territory.header[setup["day-range"]]) + " " : "";
         if (this.type === Figure.TYPE_LOG_DATASET) {
             axe_title += "Confirmed cases";
             if (setup["outbreak-on"]) {

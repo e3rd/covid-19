@@ -71,8 +71,9 @@
             </div>
             <input class="refresh" type="checkbox"  id="single-day">
             <label title="Toggle using single day / day range" for="single-day">Single day</label>
+
             <input class="refresh" type="checkbox"  id="average">
-            <!--<label title="Toggle using absolute values / averaged values" for="average">Average</label>-->
+            <label title="Toggle using absolute values / last 7 days averaged values" for="average">Average</label>
         </div>
 
         <div class="range-container range-hide-legend range-short">
@@ -111,12 +112,12 @@
                     <input type="range" id="plot-type" />
                 </div>
             </div>
-<!--            <span>
-                <input class="refresh" type="checkbox"  id="percentage" value="off" title="Stack on 100 %">
-                <label for="percentage">percent</label>
-            </span>-->
-            <input class="refresh" type="checkbox"  id="sum-territories" value="off" title="Sum territories into single curve">
-            <label for="sum-territories">aggregate</label>
+            <!--            <span>
+                            <input class="refresh" type="checkbox"  id="percentage" value="off" title="Stack on 100 %">
+                            <label for="percentage">percent</label>
+                        </span>-->
+            <input class="refresh" type="checkbox"  id="sum-territories" value="off">
+            <label title="Sum territories into single curve" for="sum-territories">aggregate</label>
             <a id="plot-new" class="btn btn-light">+</a>
             <div id="plot-stack"></div>
         </div>
@@ -124,7 +125,7 @@
             Put any arithmetic expression using <code>C</code>/<code>R</code>/<code>D</code> (confirmed/recovered/death),
             <code>NC</code>/<code>NR</code>/<code>ND</code> (newly confirmed/recovered/death cases),
             <code>dNC</code>/<code>dNR</code>/<code>dND</code> (derivation of newly added cases),
-            <code>dC</code> (derivation of cumulative confirmed cases), or <code>P</code> (population) while <code>%</code>=10^2, <code>k</code>=10^3 and <code>M</code>=10^6.
+            <code>dC</code> (derivation of cumulative confirmed cases = <code>NC-ND-NR</code>), or <code>P</code> (population) while <code>%</code>=10^2, <code>k</code>=10^3 and <code>M</code>=10^6.
             <br>Ex: <code>R/(C+R+D)</code>: <i>Total recovered ratio.</i> <code>NR+ND</code>: <i>Newly closed cases.</i>
             <code>P/C</code>: <i>Every n-th person is confirmed.</i>
             <code>C/P</code>: <i>Nth part of the population is confirmed.</i>
@@ -133,6 +134,38 @@
         </p>
         <div class="alert alert-warning" id="plot-alert"></div>
     </div>
+
+<!--    <div id="display-menu"> XXX
+
+
+        <div class="range-container">
+            <label for="day-range">Mouse drag:</label>
+            <div>
+                <input type="range" id="mouse-drag" />
+            </div>
+
+            <input class="refresh" type="checkbox"  id="mouse-wheel-zoom">
+            <label title="" for="mouse-wheel-zoom">wheel zoom</label>
+
+            <input class="refresh" type="checkbox"  id="average">
+            <label title="Toggle using absolute values / averaged values" for="average">Average</label>
+        </div>
+
+        <div class="range-container range-hide-legend range-short">
+            Axes:
+            <div>
+                <input type="range" id="axes-type" data-legend="#axes-type-legend"/>
+            </div>
+        </div>
+        <span class="range-legend" id="axes-type-legend"></span>
+
+        * Mouse drag off / zooming / panning
+        * checkbox (wheel zooming)
+        * tooltips label: off, sort by value, plot, dataset (je to připraveno)
+        * tooltips decimal places (?)
+        * color menu: default (by territory, slightly different), by plot, by static kontrastní dict [červená, bílá, zelená, ...]
+        * toggle dataset label / values / off
+    </div>-->
 
     <div id="export">
         <a class="btn btn-light" id="export-image">Download image</a>

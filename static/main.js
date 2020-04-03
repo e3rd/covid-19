@@ -84,16 +84,16 @@ $(function () {
         let ion = $("#day-range").data("ionRangeSlider");
         let single = $(this).prop("checked");
         let was_single = ion.options.type === "single";
-        if(single !== was_single) {
-            let o ={type: single ? "single" : "double"};
+        if (single !== was_single) {
+            let o = {type: single ? "single" : "double"};
             let c = ion.result;
-            if(single) { // changing to single day
+            if (single) { // changing to single day
                 o._from = c.from;
                 o.from = c.to;
             } else { // changing to multiple day
                 o.from = ion.options._from;
                 o.to = c.from;
-                if(o.to <= o.from) { // we have moved "to" value before previously stored "from" value, reset it
+                if (o.to <= o.from) { // we have moved "to" value before previously stored "from" value, reset it
                     o.from = 0;
                 }
             }
@@ -489,7 +489,6 @@ function dom_setup(allow_window_hash_change = true) {
         } else {
             val = $el.val();
         }
-        //console.log("Refresh setup", key, "from", setup[key], " to ", $el.val());
         setup[key] = val;
     });
 

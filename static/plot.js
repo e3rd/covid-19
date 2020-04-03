@@ -135,7 +135,7 @@ class Plot {
         Object.assign(Plot.current, {
             type: setup["plot-type"],
             aggregate: setup["sum-territories"]
-            //percentage: setup["percentage"]
+                    //percentage: setup["percentage"]
         });
         //$("#percentage").parent().toggle(setup["plot-type"] >= Plot.TYPE_STACKED_PLOT); // show/hide percentage checkbox if the plot uses stacked bar
         delete setup["plot-type"];
@@ -313,55 +313,65 @@ class Plot {
             p.valid = null;
             let aggregated = [];
             for (let t of p.checked) {
-                let C = t.data["confirmed"]; // the length of C must be the same as of Territory.header
-                let R = t.data["recovered"];
-                let D = t.data["deaths"];
                 let chart_data = [];
                 let outbreak_start = null;
                 let ignore = true;
 
+                let averagable = (data) => {
+                    if (setup["average"]) {
+                        return average_stream(data, 7);
+                    } else {
+                        return v => data[v];
+                    }
+                };
+
+                let C = averagable(t.data["confirmed"]); // the length of C must be the same as of Territory.header
+                let R = averagable(t.data["recovered"]);
+                let D = averagable(t.data["deaths"]);
+
+
                 let last_vars = null;
                 for (let j = 0; j < Territory.header.length; j++) {
                     // append the data starting with threshold (while threshold can be number of confirmed cases totally or confirmed cases in population
+                    let c = C(j);
                     if (ignore && // we have not yet passed outbreak
                             (!outbreak_threshold // there is no outbreak
                                     ||
-                                    ((outbreak_population && C[j] >= outbreak_threshold * t.population / 100000) // outbreak determined by population
-                                            || (!outbreak_population && C[j] >= outbreak_threshold) // outbreak determined by constant number of casesz
+                                    ((outbreak_population && c >= outbreak_threshold * t.population / 100000) // outbreak determined by population
+                                            || (!outbreak_population && c >= outbreak_threshold) // outbreak determined by constant number of casesz
                                             ))
                             ) {
                         outbreak_start = j;
                         ignore = false;
                     }
                     if (!ignore) {
-//                        setup["average"]; XXXXXXx
-
                         // value calculation
+
                         let vars = {
-                            "R": R[j],
-                            "D": D[j],
-                            "C": C[j],
+                            "R": R(j),
+                            "D": D(j),
+                            "C": c,
                             "P": t.population,
                             "k": "1000",
                             "M": 1000000
                         };
 
                         if (last_vars) {
-                            vars["NR"] = R[j] - last_vars["R"]; // == dR
-                            vars["ND"] = D[j] - last_vars["D"]; // == dD
-                            vars["NC"] = C[j] - last_vars["C"] + vars["NR"] + vars["ND"];
+                            vars["NR"] = vars["R"] - last_vars["R"]; // == dR
+                            vars["ND"] = vars["D"] - last_vars["D"]; // == dD
+                            vars["NC"] = vars["C"] - last_vars["C"] + vars["NR"] + vars["ND"];
 
-                            vars["dC"] = C[j] - last_vars["C"];
+                            vars["dC"] = vars["C"] - last_vars["C"];
 
                             vars["dNC"] = vars["NC"] - last_vars["NC"];
                             vars["dNR"] = vars["NR"] - last_vars["NR"];
                             vars["dND"] = vars["ND"] - last_vars["ND"];
                         } else {
-                            vars["NR"] = R[j]; // == dR
-                            vars["ND"] = D[j]; // == dD
-                            vars["NC"] = C[j];
+                            vars["NR"] = vars["R"]; // == dR
+                            vars["ND"] = vars["D"]; // == dD
+                            vars["NC"] = vars["C"];
 
-                            vars["dC"] = C[j];
+                            vars["dC"] = vars["C"];
 
                             vars["dNC"] = vars["NC"];
                             vars["dNR"] = vars["NR"];
@@ -437,7 +447,8 @@ class Plot {
                                 t.population
                             ];
                             if (p.figure.type === Figure.TYPE_LOG_DATASET) {
-                                chart_data.push({x: C[j], y: result});
+                                chart_data.push({x: vars["C"], y: result}); // XXX
+//                                chart_data.push({x: C[j], y: result});
                             } else {
                                 chart_data.push(result);
                             }

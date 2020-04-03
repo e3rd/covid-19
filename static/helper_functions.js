@@ -30,7 +30,7 @@ function intToRGB(i) {
  * @returns {String}
  */
 function adjust(color, amount) {
-    return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+    return '#' + color.replace(/^#/, '').replace(/../g, color => ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
 }
 
 /**
@@ -308,4 +308,32 @@ function make_thumbnail(oldCanvas) {
     context.scale(scale, scale);
     context.drawImage(oldCanvas, 0, 0);
     return newCanvas;
+}
+
+
+/**
+ * Average number generator.
+ * @param {int} len Max queue length
+ * @returns {Function}
+ */
+//function average_stream(len = 3) {
+//        q = [];
+//        return (v) => {
+//            q.push(v);
+//            if (q.length > len) { // XXX ignore zeros between non-zeros?
+//                q.shift();
+//            }
+//            return q.sum() / q.length; // yield average value
+//        };
+//    }
+
+/**
+ * @param {Array} d Dataset.
+ * @param {int} len Number of items the result is averaged from.
+ * @returns {Function} When called, yields averaged value for the given position.
+ */
+function average_stream(d, len = 7) {
+    return i => {
+        return Math.round(d.slice(i - len + 1, i + 1).sum() / len);
+    };
 }
