@@ -134,13 +134,14 @@ class Figure {
         Object.values(Figure.figures).forEach(f => f.chart && f.chart.resize());
     }
 
+    /**
+     * Resets zoom for all figures.
+     * @returns {undefined}
+     */
     static reset_zoom() {
-//        Figure.current.chart.resetZoom();
-        for (let o of Object.values(Figure.figures)) { // XXX this should be for current figure only. The figure should know whether it is zoomed.
+        for (let o of Object.values(Figure.figures)) {
             let chart = o.chart;
             chart.resetZoom();
-//            chart.config.options.plugins.zoom.pan.enabled = false;
-//            chart.config.options.plugins.zoom.zoom.enabled = true;
         }
         $("#reset-zoom").fadeOut(500);
     }
@@ -265,36 +266,36 @@ class Figure {
                         title: function (el) {
                             if (setup["outbreak-on"]) {
                                 if (setup["outbreak-mode"]) {
-                                    return "Population outbreak day " + el[0].xLabel; // XXX replace by label
+                                    return "Population outbreak day " + el[0].label;
                                 }
-                                return "Confirmed case outbreak day " + el[0].xLabel;
+                                return "Confirmed case outbreak day " + el[0].label;
                             } else {
-                                return new Date(el[0].xLabel).toYMD();
+                                return new Date(el[0].label).toYMD();
                             }
                         },
                         label: function (el, data) {
                             let label = data.datasets[el.datasetIndex].label || '';
+                            let v = isNaN(el.value) ? "no data" : Math.round(el.value * 10000) / 10000;
                             if (el.datasetIndex === figure.hovered_dataset) {
                                 label = "→ " + label;
                             }
 
                             if (this.type === Figure.TYPE_LOG_DATASET) { // Absolute numbers axe X
-                                label += ` (${el.xLabel}, ${el.yLabel})`; // XXX replace by yLabel => value
+                                label += ` (${el.label}, ${v})`;
                             } else {
                                 // Timeline axe X
                                 if (label) {
                                     label += ': ';
                                 }
-                                label += Math.round(el.yLabel * 10000) / 10000;
+                                label += v;
                                 if (setup["outbreak-on"]) {
                                     let start = figure.meta(el.datasetIndex).outbreak_start;
                                     if (start) { // if aggregating, outbreak_start is not known
-                                        let day = Territory.header[parseInt(start) + parseInt(el.xLabel)];
-                                        label += " (" + (new Date(day).toYMD()) + ")";
+                                        let day = Territory.header[parseInt(start) + parseInt(el.label)];
+                                        label += " (" + (day === undefined ? "for the given territory, this is a future date": (new Date(day).toYMD())  )+ ")";
                                     }
                                 }
                             }
-
                             return label;
                         }
                     }
@@ -364,23 +365,11 @@ class Figure {
                                 x: null,
                                 y: null
                             },
-
                             // On category scale, factor of pan velocity
                             speed: 20,
-
                             // Minimal pan distance required before actually applying pan
-                            threshold: 10,
-
-                            // Function called while the user is panning
-                            onPan: function ( {chart}) {
-                                console.log(`I'm panning!!!`);
-                            },
-                            // Function called once panning is completed
-                            onPanComplete: function ( {chart}) {
-                                console.log(`I was panned!!!`);
-                            }
+                            threshold: 1
                         },
-
                         // Container for zoom options
                         zoom: {
                             // Boolean to enable zooming
@@ -404,8 +393,8 @@ class Figure {
                             speed: 0.1,
                             // On category scale, minimal zoom level before actually applying zoom
                             sensitivity: 3,
-                            onZoomComplete: function ( {chart}) {
-                                $("#reset-zoom").show(); // XX might work for every chart independently
+                            onZoomComplete: function () {
+                                $("#reset-zoom").show();
                             }
                         }
                     },
@@ -469,7 +458,7 @@ class Figure {
         for (let [plot, territory, data, outbreak_start] of plot_data) {
             // choose only some days in range
             if (!data.length) {
-                if(!plot.valid) {
+                if (!plot.valid) {
                     return false;
                 }
                 continue;
@@ -529,7 +518,7 @@ class Figure {
 //            console.log("Dataset", label, chosen_data);
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }
-        let r = range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
+        let r = setup["single-day"] ? [setup["day-range"]] : range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
         let labels = this.type === Figure.TYPE_LOG_DATASET ? null : (setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)]));
 
 
@@ -616,18 +605,20 @@ class Figure {
         // Apply other figure settings
         if (this.mouse_drag !== null) { // if at least one attribute is not null, all of the display-menu related attributes are ready
             // Set zoom plugin
-            [this.chart.config.options.plugins.zoom.zoom.enabled,
-                this.chart.config.options.plugins.zoom.zoom.drag,
-                this.chart.config.options.plugins.zoom.pan.enabled] = {
+            let z = this.chart.config.options.plugins.zoom;
+            [z.zoom.enabled,
+                z.zoom.drag,
+                z.pan.enabled] = {
                 "off": [false, false, false],
                 "zoom": [true, true, false],
                 "pan": [false, false, true],
                 "pan + wheel zoom": [true, false, true]
             }[Figure.MOUSE_DRAG[this.mouse_drag]];
+            //this.$element.toggleClass("grabbable", z.zoom.enabled || z.pan.enabled);
 
             // Tooltip sorting
             opt.tooltips.itemSort = {
-                "by value": (a, b, data) => b.yLabel - a.yLabel,
+                "by value": (a, b, data) => b.value - a.value,
                 "by expression": (a, b, data) => { // sort by plot name, then by dataset name
                     console.log("HU", data.datasets[b.datasetIndex], this.meta(b.datasetIndex).plot.expression);
                     let [i, j] = [this.meta(b.datasetIndex).plot.expression, this.meta(a.datasetIndex).plot.expression];

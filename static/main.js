@@ -120,10 +120,12 @@ $(function () {
             let c = ion.result;
             if (single) { // changing to single day
                 o._from = c.from;
-                o.from = c.to;
+                o.from = c.to - 1;
+                o.max = c.max - 1;
             } else { // changing to multiple day
                 o.from = ion.options._from;
-                o.to = c.from;
+                o.to = c.from + 1;
+                o.max = c.max + 1;
                 if (o.to <= o.from) { // we have moved "to" value before previously stored "from" value, reset it
                     o.from = 0;
                 }
