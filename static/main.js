@@ -43,6 +43,33 @@ $(function () {
         onChange: Figure.chart_size
     });
 
+    // display menu
+    $("#mouse-drag").ionRangeSlider({
+        skin: "big",
+        grid: false,
+        values: ["off", "zoom", "pan"]
+    });
+    $("#tooltip-sorting").ionRangeSlider({
+        skin: "big",
+        grid: false,
+        values: ["off", "by value", "by plot", "by dataset"]
+    });
+    $("#color-style").ionRangeSlider({
+        skin: "big",
+        grid: false,
+        values: ["territory + plot", "plot", "static"]
+    });
+    $("#dataset-labels").ionRangeSlider({
+        skin: "big",
+        grid: false,
+        values: ["off", "default", "label", "values"]
+    });
+//        * checkbox (wheel zooming) XXXXXXxx
+//               * color menu: default (by territory, slightly different), by plot, by static kontrastní dict [červená, bílá, zelená, ...]
+//        * toggle dataset default / label / values / off
+
+
+    // axes menu
     $("#plot-type").ionRangeSlider({
         skin: "big",
         grid: false,

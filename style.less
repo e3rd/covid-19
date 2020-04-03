@@ -83,9 +83,19 @@ form {
         width:70px;
         margin-right: 20px;
     }
-    > div:last-of-type {
+    span.irs {
         flex: 1;
     }
+    > div:last-of-type {
+        flex:1;
+        //width: 100%;
+    }
+    /*    > div:last-of-type {
+            display:inline-flex;
+            span.irs {
+                flex: 1;
+            }
+        }*/
 
     &.range-hide-legend .irs{ // hide max min at the chart-size range
                               .irs-min, .irs-max {
@@ -94,10 +104,12 @@ form {
     }
     &.range-short {
         display:inline-flex;
-        width:100px;
-        .irs--big { // compensation so that they are inline
-                    height: 23px;
-                    top: -23px;
+        > div {
+            width:100px;
+            .irs--big { // compensation so that they are inline
+                        height: 23px;
+                        top: -23px;
+            }
         }
     }
 }

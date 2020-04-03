@@ -32,6 +32,12 @@
             <input type="checkbox" class="custom-control-input" id="y-axis-independency-switch" data-target=".y-axis" data-parent="#plot-multiple-switch">
             <label class="custom-control-label" for="y-axis-independency-switch">Allow multiple y-axis</label>
         </div>
+
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="display-menu-switch" data-target="#display-menu">
+            <label class="custom-control-label" for="display-menu-switch">Display menu</label>
+        </div>
+
         <div class="custom-control custom-switch">
             <input type="checkbox" class="custom-control-input" id="export-switch">
             <label class="custom-control-label" for="export-switch">Export</label>
@@ -135,37 +141,50 @@
         <div class="alert alert-warning" id="plot-alert"></div>
     </div>
 
-<!--    <div id="display-menu"> XXX
+    <div id="display-menu">
 
 
-        <div class="range-container">
+        <div class="range-container range-hide-legend range-short">
             <label for="day-range">Mouse drag:</label>
             <div>
                 <input type="range" id="mouse-drag" />
             </div>
+        </div>
 
-            <input class="refresh" type="checkbox"  id="mouse-wheel-zoom">
-            <label title="" for="mouse-wheel-zoom">wheel zoom</label>
+        <input class="refresh" type="checkbox"  id="mouse-wheel-zoom">
+        <label title="" for="mouse-wheel-zoom">wheel zoom</label>
 
-            <input class="refresh" type="checkbox"  id="average">
-            <label title="Toggle using absolute values / averaged values" for="average">Average</label>
+        <div class="range-container range-hide-legend range-short">
+            <label for="tooltip-sorting">Tooltip sorting:</label>
+            <div>
+                <input type="range" id="tooltip-sorting" />
+            </div>
+        </div>
+
+        <!-- XX tooltips decimal places (?)-->
+
+        <div class="range-container range-hide-legend range-short">
+            <label for="color-style">Colours:</label>
+            <div>
+                <input type="range" id="color-style" />
+            </div>
         </div>
 
         <div class="range-container range-hide-legend range-short">
-            Axes:
+            <label for="dataset-labels">Dataset labels:</label>
             <div>
-                <input type="range" id="axes-type" data-legend="#axes-type-legend"/>
+                <input type="range" id="dataset-labels" />
             </div>
         </div>
-        <span class="range-legend" id="axes-type-legend"></span>
 
-        * Mouse drag off / zooming / panning
-        * checkbox (wheel zooming)
-        * tooltips label: off, sort by value, plot, dataset (je to připraveno)
-        * tooltips decimal places (?)
-        * color menu: default (by territory, slightly different), by plot, by static kontrastní dict [červená, bílá, zelená, ...]
-        * toggle dataset label / values / off
-    </div>-->
+        <!--        <div class="range-container range-hide-legend range-short">
+                    Axes:
+                    <div>
+                        <input type="range" id="axes-type" data-legend="#axes-type-legend"/>
+                    </div>
+                </div>
+                <span class="range-legend" id="axes-type-legend"></span>-->
+    </div>
 
     <div id="export">
         <a class="btn btn-light" id="export-image">Download image</a>
