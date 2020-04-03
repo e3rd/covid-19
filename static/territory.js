@@ -15,7 +15,7 @@ class Territory {
         this.is_eye_on = null;
         this.id = ++counter;
         this.dom_id = "t" + (this.id);
-        this.data = {"confirmed": [], "deaths": [], "recovered": []};
+        this.data = {"confirmed": [], "deaths": [], "recovered": [], "tested": []};
         this.population = null;
 
         /** @type {Territory[]} */
@@ -380,10 +380,8 @@ class Territory {
         }
         // data sheets have sometimes different length but start at the same day. We pick the longest.
         if (headers.length > Territory.header.length) {
-            Territory.header = headers;
-            //Territory.header.length=10; X shorten header to debug day-range
+            Territory.header = headers.map(h => new Date(h));
         }
-
 
         for (let i = 1; i < lines.length; i++) {
             if (!lines[i]) {
@@ -406,6 +404,19 @@ class Territory {
                 ch.add_data(data, type);
             }
         }
+    }
+
+    // Raw data from MVCR
+    static build_json(json) {
+        let data_cz = json.data.map(d => d["testy-celkem"]);
+
+        let start = Date.from_dmy(json.data[0]["datum"]);
+        let i = Territory.header.findIndex(h => !(h < start)); // JS cannot simple tell if dates are equal
+        if(i === -1) {
+            console.error("Cannot bind czech tests date.");
+            return false;
+        }
+        Territory.get("Czechia", Territory.COUNTRY).add_data((new Array(i).fill(0)).concat(data_cz), "tested");
     }
 
     /**

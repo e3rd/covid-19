@@ -193,20 +193,35 @@ function logslider(minp = 0, maxp = 100, minv = 100, max_v = 10000000) {
 /**
  * Thanks to https://stackoverflow.com/a/2280117/2036148
  */
-Date.prototype.toYMD = Date_toYMD;
-function Date_toYMD() {
-    var year, month, day;
-    year = String(this.getFullYear());
-    month = String(this.getMonth() + 1);
-    if (month.length == 1) {
-        month = "0" + month;
-    }
-    day = String(this.getDate());
-    if (day.length == 1) {
-        day = "0" + day;
-    }
-    return year + "-" + month + "-" + day;
-}
+Object.defineProperty(Date.prototype, "toYMD", {
+    value: function () {
+        let year = String(this.getFullYear());
+        let month = String(this.getMonth() + 1);
+        if (month.length === 1) {
+            month = "0" + month;
+        }
+        let day = String(this.getDate());
+        if (day.length === 1) {
+            day = "0" + day;
+        }
+        return year + "-" + month + "-" + day;
+    }}
+);
+
+/**
+ * I will never understand why vanilla JS is so poor in date format handling.
+ */
+Object.defineProperty(Date.prototype, "toDM", {
+    value: function () {
+        let month = String(this.getMonth() + 1);
+        let day = String(this.getDate());
+        return `${day}. ${month}.`;
+    }}
+);
+Date.from_dmy = function (date) {
+    let d = date.split(".").reverse();
+    return new Date(d[0], d[1] - 1, d[2]);
+};
 
 
 /**
@@ -338,4 +353,5 @@ function average_stream(d, len = 7) {
     };
 }
 
+// distinct color palette
 var palette = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac", "#b77322", "#16d620", "#b91383", "#f4359e", "#9c5935", "#a9c413", "#2a778d", "#668d1c", "#bea413", "#0c5922", "#743411"];

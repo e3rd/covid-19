@@ -100,14 +100,7 @@ $(function () {
         grid: true,
         from: 1,
         values: [1]
-    });// XXX.data("bound-$input", $("#outbreak-value"));
-
-//    $("#outbreak-value").change(function () {
-//        // update corresponding slider to have to nearest value possible
-//        //console.log("Outbreak value change to VAL:", $(this).val());
-//        alert("55");
-//        set_slider($("#outbreak-threshold"), $(this).val());
-//    });
+    });
 
     // single day switch
     $("#single-day").change(function () {
@@ -302,11 +295,14 @@ $(function () {
 
 
     // runtime
+    let tests_czech;
     $.when(// we need to build Territory objects from CSV first
-            $.get(url_pattern + "confirmed_global.csv", (data) => Territory.build(data, "confirmed")),
-            $.get(url_pattern + "deaths_global.csv", (data) => Territory.build(data, "deaths")),
-            $.get(url_pattern + "recovered_global.csv", (data) => Territory.build(data, "recovered")),
+            $.get(url_pattern + "confirmed_global.csv", data => Territory.build(data, "confirmed")),
+            $.get(url_pattern + "deaths_global.csv", data => Territory.build(data, "deaths")),
+            $.get(url_pattern + "recovered_global.csv", data => Territory.build(data, "recovered")),
+            $.getJSON("https://onemocneni-aktualne.mzcr.cz/api/v1/covid-19/testy.min.json", json => tests_czech = json)
             ).then(() => {
+        Territory.build_json(tests_czech); // we have to be sure another built is completed => Territory.header is set and we know its beginning
         Territory.finalize();
 
         // setup options according to data boundaries

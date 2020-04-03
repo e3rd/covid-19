@@ -9,14 +9,17 @@ let variables = {
     "R": "recovered",
     "D": "death",
     "C": "confirmed",
+    "T": "confirmed",
     "P": "population",
     "NR": "newly recovered",
     "ND": "newly deceased",
     "NC": "newly confirmed",
+    "NT": "newly tested",
     "dC": "confirmed derivation",
     "dNC": "newly confirmed derivation",
-    "dND": "newly deceased derivation",
     "dNR": "newly recovered derivation",
+    "dND": "newly deceased derivation",
+    "dNT": "newly tested derivation",
     "%": "100",
     "k": "1 000",
     "M": "1 000 000"
@@ -27,7 +30,8 @@ for (let v in variables) {
 let units = {// since calculate.js cannot parse two paranthesis `(C)(100)` as multiplication, we have to manually define all shorthands
     "C%": "C*10^2", "Ck": "C*10^3", "CM": "C*10^6",
     "R%": "R*10^2", "Rk": "R*10^3", "RM": "R*10^6",
-    "D%": "D*10^2", "Dk": "D*10^3", "DM": "D*10^6"
+    "D%": "D*10^2", "Dk": "D*10^3", "DM": "D*10^6",
+    "T%": "T*10^2", "Tk": "T*10^3", "TM": "T*10^6"
 };
 
 class Plot {
@@ -345,6 +349,7 @@ class Plot {
                 let C = averagable(t.data["confirmed"]); // the length of C must be the same as of Territory.header
                 let R = averagable(t.data["recovered"]);
                 let D = averagable(t.data["deaths"]);
+                let T = averagable(t.data["tested"]);
 
 
                 let last_vars = null;
@@ -368,6 +373,7 @@ class Plot {
                             "R": R(j),
                             "D": D(j),
                             "C": c,
+                            "T": T(j),
                             "P": t.population,
                             "k": "1000",
                             "M": 1000000
@@ -377,22 +383,26 @@ class Plot {
                             vars["NR"] = vars["R"] - last_vars["R"]; // == dR
                             vars["ND"] = vars["D"] - last_vars["D"]; // == dD
                             vars["NC"] = vars["C"] - last_vars["C"] + vars["NR"] + vars["ND"];
+                            vars["NT"] = vars["T"] - last_vars["T"]; // == dT
 
                             vars["dC"] = vars["C"] - last_vars["C"];
 
                             vars["dNC"] = vars["NC"] - last_vars["NC"];
                             vars["dNR"] = vars["NR"] - last_vars["NR"];
                             vars["dND"] = vars["ND"] - last_vars["ND"];
+                            vars["dNT"] = vars["NT"] - last_vars["NT"];
                         } else {
                             vars["NR"] = vars["R"]; // == dR
                             vars["ND"] = vars["D"]; // == dD
                             vars["NC"] = vars["C"];
+                            vars["NT"] = vars["T"]; // = dT
 
                             vars["dC"] = vars["C"];
 
                             vars["dNC"] = vars["NC"];
                             vars["dNR"] = vars["NR"];
                             vars["dND"] = vars["ND"];
+                            vars["dNT"] = vars["NT"];
                         }
 
                         last_vars = vars;
@@ -435,7 +445,7 @@ class Plot {
 //                        }
 //                        console.log("Numeral" , numeral);
 //                        let result = Calculation.calculate(numeral.join(""));
-//                        console.log("CALC", vars, p.express(vars));
+//                        console.log("CALC", vars, p.express(vars, true));
                         let result;
                         try {
                             result = p.express(vars, true);
@@ -453,7 +463,7 @@ class Plot {
                         $("#plot-alert").hide();
                         if (typeof (result) === "string") { // error encountered
                             if (p.expression.trim()) {
-                                $("#plot-alert").show().html("<b>Use one of the following variables: <code>C R D NC NR ND dC dNC dNR dND P M k</code></b> (" + result + ")");
+                                $("#plot-alert").show().html("<b>Use one of the following variables: <code>C R D T NC NR ND NT dC dNC dNR dND dNT P M k</code></b> (" + result + ")");
                             }
                             p.valid = false;
                             break;
@@ -504,8 +514,8 @@ class Plot {
      */
     express(vars, check_NaN = false) {
         return this.expression
-                .replace(/(C%)|(Ck)|(CM)/g, m => units[m]) // first replace units ex: `C% => C * 100` because calculation.js cannot multiply by default when parsing `(C)(100)`
-                .replace(/(dNC)|(dND)|(dNR)|(dC)|(NC)|(ND)|(NR)|[CRDPkM]/g, m => {
+                .replace(/(C%)|(Ck)|(CM)|(R%)|(Rk)|(RM)|(D%)|(Dk)|(DM)|(T%)|(Tk)|(TM)/g, m => units[m]) // first replace units ex: `C% => C * 100` because calculation.js cannot multiply by default when parsing `(C)(100)`
+                .replace(/(dNC)|(dNR)|(dND)|(dNT)|(dC)|(NC)|(ND)|(NR)|(NT)|[CRDTPkM]/g, m => {
                     let v = vars[m];
                     if (check_NaN && isNaN(v)) {
                         throw new NaNException();

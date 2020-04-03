@@ -270,7 +270,7 @@ class Figure {
                                 }
                                 return "Confirmed case outbreak day " + el[0].label;
                             } else {
-                                return new Date(el[0].label).toYMD();
+                                return el[0].label;
                             }
                         },
                         label: function (el, data) {
@@ -292,7 +292,7 @@ class Figure {
                                     let start = figure.meta(el.datasetIndex).outbreak_start;
                                     if (start) { // if aggregating, outbreak_start is not known
                                         let day = Territory.header[parseInt(start) + parseInt(el.label)];
-                                        label += " (" + (day === undefined ? "for the given territory, this is a future date": (new Date(day).toYMD())  )+ ")";
+                                        label += " (" + (day === undefined ? "for the given territory, this is a future date": day.toYMD() )+ ")";
                                     }
                                 }
                             }
@@ -519,7 +519,7 @@ class Figure {
             //console.log("Push name", plot.get_name(), plot.id, territory);
         }
         let r = setup["single-day"] ? [setup["day-range"]] : range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
-        let labels = this.type === Figure.TYPE_LOG_DATASET ? null : (setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)]));
+        let labels = this.type === Figure.TYPE_LOG_DATASET ? null : (setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)].toDM()));
 
 
 
@@ -681,7 +681,7 @@ class Figure {
     }
 
     axe_x_title() {
-        let axe_title = setup["single-day"] ? "Day: " + (setup["outbreak-on"] ? setup["day-range"] : Territory.header[setup["day-range"]]) + " " : "";
+        let axe_title = setup["single-day"] ? "Day: " + (setup["outbreak-on"] ? setup["day-range"] : Territory.header[setup["day-range"]].toDM()) + " " : "";
         if (this.type === Figure.TYPE_LOG_DATASET) {
             axe_title += "Confirmed cases";
             if (setup["outbreak-on"]) {

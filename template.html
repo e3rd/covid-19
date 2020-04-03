@@ -128,10 +128,11 @@
             <div id="plot-stack"></div>
         </div>
         <p id="plot-hint">
-            Put any arithmetic expression using <code>C</code>/<code>R</code>/<code>D</code> (confirmed/recovered/death),
-            <code>NC</code>/<code>NR</code>/<code>ND</code> (newly confirmed/recovered/death cases),
-            <code>dNC</code>/<code>dNR</code>/<code>dND</code> (derivation of newly added cases),
+            Put any arithmetic expression using <code>C</code>/<code>R</code>/<code>D</code>/<code>T</code> (confirmed/recovered/death/tested),
+            <code>NC</code>/<code>NR</code>/<code>ND</code>/<code>NT</code> (newly confirmed/recovered/death/tested cases),
+            <code>dNC</code>/<code>dNR</code>/<code>dND</code>/<code>dNT</code> (derivation of newly added cases),
             <code>dC</code> (derivation of cumulative confirmed cases = <code>NC-ND-NR</code>), or <code>P</code> (population) while <code>%</code>=10^2, <code>k</code>=10^3 and <code>M</code>=10^6.
+            Note that `tested` are available for Czechia only.
             <br>Ex: <code>R/(C+R+D)</code>: <i>Total recovered ratio.</i> <code>NR+ND</code>: <i>Newly closed cases.</i>
             <code>P/C</code>: <i>Every n-th person is confirmed.</i>
             <code>C/P</code>: <i>Nth part of the population is confirmed.</i>
