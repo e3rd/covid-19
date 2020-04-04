@@ -141,6 +141,14 @@ $(function () {
     // sliders input change
     $("#setup input.irs-hidden-input").each(function () {
         let ion = $(this).data("ionRangeSlider");
+
+        $(`label[for=${ion.input.id}]`).click(() => {
+            $(this).siblings("span.irs").find(".irs-handle.from").focus()
+            console.log("ZDEE", $(this).siblings("span.irs").find(".irs-handle.from"));
+            return false;
+        })
+        // make labels focus the ion
+
         let opt = $(this).data("ionRangeSlider").options;
         if ($(this).closest("#view-menu").length) {
             // we are in the view menu DOM context

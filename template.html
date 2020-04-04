@@ -10,11 +10,11 @@
                 </div>-->
         <div class="custom-control custom-switch">
             <input type="checkbox" class="custom-control-input" id="axes-options-switch" checked>
-            <label class="custom-control-label" for="axes-options-switch">Axes options</label>
+            <label class="custom-control-label" for="axes-options-switch">Axes</label>
         </div>
         <div class="custom-control custom-switch">
             <input type="checkbox" class="custom-control-input" id="outbreak-switch" checked data-target="#outbreak-container">
-            <label class="custom-control-label" for="outbreak-switch">Outbreak shift</label>
+            <label class="custom-control-label" for="outbreak-switch">Computation</label>
         </div>
         <div class="custom-control custom-switch">
             <input type="checkbox" class="custom-control-input" id="plot-options-switch">
@@ -70,6 +70,14 @@
 
     <div id="axes-options">
 
+        <div class="range-container range-hide-legend range-short">
+            Axes:
+            <div>
+                <input type="range" id="axes-type" />  <!--data-legend="#axes-type-legend"-->
+            </div>
+<!--            <span class="range-legend" id="axes-type-legend"></span>-->
+        </div>
+
         <div class="range-container">
             <label for="day-range">Days visible:</label>
             <div>
@@ -77,24 +85,17 @@
             </div>
             <input class="refresh" type="checkbox"  id="single-day">
             <label title="Toggle using single day / day range" for="single-day">Single day</label>
-
-            <input class="refresh" type="checkbox"  id="average">
-            <label title="Toggle using absolute values / last 7 days averaged values" for="average">Average</label>
         </div>
-
-        <div class="range-container range-hide-legend range-short">
-            Axes:
-            <div>
-                <input type="range" id="axes-type" data-legend="#axes-type-legend"/>
-            </div>
-        </div>
-        <span class="range-legend" id="axes-type-legend"></span>
     </div>
 
+
     <div class="range-container" id="outbreak-container">
+        <input class="refresh" type="checkbox"  id="average">
+        <label title="Toggle using absolute values / last 7 days averaged values" for="average">Average</label>
+
         <div>
             <input class="refresh" type="checkbox"  id="outbreak-on" value="off">
-            <label for="outbreak-on">Outbreak</label>
+            <label title="Turn on outbreak shift -> dataset will start the day when confirmed cases in the given territory reaches certain the number" for="outbreak-on">Outbreak</label>
         </div>
         <div>
             <label><input type="checkbox"  id="outbreak-mode" value="off">~ population</label>
