@@ -6,7 +6,7 @@ let DATASET_BORDER = {
 
 
 class Figure {
-    constructor(type = Figure.TYPE_LOG_TIME, mouse_drag = null, tooltip_sorting = null, color_style = null, data_labels = null) {
+    constructor(type = Figure.TYPE_LOG_TIME, mouse_drag = 0, tooltip_sorting = 0, color_style = 0, data_labels = 0) {
         this.type = type;
         this.last_type = null;
 
@@ -292,7 +292,7 @@ class Figure {
                                     let start = figure.meta(el.datasetIndex).outbreak_start;
                                     if (start) { // if aggregating, outbreak_start is not known
                                         let day = Territory.header[parseInt(start) + parseInt(el.label)];
-                                        label += " (" + (day === undefined ? "for the given territory, this is a future date": day.toYMD() )+ ")";
+                                        label += " (" + (day === undefined ? "for the given territory, this is a future date" : day.toYMD()) + ")";
                                     }
                                 }
                             }
@@ -603,38 +603,37 @@ class Figure {
         });
 
         // Apply other figure settings
-        if (this.mouse_drag !== null) { // if at least one attribute is not null, all of the display-menu related attributes are ready
-            // Set zoom plugin
-            let z = this.chart.config.options.plugins.zoom;
-            [z.zoom.enabled,
-                z.zoom.drag,
-                z.pan.enabled] = {
-                "off": [false, false, false],
-                "zoom": [true, true, false],
-                "pan": [false, false, true],
-                "pan + wheel zoom": [true, false, true]
-            }[Figure.MOUSE_DRAG[this.mouse_drag]];
-            //this.$element.toggleClass("grabbable", z.zoom.enabled || z.pan.enabled);
 
-            // Tooltip sorting
-            opt.tooltips.itemSort = {
-                "by value": (a, b, data) => b.value - a.value,
-                "by expression": (a, b, data) => { // sort by equation name, then by dataset name
-                    console.log("HU", data.datasets[b.datasetIndex], this.meta(b.datasetIndex).equation.expression);
-                    let [i, j] = [this.meta(b.datasetIndex).equation.expression, this.meta(a.datasetIndex).equation.expression];
-                    if (i === j) {
-                        return data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1;
-                    }
-                    return i > j ? -1 : 1;
-                },
-                "by territory": (a, b, data) => data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1 // sort by dataset name
-            }[Figure.TOOLTIP_SORTING[this.tooltip_sorting]];
+        // Set zoom plugin
+        let z = this.chart.config.options.plugins.zoom;
+        [z.zoom.enabled,
+            z.zoom.drag,
+            z.pan.enabled] = {
+            "off": [false, false, false],
+            "zoom": [true, true, false],
+            "pan": [false, false, true],
+            "pan + wheel zoom": [true, false, true]
+        }[Figure.MOUSE_DRAG[this.mouse_drag]];
+        //this.$element.toggleClass("grabbable", z.zoom.enabled || z.pan.enabled);
+
+        // Tooltip sorting
+        opt.tooltips.itemSort = {
+            "by value": (a, b, data) => b.value - a.value,
+            "by expression": (a, b, data) => { // sort by equation name, then by dataset name
+                console.log("HU", data.datasets[b.datasetIndex], this.meta(b.datasetIndex).equation.expression);
+                let [i, j] = [this.meta(b.datasetIndex).equation.expression, this.meta(a.datasetIndex).equation.expression];
+                if (i === j) {
+                    return data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1;
+                }
+                return i > j ? -1 : 1;
+            },
+            "by territory": (a, b, data) => data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1 // sort by dataset name
+        }[Figure.TOOLTIP_SORTING[this.tooltip_sorting]];
 
 
-            // Data labels are off by default when TYPE_LOG_DATASET used
-            let v = Figure.DATA_LABELS[this.data_labels];
-            Figure.current.chart.options.plugins.datalabels.display = v !== "off" && !(v === "default" && this.type === Figure.TYPE_LOG_DATASET);
-        }
+        // Data labels are off by default when TYPE_LOG_DATASET used
+        let v = Figure.DATA_LABELS[this.data_labels];
+        opt.plugins.datalabels.display = v !== "off" && !(v === "default" && this.type === Figure.TYPE_LOG_DATASET);
 
 
         // Submit changes
