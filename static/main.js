@@ -1,11 +1,11 @@
 /**
  * Input field DOM
  *  * `dom_setup` method will register it to the `setup` variable
- *  * rewritten in (Plot|Figure).focus()
+ *  * rewritten in (Equation|Figure).focus()
  *
  *
  *
- * Editor -> Figure -> Plot -> dataset -> Territory
+ * Editor -> Figure -> Equation -> dataset -> Territory
  *
  */
 
@@ -69,15 +69,15 @@ $(function () {
         values: Figure.DATA_LABELS
     });
 //        * checkbox (wheel zooming) XXXXXXxx
-//               * color menu: default (by territory, slightly different), by plot, by static kontrastní dict [červená, bílá, zelená, ...]
+//               * color menu: default (by territory, slightly different), by equation, by static kontrastní dict [červená, bílá, zelená, ...]
 //        * toggle dataset default / label / values / off
 
 
     // axes menu
-    $("#plot-type").ionRangeSlider({
+    $("#equation-type").ionRangeSlider({
         skin: "big",
         grid: false,
-        values: ["line", "bar", "stacked by plot", "stacked by territory"]
+        values: ["line", "bar", "stacked by equation", "stacked by territory"]
     });
     $("#axes-type").ionRangeSlider({
         skin: "big",
@@ -189,60 +189,60 @@ $(function () {
         };
 
     });
-    // refresh on plot change
-    $plot.keyup(function () {
+    // refresh on equation change
+    $equation.keyup(function () {
         let v = $(this).val();
         if ($(this).data("last") !== v) {
-            Plot.current.refresh_html(v);
+            Equation.current.refresh_html(v);
             refresh();
             $(this).data("last", v);
         }
     });
-    // place plot on a different figure
-    $("#plot-stack").on("change", ".plot-figure", function () {
-        let plot = $(this).parent().data("plot").focus();
-        plot.set_figure(Figure.get($(this).val() * 1).focus());
+    // place equation on a different figure
+    $("#equation-stack").on("change", ".equation-figure", function () {
+        let equation = $(this).parent().data("equation").focus();
+        equation.set_figure(Figure.get($(this).val() * 1).focus());
         refresh(false);
     });
-    // place plot on a different Y axe
-    $("#plot-stack").on("change", ".y-axis", function () {
-        let plot = $(this).parent().data("plot").focus();
-        plot.y_axis = $(this).val();
-        if (plot.active) {
-            // possible chartjs bug – if I did not toggle the plot activity, Y axis would appear but data would stay still wrongly linked to the old Y axis
-            plot.active = false;
+    // place equation on a different Y axe
+    $("#equation-stack").on("change", ".y-axis", function () {
+        let equation = $(this).parent().data("equation").focus();
+        equation.y_axis = $(this).val();
+        if (equation.active) {
+            // possible chartjs bug – if I did not toggle the equation activity, Y axis would appear but data would stay still wrongly linked to the old Y axis
+            equation.active = false;
             refresh(false);
-            plot.active = true;
+            equation.active = true;
             refresh(false);
         }
     });
-    // possibility to add a new plot
-    $("#plot-new").click(() => {
-        let cp = Plot.current;
+    // possibility to add a new equation
+    $("#equation-new").click(() => {
+        let cp = Equation.current;
         if (!cp.valid) {
-            alert("This plot expression is invalid");
-            $plot.focus();
+            alert("This equation expression is invalid");
+            $equation.focus();
             return;
         }
-        //Plot.current.assure_stack();
-        $plot.val("");
-        let p = new Plot();
+        //Equation.current.assure_stack();
+        $equation.val("");
+        let p = new Equation();
         p.checked = Object.assign(cp.checked);
         p.starred = Object.assign(cp.starred);
         p.focus().refresh_html();
-        $plot.focus();
+        $equation.focus();
     });
-    // clicking on a plot stack curve label
-    $("#plot-stack").on("click", "> div", function (event) {
-        let plot = $(this).data("plot");
-        if (event.target === $("span.remove", $(this))[0]) { // delete plot
-            $(this).data("plot").remove();
+    // clicking on a equation stack curve label
+    $("#equation-stack").on("click", "> div", function (event) {
+        let equation = $(this).data("equation");
+        if (event.target === $("span.remove", $(this))[0]) { // delete equation
+            $(this).data("equation").remove();
         } else if (event.target === $("span.shown", $(this))[0]) { // toggle hide
-            $(this).toggleClass("active", plot.active = !plot.active);
+            $(this).toggleClass("active", equation.active = !equation.active);
         } else {
-            plot.focus();
+            equation.focus();
 //                if (event.target === $("span.name", $(this))[0]) { // re-edit
-//            plot.focus();
+//            equation.focus();
 //        }
             return;
         }
@@ -392,9 +392,9 @@ $(function () {
 //        if (!Figure.current) {
 //            (new Figure()).focus();
 //        }
-        if (!Plot.current) {
-            console.debug("Plot.current -> creating new", setup["plot"], setup);
-            (new Plot(setup["plot-expression"])).focus(); // initialize a plot and give it initial math expression from DOM
+        if (!Equation.current) {
+            console.debug("Equation.current -> creating new", setup["equation"], setup);
+            (new Equation(setup["equation-expression"])).focus(); // initialize a equation and give it initial math expression from DOM
             for (let country of ["Czechia", "Italy"]) { // X ["Czechia", "United Kingdom"] european_countries
                 Territory.get_by_name(country, Territory.COUNTRY).set_active().show();
             }
@@ -438,8 +438,8 @@ function load_hash() {
     for (let key in setup) {
         let val = setup[key];
 
-        // handle keys that `refresh` does not handle: plots and chart-size
-        if (key === "plots" || key === "figures") {
+        // handle keys that `refresh` does not handle: equations and chart-size
+        if (key === "equations" || key === "figures") {
             continue; // will be handled later since it is important figures are deserialized earlier
         } else if (key === "chart-size") {
             Figure.chart_size({"from": val});
@@ -486,8 +486,8 @@ function load_hash() {
     if ((val = setup["figures"])) {
         Figure.deserialize(val);
     }
-    if ((val = setup["plots"])) {
-        Plot.deserialize(val);
+    if ((val = setup["equations"])) {
+        Equation.deserialize(val);
     }
 
 
@@ -529,11 +529,11 @@ function dom_setup(allow_window_hash_change = true) {
         setup[key] = val;
     });
 
-    // convert global input fields to plot attributes
+    // convert global input fields to equation attributes
     // these parameters were handled by their respective object
-    // more over, there is no need to save them in hash, they are reconstructed on (Figure|Plot).focus
-    if (Plot.current) {
-        Plot.current.dom_setup();
+    // more over, there is no need to save them in hash, they are reconstructed on (Figure|Equation).focus
+    if (Equation.current) {
+        Equation.current.dom_setup();
     }
 
     if (Figure.current) {
@@ -542,7 +542,7 @@ function dom_setup(allow_window_hash_change = true) {
 
     if (allow_window_hash_change) {
         // save to hash
-        setup["plots"] = Plot.serialize();
+        setup["equations"] = Equation.serialize();
         setup["figures"] = Figure.serialize();
 
         // ignore day-range from unique hash -> day-range can very but thumbnail will stay the same

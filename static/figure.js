@@ -21,7 +21,7 @@ class Figure {
 
         Figure.figures.push(this);
         this.id = Figure.figures.length;
-        this.plots = [];
+        this.equations = [];
 
         this.$element = $("<canvas />", {id: "figure-" + this.id}).appendTo($("#canvas-container")).data("figure", this);
 
@@ -88,21 +88,21 @@ class Figure {
         let hide = [Figure.TYPE_LOG_DATASET, Figure.TYPE_PERCENT_TIME].indexOf(this.type) > -1;
 
         // only if we are not in Figure.TYPE_LOG_DATASET mode we can change from line to bar etc.
-        // XX Disable this functionality too for Figure.TYPE_PERCENT_TIME. Here we should still have the possibility to change between STACKED_PLOT|TERRITORY.
-        $("#plot-type").closest(".range-container").toggle(!hide);
-        this.plots.forEach(p => p.refresh_html()); // XX this is not so elegant; we want to refresh all plots (icon might have changed) but Plot.current has already been refreshed
+        // XX Disable this functionality too for Figure.TYPE_PERCENT_TIME. Here we should still have the possibility to change between STACKED_EQUATION|TERRITORY.
+        $("#equation-type").closest(".range-container").toggle(!hide);
+        this.equations.forEach(p => p.refresh_html()); // XX this is not so elegant; we want to refresh all equations (icon might have changed) but Equation.current has already been refreshed
     }
 
     check_canvas_container() {
         $("#canvas-container").toggleClass("multiple", Object.keys(Figure.figures).length > 1);
     }
 
-    add_plot(plot) {
-        this.plots.push(plot);
+    add_equation(equation) {
+        this.equations.push(equation);
         return this;
     }
-    remove_plot(plot) {
-        this.plots = this.plots.filter(it => it !== plot);
+    remove_equation(equation) {
+        this.equations = this.equations.filter(it => it !== equation);
         return this;
     }
 
@@ -217,7 +217,7 @@ class Figure {
         Chart.plugins.unregister(ChartDataLabels); // XX line should be removed since ChartDataLabels 1.0
         this.hovered_dataset = null;
         return this.chart = new Chart(this.$element, {
-            type: type, // changed to bar if there is no line plot
+            type: type, // changed to bar if there is no line equation
             data: {},
             plugins: [ChartDataLabels],
             options: {
@@ -235,11 +235,11 @@ class Figure {
                         let dst = figure.meta(i);
                         let star, label;
                         if (dst.territory) {
-                            star = dst.plot.set_star(dst.territory);
+                            star = dst.equation.set_star(dst.territory);
                             label = dst.territory.get_name(true);
                         } else { // this is not territory but another curve (aggregated sum of territories)
                             star = !dst.star;
-                            label = dst.plot.get_name(star);
+                            label = dst.equation.get_name(star);
                         }
                         dst.star = star;
                         figure.unhighlight(i);
@@ -445,9 +445,9 @@ class Figure {
         let datasets_used_last = this.datasets_used;
         this.datasets_used = {};
 
-        let plots = this.plots.filter(p => p.active);
-        let [plot_data, boundaries, title] = Plot.get_data(plots);
-        this.plot_data = plot_data;
+        let equations = this.equations.filter(p => p.active);
+        let [equation_data, boundaries, title] = Equation.get_data(equations);
+        this.equation_data = equation_data;
         let y_axes = new Set();
         let static_color_i = 0;
 
@@ -455,17 +455,17 @@ class Figure {
          *
          * @type {Territory|null} territory Null if sum-territories is on.
          */
-        for (let [plot, territory, data, outbreak_start] of plot_data) {
+        for (let [equation, territory, data, outbreak_start] of equation_data) {
             // choose only some days in range
             if (!data.length) {
-                if (!plot.valid) {
+                if (!equation.valid) {
                     return false;
                 }
                 continue;
             }
             let chosen_data = [];
 
-            // XX we may save performance if we pass day-range to Plot.get_data.
+            // XX we may save performance if we pass day-range to Equation.get_data.
             //  However, this might change the calculation of the outbreak start.
             if (setup["single-day"]) {
                 chosen_data.push(data[setup["day-range"]]);
@@ -481,42 +481,42 @@ class Figure {
             longest_data = Math.max(longest_data, setup["day-range"][0] + chosen_data.length);
 
             // prepare dataset options
-            let [name, label, starred, id] = plot.territory_info(territory);
+            let [name, label, starred, id] = equation.territory_info(territory);
             let color = {
-                "territory + expression": adjust(intToRGB(hashCode(name)), plot.hash),
-                "expression": plot.color(),
+                "territory + expression": adjust(intToRGB(hashCode(name)), equation.hash),
+                "expression": equation.color(),
                 "static": palette[static_color_i++]
             }[Figure.COLOR_STYLE[this.color_style]];
-            let border_color = (plot.type === Plot.TYPE_STACKED_TERRITORY && Figure.COLOR_STYLE[this.color_style] === "territory + expression") ? 'rgba(0,0,0,1)' : color; // colours of the same territory are hardly distinguishable
+            let border_color = (equation.type === Equation.TYPE_STACKED_TERRITORY && Figure.COLOR_STYLE[this.color_style] === "territory + expression") ? 'rgba(0,0,0,1)' : color; // colours of the same territory are hardly distinguishable
 
             // push new dataset
             let dataset = datasets[id] = {
-                type: plot.type ? 'bar' : 'line',
-                label: label + (plots.length > 1 ? " (" + plot.expression + ")" : ""),
+                type: equation.type ? 'bar' : 'line',
+                label: label + (equations.length > 1 ? " (" + equation.expression + ")" : ""),
                 data: chosen_data,
                 fill: false,
                 id: id,
-                xAxisID: "normal", // Xfor unknown reason, this is not needed this.type === Figure.TYPE_LOG_DATASET || plot.type <= Plot.TYPE_BAR ? "normal" : "stacked",
-                stack: plot.type > Plot.TYPE_BAR ? (plot.type === Plot.TYPE_STACKED_TERRITORY ? (territory ? territory.id : null) : "p" + plot.id) : id,
-                yAxisID: parseInt(plot.y_axis),
+                xAxisID: "normal", // Xfor unknown reason, this is not needed this.type === Figure.TYPE_LOG_DATASET || equation.type <= Equation.TYPE_BAR ? "normal" : "stacked",
+                stack: equation.type > Equation.TYPE_BAR ? (equation.type === Equation.TYPE_STACKED_TERRITORY ? (territory ? territory.id : null) : "p" + equation.id) : id,
+                yAxisID: parseInt(equation.y_axis),
                 borderWidth: DATASET_BORDER[starred],
                 borderColor: border_color,
                 backgroundColor: color
             };
             this.datasets_used[id] = {// available through this.meta(i)
-                plot: plot,
+                equation: equation,
                 territory: territory,
                 star: false,
                 outbreak_start: outbreak_start,
-                type: plot.type,
+                type: equation.type,
                 backgroundColor: color,
                 borderColor: border_color,
                 highlightColor: adjust(color, +40)
             };
-            y_axes.add(parseInt(plot.y_axis));
+            y_axes.add(parseInt(equation.y_axis));
 //            console.log("Dataset color", id, label, color, adjust(color, 40), adjust(color, -40));
 //            console.log("Dataset", label, chosen_data);
-            //console.log("Push name", plot.get_name(), plot.id, territory);
+            //console.log("Push name", equation.get_name(), equation.id, territory);
         }
         let r = setup["single-day"] ? [setup["day-range"]] : range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
         let labels = this.type === Figure.TYPE_LOG_DATASET ? null : (setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)].toDM()));
@@ -524,8 +524,8 @@ class Figure {
 
 
         // destroy current chart if needed
-        this.is_line = !setup["single-day"] && Object.values(datasets).some(d => d.type === "line");// ChartJS cannot dynamically change line type (dataset left align) to bar (centered). We have bar if single day (centered) and if there is no line plot.
-        let percentage = this.type === Figure.TYPE_PERCENT_TIME; // Stacked percentage if at least one plot has it
+        this.is_line = !setup["single-day"] && Object.values(datasets).some(d => d.type === "line");// ChartJS cannot dynamically change line type (dataset left align) to bar (centered). We have bar if single day (centered) and if there is no line equation.
+        let percentage = this.type === Figure.TYPE_PERCENT_TIME; // Stacked percentage if at least one equation has it
         if (this.chart && (
                 (this.chart.config.type === "line") !== this.is_line || // cannot change dynamically line to bar
                 this.chart.config.options.plugins.stacked100.enable !== percentage // cannot turn on/off stacked100 plugin dynamically
@@ -547,13 +547,13 @@ class Figure {
                 if (o.id in datasets) { // check if there if current dataset still present
                     let d = datasets[o.id];
                     let last = datasets_used_last[o.id];
-                    if (last && last.type > Plot.TYPE_LINE && last.type !== this.datasets_used[o.id].plot.type) { // if plot.type changed from the last type to a non-line, hard update
+                    if (last && last.type > Equation.TYPE_LINE && last.type !== this.datasets_used[o.id].equation.type) { // if equation.type changed from the last type to a non-line, hard update
                         // (probably) due to a bug in ChartJS, if (ex.) bar changes to stacked smoothly, the change is not visible, it remains non-stacked,
                         // do a hard update of the dataset (not smooth movement)
                         this.chart.data.datasets[i] = d;
                     } else {
                         // even though we change all current dataset properties but without swapping the object itself,
-                        // smooth change will not re-render plot-create animation
+                        // smooth change will not re-render equation-create animation
                         for (const [key, prop] of Object.entries(d)) {
                             o[key] = prop;
                         }
@@ -573,7 +573,7 @@ class Figure {
         let opt = this.chart.options;
 
         // Set figure title
-        if (!plot_data.length) { // error when processing plot function formula
+        if (!equation_data.length) { // error when processing equation function formula
             opt.title.text = "Empty figure " + this.id;
         } else if (!this.chart.data.datasets.length) {
             opt.title.text = "No data";
@@ -619,9 +619,9 @@ class Figure {
             // Tooltip sorting
             opt.tooltips.itemSort = {
                 "by value": (a, b, data) => b.value - a.value,
-                "by expression": (a, b, data) => { // sort by plot name, then by dataset name
-                    console.log("HU", data.datasets[b.datasetIndex], this.meta(b.datasetIndex).plot.expression);
-                    let [i, j] = [this.meta(b.datasetIndex).plot.expression, this.meta(a.datasetIndex).plot.expression];
+                "by expression": (a, b, data) => { // sort by equation name, then by dataset name
+                    console.log("HU", data.datasets[b.datasetIndex], this.meta(b.datasetIndex).equation.expression);
+                    let [i, j] = [this.meta(b.datasetIndex).equation.expression, this.meta(a.datasetIndex).equation.expression];
                     if (i === j) {
                         return data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1;
                     }

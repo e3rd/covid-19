@@ -17,20 +17,20 @@
             <label class="custom-control-label" for="outbreak-switch">Computation</label>
         </div>
         <div class="custom-control custom-switch">
-            <input type="checkbox" class="custom-control-input" id="plot-options-switch">
-            <label class="custom-control-label" for="plot-options-switch">Plot options</label>
+            <input type="checkbox" class="custom-control-input" id="equation-options-switch">
+            <label class="custom-control-label" for="equation-options-switch">Equation</label>
         </div>
         <div class="custom-control custom-switch">
-            <input type="checkbox" class="custom-control-input" id="plot-multiple-switch" data-target="#plot-new, #plot-stack" data-parent="#plot-options-switch">
-            <label class="custom-control-label" for="plot-multiple-switch">Allow multiple plots</label>
+            <input type="checkbox" class="custom-control-input" id="equation-multiple-switch" data-target="#equation-new, #equation-stack" data-parent="#equation-options-switch">
+            <label class="custom-control-label" for="equation-multiple-switch">Multiple equations</label>
         </div>
         <div class="custom-control custom-switch">
-            <input type="checkbox" class="custom-control-input" id="plot-figure-switch" data-target=".plot-figure" data-parent="#plot-multiple-switch">
-            <label class="custom-control-label" for="plot-figure-switch">Allow multiple figures</label>
+            <input type="checkbox" class="custom-control-input" id="equation-figure-switch" data-target=".equation-figure" data-parent="#equation-multiple-switch">
+            <label class="custom-control-label" for="equation-figure-switch">Multiple figures</label>
         </div>
         <div class="custom-control custom-switch">
-            <input type="checkbox" class="custom-control-input" id="y-axis-independency-switch" data-target=".y-axis" data-parent="#plot-multiple-switch">
-            <label class="custom-control-label" for="y-axis-independency-switch">Allow multiple y-axis</label>
+            <input type="checkbox" class="custom-control-input" id="y-axis-independency-switch" data-target=".y-axis" data-parent="#equation-multiple-switch">
+            <label class="custom-control-label" for="y-axis-independency-switch">Multiple y-axis</label>
         </div>
 
         <div class="custom-control custom-switch">
@@ -110,13 +110,13 @@
         </div>
     </div>
 
-    <div id="plot-options">
+    <div id="equation-options">
         <div>
 
-            Plot expression: <input type="text" id="plot-expression" placeholder="NR+ND" value="C"/>
+            Equation: <input type="text" id="equation-expression" placeholder="NR+ND" value="C"/>
             <div class="range-container range-hide-legend range-short">
                 <div>
-                    <input type="range" id="plot-type" />
+                    <input type="range" id="equation-type" />
                 </div>
             </div>
             <!--            <span>
@@ -125,10 +125,10 @@
                         </span>-->
             <input class="refresh" type="checkbox"  id="sum-territories" value="off">
             <label title="Sum territories into single curve" for="sum-territories">aggregate</label>
-            <a id="plot-new" class="btn btn-light">+</a>
-            <div id="plot-stack"></div>
+            <a id="equation-new" class="btn btn-light">+</a>
+            <div id="equation-stack"></div>
         </div>
-        <p id="plot-hint">
+        <p id="equation-hint">
             Put any arithmetic expression using <code>C</code>/<code>R</code>/<code>D</code>/<code>T</code> (confirmed/recovered/death/tested),
             <code>NC</code>/<code>NR</code>/<code>ND</code>/<code>NT</code> (newly confirmed/recovered/death/tested cases),
             <code>dNC</code>/<code>dNR</code>/<code>dND</code>/<code>dNT</code> (derivation of newly added cases),
@@ -140,7 +140,7 @@
             <code>C%/P</code>: <i>Nth-percent of the population is confirmed.</i>
             <code>CM/P</code>: <i>N people is confirmed in every million of citizens.</i>
         </p>
-        <div class="alert alert-warning" id="plot-alert"></div>
+        <div class="alert alert-warning" id="equation-alert"></div>
     </div>
 
     <div id="display-menu">

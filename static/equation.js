@@ -1,9 +1,9 @@
 setup = setup || {};
-$plot = $plot || {};
+$equation = $equation || {};
 
 /**
  *
- * @type type Used by Plot.express
+ * @type type Used by Equation.express
  */
 let variables = {
     "R": "recovered",
@@ -34,32 +34,32 @@ let units = {// since calculate.js cannot parse two paranthesis `(C)(100)` as mu
     "T%": "T*10^2", "Tk": "T*10^3", "TM": "T*10^6"
 };
 
-class Plot {
-    constructor(expression = "", active = true, figure_id = null, y_axis = 1, checked_names = [], starred_names = [], type = Plot.TYPE_LINE, aggregate = false) {
+class Equation {
+    constructor(expression = "", active = true, figure_id = null, y_axis = 1, checked_names = [], starred_names = [], type = Equation.TYPE_LINE, aggregate = false) {
         /**
          * @property {Territory[]} chosen territories to be processed
          */
         this.checked = checked_names.map(name => Territory.get_by_name(name));
-        //console.log("Plot", this.checked, checked_names);
+        //console.log("Equation", this.checked, checked_names);
         /**
          * @property {Territory[]} chosen
          */
         this.starred = starred_names.map(name => Territory.get_by_name(name));
         this.expression; // current function
-        this.hash; // small hash of the function, used to modify plot colour a little bit
+        this.hash; // small hash of the function, used to modify equation colour a little bit
         this.set_expression(expression);
         this._valid = null; // check if this expression is valid
         this.active = active;
         this.$element = null;
 
-        Plot.plots.push(this);
+        Equation.equations.push(this);
 
-        this.id = Plot.plots.length;
+        this.id = Equation.equations.length;
         this.set_figure(Figure.get(figure_id || 1));
         this.y_axis = y_axis;
 
 
-        this._type = type; // line, bar, stacked by plot, territory
+        this._type = type; // line, bar, stacked by equation, territory
         this.aggregate = aggregate;
 //        this.percentage = percentage; // the stack should be seen as percentage
 
@@ -67,8 +67,8 @@ class Plot {
     }
 
     static serialize() {
-        setup["plot"] = Plot.current.id;
-        return Plot.plots.map(p => {
+        setup["equation"] = Equation.current.id;
+        return Equation.equations.map(p => {
             return [p.expression,
                 p.active,
                 p.figure.id,
@@ -83,18 +83,18 @@ class Plot {
     }
 
     static deserialize(data) {
-        Plot.plots = [];
-        data.forEach((d) => new Plot(...d));
-        if (Plot.plots.length) {
-            Plot.plots[setup["plot"] - 1 || 0].focus();
+        Equation.equations = [];
+        data.forEach((d) => new Equation(...d));
+        if (Equation.equations.length) {
+            Equation.equations[setup["equation"] - 1 || 0].focus();
         }
     }
 
     set_figure(figure) {
         if (this.figure) {
-            this.figure.remove_plot(this);
+            this.figure.remove_equation(this);
         }
-        this.figure = figure.add_plot(this);
+        this.figure = figure.add_equation(this);
     }
 
     get valid() {
@@ -109,12 +109,12 @@ class Plot {
 
     /**
      *
-     * @param {bool} clean Clean the old current plot-
-     * @returns {Plot}
+     * @param {bool} clean Clean the old current equation-
+     * @returns {Equation}
      */
     focus(clean = true) {
-        let cp = Plot.current;
-        if (clean && cp && cp !== this) { // kick out the old plot
+        let cp = Equation.current;
+        if (clean && cp && cp !== this) { // kick out the old equation
             if (cp.checked && cp.expression) { // show only if it is worthy
                 cp.$element.removeClass("edited");
                 //cp.$element.show();
@@ -122,9 +122,9 @@ class Plot {
                 cp.remove(false);
             }
         }
-        Territory.plot = Plot.current = this;
-        $plot.val(this.expression);
-        $("#plot-type").data("ionRangeSlider").update({from: this.type});
+        Territory.equation = Equation.current = this;
+        $equation.val(this.expression);
+        $("#equation-type").data("ionRangeSlider").update({from: this.type});
         if (this.$element) {
             this.$element.addClass("edited");
         }
@@ -136,37 +136,37 @@ class Plot {
     }
 
     dom_setup() {
-        Object.assign(Plot.current, {
-            type: setup["plot-type"],
+        Object.assign(Equation.current, {
+            type: setup["equation-type"],
             aggregate: setup["sum-territories"]
                     //percentage: setup["percentage"]
         });
-        //$("#percentage").parent().toggle(setup["plot-type"] >= Plot.TYPE_STACKED_PLOT); // show/hide percentage checkbox if the plot uses stacked bar
-        delete setup["plot-type"];
+        //$("#percentage").parent().toggle(setup["equation-type"] >= Equation.TYPE_STACKED_EQUATION); // show/hide percentage checkbox if the equation uses stacked bar
+        delete setup["equation-type"];
         delete setup["sum-territories"];
         //delete setup["percentage"];
         this.refresh_html();
     }
 
     remove(focus_next = true) {
-        let without_me = Plot.plots.filter(p => p !== this);
+        let without_me = Equation.equations.filter(p => p !== this);
 
-        if (this === Plot.current) {
+        if (this === Equation.current) {
             if (without_me.length) {
                 if (focus_next) {
                     without_me[0].focus(false);
                 }
             } else {
-                // we cannot remove the last plot, just clear the text
-                $plot.val("").focus();
+                // we cannot remove the last equation, just clear the text
+                $equation.val("").focus();
                 this.set_expression("");
                 this.refresh_html();
                 return;
             }
         }
 
-        this.figure.remove_plot(this);
-        Plot.plots = without_me;
+        this.figure.remove_equation(this);
+        Equation.equations = without_me;
         this.$element.hide(500, function () {
             $(this).remove();
         });
@@ -174,10 +174,10 @@ class Plot {
 
     get type() {
         if (this.figure.type === Figure.TYPE_LOG_DATASET) {
-            return Plot.TYPE_LINE;
+            return Equation.TYPE_LINE;
         }
         if (this.figure.type === Figure.TYPE_PERCENT_TIME && this._type === Figure.TYPE_LINEAR_TIME) {
-            return Plot.TYPE_STACKED_PLOT;
+            return Equation.TYPE_STACKED_EQUATION;
         }
         return this._type;
     }
@@ -188,33 +188,33 @@ class Plot {
     set_expression(expression) {
         if (expression !== null) {
             this.expression = expression;
-            // 'C' is the default plot, let the colour be as I am used to
+            // 'C' is the default equation, let the colour be as I am used to
             this.hash = (expression === "C") ? 0 : hashCode(expression) % 20 * 5;
 //            console.log("Color",expression, this.hash, hashCode(expression));
         }
     }
 
     /**
-     * Assure the plot is in the plot stack
+     * Assure the equation is in the equation stack
      */
     build_html() {
-        let s = '<input type="number" min="1" class="plot-figure" value="' + this.figure.id + '" title="If you change the number, you place the plot on a different figure."/>';
+        let s = '<input type="number" min="1" class="equation-figure" value="' + this.figure.id + '" title="If you change the number, you place the equation on a different figure."/>';
         let t = '<input type="number" min="1" max="5" class="y-axis" value="' + this.y_axis + '" title="Independent y-axis scale"/>';
         this.$element = $("<div><span class=name></span>" + s + t + "<span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
-                .data("plot", this)
-                .prependTo($("#plot-stack"));
+                .data("equation", this)
+                .prependTo($("#equation-stack"));
         this.refresh_html();
     }
 
     icon() {
         switch (this.type) {
-            case Plot.TYPE_BAR:
+            case Equation.TYPE_BAR:
                 return "<span title='bars displayed'> ❘ </span>";
-            case Plot.TYPE_STACKED_PLOT:
-                return "<span title='stacked by plot'> ☰ ";
-            case Plot.TYPE_STACKED_TERRITORY:
+            case Equation.TYPE_STACKED_EQUATION:
+                return "<span title='stacked by equation'> ☰ ";
+            case Equation.TYPE_STACKED_TERRITORY:
                 return "<span title='stacked by territory'> 🏳 </span>";
-            case Plot.TYPE_LINE:
+            case Equation.TYPE_LINE:
             default:
                 return "";
         }
@@ -236,12 +236,12 @@ class Plot {
         }
 
         // allow multiple figures
-        //console.log("SHOW PLOT FIGURE?", setup["plot-figure"]);
-        $(".plot-figure", this.$element).toggle(Boolean(parseInt(setup["plot-figure-switch"])));
+        //console.log("SHOW EQUATION FIGURE?", setup["equation-figure"]);
+        $(".equation-figure", this.$element).toggle(Boolean(parseInt(setup["equation-figure-switch"])));
         $(".y-axis", this.$element).toggle(Boolean(parseInt(setup["y-axis-independency-switch"])));
 
-        // hide remove buttons if there is last plot
-        $(".remove", $("#plot-stack")).toggle(Plot.plots.length > 1);
+        // hide remove buttons if there is last equation
+        $(".remove", $("#equation-stack")).toggle(Equation.equations.length > 1);
     }
 
     get_name(highlight = false) {
@@ -324,13 +324,13 @@ class Plot {
     /**
      * @returns {Array} Sorted by chosen countries.
      */
-    static get_data(plots = []) {
+    static get_data(equations = []) {
         let title = [];
         let result = [];
         let outbreak_population = setup["outbreak-mode"] ? 1 : 0;
         let outbreak_threshold = setup["outbreak-on"] ? parseInt(setup["outbreak-value"]) : 0;
         let boundaries = [Number.POSITIVE_INFINITY, 0, 0]; // min, max, outbreak population percentil
-        for (let p of plots) {
+        for (let p of equations) {
             p.valid = null;
             let aggregated = [];
             for (let t of p.checked) {
@@ -460,10 +460,10 @@ class Plot {
                         }
 
                         result = Calculation.calculate(result);
-                        $("#plot-alert").hide();
+                        $("#equation-alert").hide();
                         if (typeof (result) === "string") { // error encountered
                             if (p.expression.trim()) {
-                                $("#plot-alert").show().html("<b>Use one of the following variables: <code>C R D T NC NR ND NT dC dNC dNR dND dNT P M k</code></b> (" + result + ")");
+                                $("#equation-alert").show().html("<b>Use one of the following variables: <code>C R D T NC NR ND NT dC dNC dNR dND dNT P M k</code></b> (" + result + ")");
                             }
                             p.valid = false;
                             break;
@@ -501,7 +501,7 @@ class Plot {
                 title.push(p.get_title());
             }
         }
-//        console.log("Plot data: ", result);
+//        console.log("Equation data: ", result);
         return [result, boundaries, title];
     }
 
@@ -529,12 +529,12 @@ function NaNException() {}
 
 /**
  *
- * @type Plot
+ * @type Equation
  */
-Plot.current = null;
-Plot.plots = [];
+Equation.current = null;
+Equation.equations = [];
 
-Plot.TYPE_LINE = 0;
-Plot.TYPE_BAR = 1;
-Plot.TYPE_STACKED_PLOT = 2;
-Plot.TYPE_STACKED_TERRITORY = 3;
+Equation.TYPE_LINE = 0;
+Equation.TYPE_BAR = 1;
+Equation.TYPE_STACKED_EQUATION = 2;
+Equation.TYPE_STACKED_TERRITORY = 3;

@@ -30,3 +30,4 @@
 * scatter chart: NC/C
 * JSON export
 * display menu
+* rename `plot` to `equation`

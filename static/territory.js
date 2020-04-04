@@ -73,20 +73,20 @@ class Territory {
     }
 
     get is_active() {
-        return this.plot.checked.indexOf(this) > -1;
+        return this.equation.checked.indexOf(this) > -1;
     }
 
     set_active(check = true) {
         this.$activate_button.prop("checked", check);
         if (!Territory.loading_freeze) {
             if (check) {
-                this.plot.checked.push(this);
+                this.equation.checked.push(this);
             } else {
-                this.plot.checked = this.plot.checked.filter(e => e !== this); // remove from chosens
+                this.equation.checked = this.equation.checked.filter(e => e !== this); // remove from chosens
             }
             if (!Territory.parent_freeze) {
                 this.parents.forEach(p => p.some_children_active(check));
-                Plot.current.refresh_html();
+                Equation.current.refresh_html();
             }
         }
         return this;
@@ -132,19 +132,19 @@ class Territory {
      * @param {type} set If null, star toggled.
      * @returns {undefined}
      */
-    set_star(set = null, plot = null) {
-        if (plot === null) {
-            plot = this.plot;
+    set_star(set = null, equation = null) {
+        if (equation === null) {
+            equation = this.equation;
         }
         if (set === null) {
-            set = !(plot.starred.indexOf(this) > -1);
+            set = !(equation.starred.indexOf(this) > -1);
         }
         $("> span:eq(1)", this.$element).toggleClass("off", !set);
         if (!Territory.loading_freeze) {
             if (set) {
-                plot.starred.push(this);
+                equation.starred.push(this);
             } else {
-                plot.starred = plot.starred.filter(e => e !== this);
+                equation.starred = equation.starred.filter(e => e !== this);
             }
         }
         return this.is_starred = set;
@@ -202,23 +202,23 @@ class Territory {
         return $("> input", this.$element);
     }
 
-    get plot() {
-        return Plot.current;
+    get equation() {
+        return Equation.current;
     }
 
-    static set plot(plot) {
+    static set equation(equation) {
         Territory.loading_freeze = true;
         Territory.id_list.forEach(t => {
-            let active = plot.checked.indexOf(t) > -1;
-            let star = plot.starred.indexOf(t) > -1;
+            let active = equation.checked.indexOf(t) > -1;
+            let star = equation.starred.indexOf(t) > -1;
             t.set_active(active);
             t.set_star(star);
             if (active || star) {
                 t.show();
             }
         });
-//        Territory.id_list.forEach(t => t.set_active(plot.checked.indexOf(t) > -1));
-//        Territory.id_list.forEach(t => t.set_star(plot.starred.indexOf(t) > -1));
+//        Territory.id_list.forEach(t => t.set_active(equation.checked.indexOf(t) > -1));
+//        Territory.id_list.forEach(t => t.set_star(equation.starred.indexOf(t) > -1));
         Territory.loading_freeze = false;
     }
 
@@ -320,7 +320,7 @@ class Territory {
         this.children.forEach((child) => child.set_active(any_unchecked_check_all));
         $("> span:eq(3)", this.$element).toggleClass("off", !any_unchecked_check_all);
         Territory.parent_freeze = false;
-        Plot.current.refresh_html();
+        Equation.current.refresh_html();
     }
 
     /**
