@@ -8,22 +8,45 @@
  * Editor -> Figure -> Equation -> dataset -> Territory
  *
  */
-
 // definitions
 var ready_to_refresh = false;
 //var url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-';
 var url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_';
 var just_stored_hash = ""; // determine if hash change is in progress
 
-$(function () {
+function show_menu_now() {
+    // start plotting
+    if (!Equation.current) {
+        console.debug("Equation.current -> creating new", setup["equation-expression"], setup);
+        (new Equation(setup["equation-expression"])).focus(); // initialize a equation and give it initial math expression from DOM
+        for (let country of ["Czechia", "Italy"]) { // X ["Czechia", "United Kingdom"] european_countries
+            Territory.get_by_name(country, Territory.COUNTRY).set_active().show();
+        }
+    }
+    refresh(set_ready = true);
+    $("main").fadeIn(2000);
+}
+
+function init_editor() {
+
+    $plot = $("#plot");
+
+    // Try load chart_id from the page content.
+    if (!chart_id) {
+        let node = document.getElementById("chart");
+        if (node && node.dataset.chart) {
+            chart_id = hashFnv32a(node.dataset.chart, true);
+        }
+    }
     // Show show cases or editor
     if (!chart_id) {
         show_menu = false;
         $("#showcases").fadeIn(500).on("click", "a", function () {
             $("#showcases").hide();
-            $("main").fadeIn(2000);
+            show_menu_now();
             history.pushState(null, "", $(this).attr("href"));
             load_hash();
+            refresh(set_ready = true);
             return false;
         });
     }
@@ -47,41 +70,31 @@ $(function () {
         onChange: Figure.chart_size
     });
 
-    // display menu
+    // display menu - define from:0 and min:0 as the initial values if `setup` is loadable and element is missing from `setup`
     $("#mouse-drag").ionRangeSlider({
-        skin: "big",
-        grid: false,
+        skin: "big", grid: false, from: 0, min: 0,
         values: Figure.MOUSE_DRAG
     });
     $("#tooltip-sorting").ionRangeSlider({
-        skin: "big",
-        grid: false,
+        skin: "big", grid: false, from: 0, min: 0,
         values: Figure.TOOLTIP_SORTING
     });
     $("#color-style").ionRangeSlider({
-        skin: "big",
-        grid: false,
+        skin: "big", grid: false, from: 0, min: 0,
         values: Figure.COLOR_STYLE
     });
     $("#data-labels").ionRangeSlider({
-        skin: "big",
-        grid: false,
+        skin: "big", grid: false, from: 0, min: 0,
         values: Figure.DATA_LABELS
     });
-//        * checkbox (wheel zooming) XXXXXXxx
-//               * color menu: default (by territory, slightly different), by equation, by static kontrastní dict [červená, bílá, zelená, ...]
-//        * toggle dataset default / label / values / off
-
 
     // axes menu
     $("#equation-type").ionRangeSlider({
-        skin: "big",
-        grid: false,
+        skin: "big", grid: false, from: 0, min: 0,
         values: ["line", "bar", "stacked by equation", "stacked by territory"]
     });
     $("#axes-type").ionRangeSlider({
-        skin: "big",
-        grid: false,
+        skin: "big", grid: false, from: 0, min: 0,
         values: ["linear / time", "log / time", "percent / time", "log / dataset"]
     });
 
@@ -143,8 +156,8 @@ $(function () {
         let ion = $(this).data("ionRangeSlider");
 
         $(`label[for=${ion.input.id}]`).click(() => {
-            $(this).siblings("span.irs").find(".irs-handle.from").focus()
-            console.log("ZDEE", $(this).siblings("span.irs").find(".irs-handle.from"));
+            $(this).siblings("span.irs").find(".irs-handle.from").focus(); // XXX clicking on the label does not focus IRS yet
+            // console.log("HERE", $(this).siblings("span.irs").find(".irs-handle.from"));
             return false;
         })
         // make labels focus the ion
@@ -384,32 +397,24 @@ $(function () {
             load_hash();
             //alert(`location: ${document.location}, state: ${JSON.stringify(event.state)}`);
         };
-        dom_setup(false);
+        dom_setup(false); // store default values from DOM to setup
         load_hash();
 
 
-        // start plotting
-//        if (!Figure.current) {
-//            (new Figure()).focus();
-//        }
-        if (!Equation.current) {
-            console.debug("Equation.current -> creating new", setup["equation"], setup);
-            (new Equation(setup["equation-expression"])).focus(); // initialize a equation and give it initial math expression from DOM
-            for (let country of ["Czechia", "Italy"]) { // X ["Czechia", "United Kingdom"] european_countries
-                Territory.get_by_name(country, Territory.COUNTRY).set_active().show();
-            }
-        }
-        refresh(set_ready = true);
+
+
 
         // loading effect
         if (show_menu) { // show cases are shown instead of the editor
-            $("main").fadeIn(2000);
+
+            show_menu_now();
+
             ready_to_refresh = false;
             $("#view-menu input").change(); // even though all input triggered change event in load_hash, if `main` is invisible, this had no effect (ex: #view-menu child is not displayed if off even though its parent is on)
             ready_to_refresh = true;
         }
     });
-});
+}
 
 
 
@@ -420,10 +425,12 @@ $(function () {
 function load_hash() {
     console.log("Load hash trying ...");
     try {
-        let hash = "{" + decodeURI(window.location.hash.substr(1)) + "}";
+        // Try load setup from the window hash or page content
+        let node = document.getElementById("chart");
+        let hash = window.location.hash ? "{" + decodeURI(window.location.hash.substr(1)) + "}" : ((node && node.dataset.chart) ? node.dataset.chart : "{}");
         console.log("Hash", /*hash, just_stored_hash, */" (having val: ", setup["outbreak-value"]);
         if (hash === just_stored_hash || hash === "{}") {
-            console.log("... just stored.");
+            console.log("... nothing to load.");
             return;
         }
         just_stored_hash = hash;
@@ -432,7 +439,7 @@ function load_hash() {
         console.warn("... cannot parse");
         return;
     }
-    console.log("... load hash now!", setup);
+    console.log("Parse setup:", setup);
     let original = ready_to_refresh; // block many refreshes issued by every $el.change call
     ready_to_refresh = false;
     for (let key in setup) {
@@ -554,7 +561,7 @@ function dom_setup(allow_window_hash_change = true) {
 
         let s = just_stored_hash = JSON.stringify(setup);
         let state = s.substring(1, s.length - 1);
-        history.pushState(null, "", "chart=" + chart_id + "#" + state);
+        history.pushState(null, "", "?chart=" + chart_id + "#" + state);
 //        window.location.hash = s.substring(1, s.length - 1); XX
         //console.log("Hash stored with val: ", setup["outbreak-value"]);
 }
@@ -657,3 +664,5 @@ function export_thumbnail() {
         data: {"png": exportCanvasAsPNG(make_thumbnail($("canvas")[0]))}
     });
 }
+
+document.addEventListener('DOMContentLoaded', init_editor);

@@ -6,14 +6,15 @@ let DATASET_BORDER = {
 
 
 class Figure {
-    constructor(type = Figure.TYPE_LOG_TIME, mouse_drag = 0, tooltip_sorting = 0, color_style = 0, data_labels = 0) {
+    constructor(type = Figure.TYPE_LOG_TIME, mouse_drag = null, tooltip_sorting = null, color_style = null, data_labels = null) {
         this.type = type;
         this.last_type = null;
 
-        this.mouse_drag = mouse_drag;
-        this.tooltip_sorting = tooltip_sorting;
-        this.color_style = color_style;
-        this.data_labels = data_labels;
+
+        this.mouse_drag = mouse_drag || 0;
+        this.tooltip_sorting = tooltip_sorting || 0;
+        this.color_style = color_style || 0;
+        this.data_labels = data_labels || 0;
 
 
         this.chart = null;
@@ -204,7 +205,7 @@ class Figure {
         this.hovered_dataset = i;
         let m = this.meta(i);
         Object.assign(this.chart.data.datasets[i], {
-            borderWidth: this.is_line ? 10 : 5,
+            borderWidth: this.is_line ? 10 : 5, // XX should not is_line be equation-dependent instead of figure dependent here?
             borderColor: this.is_line ? m.highlightColor : "red",
             backgroundColor: m.highlightColor
         });
@@ -411,12 +412,11 @@ class Figure {
                         formatter: function (value, item) {
                             try {
                                 return ({
-                                    "default": figure.is_line ? null : item.dataset.label, // by default shown on bar type only
+                                    "default": figure.is_line ? null : item.dataset.label, // by default shown on figure with bars only (no line chart)
                                     "label": item.dataset.label,
                                     "values": figure.type === Figure.TYPE_LOG_DATASET ? value.x + " " + value.y : value
                                 }[Figure.DATA_LABELS[figure.data_labels]]);
                             } catch (e) {// XX I forgot the case when an exception happens
-
                             }
                         }
                     },
@@ -483,8 +483,8 @@ class Figure {
             // prepare dataset options
             let [name, label, starred, id] = equation.territory_info(territory);
             let color = {
-                "territory + expression": adjust(intToRGB(hashCode(name)), equation.hash),
-                "expression": equation.color(),
+                "territory + equation": adjust(intToRGB(hashCode(name)), equation.hash),
+                "equation": equation.color(),
                 "static": palette[static_color_i++]
             }[Figure.COLOR_STYLE[this.color_style]];
             let border_color = (equation.type === Equation.TYPE_STACKED_TERRITORY && Figure.COLOR_STYLE[this.color_style] === "territory + expression") ? 'rgba(0,0,0,1)' : color; // colours of the same territory are hardly distinguishable
@@ -620,7 +620,6 @@ class Figure {
         opt.tooltips.itemSort = {
             "by value": (a, b, data) => b.value - a.value,
             "by expression": (a, b, data) => { // sort by equation name, then by dataset name
-                console.log("HU", data.datasets[b.datasetIndex], this.meta(b.datasetIndex).equation.expression);
                 let [i, j] = [this.meta(b.datasetIndex).equation.expression, this.meta(a.datasetIndex).equation.expression];
                 if (i === j) {
                     return data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1;
@@ -708,7 +707,7 @@ $(function () {
     // Change everywhere before renaming a constant, however you can re-order freely. The first one becomes the default.
     Figure.MOUSE_DRAG = ["off", "zoom", "pan", "pan + wheel zoom"];
     Figure.TOOLTIP_SORTING = ["by value", "by expression", "by territory"];
-    Figure.COLOR_STYLE = ["territory + expression", "expression", "static"];
+    Figure.COLOR_STYLE = ["territory + equation", "equation", "static"];
     Figure.DATA_LABELS = ["default", "label", "values", "off"];
 
 

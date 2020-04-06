@@ -59,7 +59,7 @@ class Equation {
         this.y_axis = y_axis;
 
 
-        this._type = type; // line, bar, stacked by equation, territory
+        this._type = type; // int; line, bar, stacked by equation, territory
         this.aggregate = aggregate;
 //        this.percentage = percentage; // the stack should be seen as percentage
 
