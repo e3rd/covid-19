@@ -12,11 +12,11 @@
 class Editor {
 
 }
-
+let edvard_deployment = window.location.hostname.indexOf("edvard") > -1;
 Editor.setup = {};
 Editor.$equation = $("#equation-expression");
-Editor.REFRESH_THUMBNAIL = '';
-Editor.chart_id = '';
+Editor.REFRESH_THUMBNAIL = typeof REFRESH_THUMBNAIL !== 'undefined' ? REFRESH_THUMBNAIL : '';
+Editor.chart_id = typeof chart_id !== 'undefined' ? chart_id : ''; // XX CZ.NIC has chart_id as URL parameter if needed '?chart=CHART_ID'
 Editor.show_menu = true;
 
 // definitions
@@ -47,7 +47,8 @@ function init_editor() {
         }
     }
     // Show show cases or editor
-    if (!Editor.chart_id && window.location.hostname.indexOf("edvard") > -1) { // showcases shown only if not deployed at nic.cz
+    if (!Editor.chart_id && edvard_deployment) { // showcases shown only if not deployed at nic.cz
+        console.log("SHOW MENU NOW", Editor.chart_id);
         Editor.show_menu = false;
         $("#showcases").fadeIn(500).on("click", "a", function () {
             $("#showcases").hide();
@@ -330,11 +331,11 @@ function init_editor() {
     // runtime
     let tests_czech;
     $.when(// we need to build Territory objects from CSV first
-        $.get(url_pattern + "confirmed_global.csv", data => Territory.build(data, "confirmed")),
-        $.get(url_pattern + "deaths_global.csv", data => Territory.build(data, "deaths")),
-        $.get(url_pattern + "recovered_global.csv", data => Territory.build(data, "recovered")),
-        $.getJSON("https://onemocneni-aktualne.mzcr.cz/api/v1/covid-19/testy.min.json", json => tests_czech = json)
-    ).then(() => {
+            $.get(url_pattern + "confirmed_global.csv", data => Territory.build(data, "confirmed")),
+            $.get(url_pattern + "deaths_global.csv", data => Territory.build(data, "deaths")),
+            $.get(url_pattern + "recovered_global.csv", data => Territory.build(data, "recovered")),
+            $.getJSON("https://onemocneni-aktualne.mzcr.cz/api/v1/covid-19/testy.min.json", json => tests_czech = json)
+            ).then(() => {
         Territory.build_json(tests_czech); // we have to be sure another built is completed => Territory.header is set and we know its beginning
         Territory.finalize();
 
@@ -584,7 +585,7 @@ function dom_setup(allow_window_hash_change = true) {
         history.pushState(null, "", serialize(Editor.setup, true));
 //        window.location.hash = s.substring(1, s.length - 1); XX
         //console.log("Hash stored with val: ", Editor.setup["outbreak-value"]);
-    }
+}
 }
 
 function serialize(setup, store = false) {
@@ -593,7 +594,7 @@ function serialize(setup, store = false) {
         just_stored_hash = s;
     }
     let state = s.substring(1, s.length - 1);
-    return "?chart=" + Editor.chart_id + "#" + state;
+    return (edvard_deployment ? "" : "?") + "chart=" + Editor.chart_id + "#" + state;
 }
 
 
