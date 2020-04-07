@@ -309,15 +309,8 @@ function init_editor() {
     });
 
     // refresh share menu
-    $("#share-menu-button").click(() => {
-        export_thumbnail();
-        $("#share-facebook").attr("href", "http://www.facebook.com/sharer.php?u=" + window.location.href);
-        let width = 600 * Figure.figures.length;
-        let setup = Object.assign({}, Editor.setup);
-        setup["iframe"] = width;
-        $("#share-iframe").val(`<iframe width="${width}" height="310" frameborder="0" src="${encodeURI(window.location.origin + window.location.pathname + serialize(setup))}"></iframe>`);
-        // $("#share-iframe").val(`<iframe width="${600 * Figure.figures.length}" height="300" src="${window.location.origin + window.location.pathname + serialize(setup)}"></iframe>`);
-    });
+    $("#export input").change(refresh_export);
+    $("#share-menu-button").click(refresh_export);
     $("#share-facebook").click(function () {
         window.open(this.href, 'facebookwindow', 'left=20,top=20,width=600,height=700,toolbar=0,resizable=1');
         return false;
@@ -458,15 +451,31 @@ function load_hash() {
         } else if (key === "chart-size") {
             Figure.chart_size({"from": val});
         } else if (key === "iframe") {
-            Editor.iframe = true;
             // we are in an iframe, hide all except figures
+            Editor.iframe = true;
+            let width = Editor.setup["iframe-width"];
+
             setTimeout(() => { // i don't know much why, this works better if hiding postponed
                 $("body > *").hide();
                 $("html").css("margin-top", "0");
                 // show just the #canvas-container in the main contents
-                let $container = $("body > .container, body > main").show().css({"max-width": "unset", "min-width": "unset", "width": val + "px"});
-                $("> :not(#canvas-container)", $container).hide();
-                $("#canvas-container").css("width", val + "px");
+                let $container = $("body > .container, body > main").show().css({"max-width": "unset", "min-width": "unset", "width": width + "px"});
+                $("div:not(#canvas-container), a, label, input", $container).hide(); // hide all divs, show just some
+
+
+
+                if (Editor.setup["iframe-day-range"]) {
+                    $("#day-range").show().parents().show();
+                }
+                if(Editor.setup["iframe-outbreak"]) {
+                    $("#outbreak-threshold").show().parents().show();
+                }
+                if(Editor.setup["iframe-buttons"]){
+                    $("#export > a:not(#share-menu-button)").show().parents().show();
+                }
+                console.log($("#day-range"), "hhhhhh");
+                $("#canvas-container").css("width", width + "px");
+//                $("#setup").css("width", width  + "px");
             }, 0);
             continue;
         }
@@ -681,12 +690,26 @@ function set_slider($slider, val, init_position = null) {
 
 function export_thumbnail() {
     // resize the canvas and upload to the server
+    if (!edvard_deployment || !Figure.figures.length) {
+        // $("#export input").change will trigger this when still loading and no refresh happenned (no canvas available)
+        return;
+    }
     console.log("Exporting thumbnail");
     $.ajax({
         url: window.location.pathname + "/upload", // /chart=HASH/upload
         method: "post",
         data: {"png": exportCanvasAsPNG(make_thumbnail($("canvas")[0]))}
     });
+}
+
+function refresh_export() {
+    export_thumbnail();
+    $("#share-facebook").attr("href", "http://www.facebook.com/sharer.php?u=" + window.location.href);
+    let width = Editor.setup["iframe-width"] * Figure.figures.length;
+    let height = width / 2 + 10 + 75 * Editor.setup["iframe-day-range"] + 75 * Editor.setup["iframe-outbreak"] + 30 * Editor.setup["iframe-buttons"];
+    let setup = Object.assign({}, Editor.setup);
+    setup["iframe"] = 1;
+    $("#share-iframe").val(`<iframe width="${width}" height="${height}" frameborder="0" src="${encodeURI(window.location.origin + window.location.pathname + serialize(setup))}"></iframe>`);
 }
 
 document.addEventListener('DOMContentLoaded', init_editor); // Figure class must be ready
