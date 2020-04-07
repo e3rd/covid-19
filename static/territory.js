@@ -2,7 +2,6 @@
  * Territory class
 
  */
-var setup = setup || {};
 let counter = 0;
 class Territory {
 

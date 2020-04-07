@@ -1,4 +1,3 @@
-setup = setup || {};
 let DATASET_BORDER = {
     true: 6,
     false: 3
@@ -37,7 +36,7 @@ class Figure {
     }
 
     static serialize() {
-//        setup["figure"] = Figure.current.id;
+//        Editor.setup["figure"] = Figure.current.id;
         return Object.values(Figure.figures).map(p => {
             return [p.type,
                 p.mouse_drag,
@@ -51,7 +50,7 @@ class Figure {
     static deserialize(data) {
         data.forEach((d) => new Figure(...d));
 //        if (Figure.figures.length) {
-//            Figure.figures[setup["figure"]-1 || 0].focus();
+//            Figure.figures[Editor.setup["figure"]-1 || 0].focus();
 //        }
     }
 
@@ -74,10 +73,10 @@ class Figure {
     }
 
     dom_setup() {
-        // migrate all DOM input values (stored in `setup`) concerning to the object to the attributes
+        // migrate all DOM input values (stored in `Editor.setup`) concerning to the object to the attributes
         let f = (key, attribute = null) => {
-            this[attribute || key.replace(/-/g, "_")] = setup[key]; // setup["mouse-drag"] => this.mouse_drag
-            delete setup[key];
+            this[attribute || key.replace(/-/g, "_")] = Editor.setup[key]; // Editor.setup["mouse-drag"] => this.mouse_drag
+            delete Editor.setup[key];
         };
         f("axes-type", "type");
         f("mouse-drag");
@@ -131,6 +130,7 @@ class Figure {
         if (e) {
             this.default_size = e.from;
         }
+        console.log('133: "Settings char size",this.default_size(): ', "Settings char size",this.default_size);
         $("#canvas-container").css("width", this.default_size + "%");
         Object.values(Figure.figures).forEach(f => f.chart && f.chart.resize());
     }
@@ -265,8 +265,8 @@ class Figure {
                     itemSort: null, // set dynamically
                     callbacks: {
                         title: function (el) {
-                            if (setup["outbreak-on"]) {
-                                if (setup["outbreak-mode"]) {
+                            if (Editor.setup["outbreak-on"]) {
+                                if (Editor.setup["outbreak-mode"]) {
                                     return "Population outbreak day " + el[0].label;
                                 }
                                 return "Confirmed case outbreak day " + el[0].label;
@@ -289,7 +289,7 @@ class Figure {
                                     label += ': ';
                                 }
                                 label += v;
-                                if (setup["outbreak-on"]) {
+                                if (Editor.setup["outbreak-on"]) {
                                     let start = figure.meta(el.datasetIndex).outbreak_start;
                                     if (start) { // if aggregating, outbreak_start is not known
                                         let day = Territory.header[parseInt(start) + parseInt(el.label)];
@@ -427,10 +427,10 @@ class Figure {
                 },
                 animation: {
                     onComplete: () => {
-                        if (this.id === 1 && REFRESH_THUMBNAIL === chart_id && show_menu) {
+                        if (this.id === 1 && Editor.REFRESH_THUMBNAIL === Editor.chart_id && Editor.show_menu) {
                             // chartjs animation finshed, we can alter the image.
-                            // But only if chart_id would not change meanwhile (we did not move sliders)
-                            REFRESH_THUMBNAIL = 0;
+                            // But only if Editor.chart_id would not change meanwhile (we did not move sliders)
+                            Editor.REFRESH_THUMBNAIL = 0;
                             export_thumbnail();
                         }
                     }
@@ -467,10 +467,10 @@ class Figure {
 
             // XX we may save performance if we pass day-range to Equation.get_data.
             //  However, this might change the calculation of the outbreak start.
-            if (setup["single-day"]) {
-                chosen_data.push(data[setup["day-range"]]);
+            if (Editor.setup["single-day"]) {
+                chosen_data.push(data[Editor.setup["day-range"]]);
             } else {
-                for (let i = setup["day-range"][0]; i < data.length && i < setup["day-range"][1]; i++) {
+                for (let i = Editor.setup["day-range"][0]; i < data.length && i < Editor.setup["day-range"][1]; i++) {
                     chosen_data.push(data[i]);
                 }
             }
@@ -478,7 +478,7 @@ class Figure {
             if (!chosen_data.length) {
                 continue;
             }
-            longest_data = Math.max(longest_data, setup["day-range"][0] + chosen_data.length);
+            longest_data = Math.max(longest_data, Editor.setup["day-range"][0] + chosen_data.length);
 
             // prepare dataset options
             let [name, label, starred, id] = equation.territory_info(territory);
@@ -518,13 +518,13 @@ class Figure {
 //            console.log("Dataset", label, chosen_data);
             //console.log("Push name", equation.get_name(), equation.id, territory);
         }
-        let r = setup["single-day"] ? [setup["day-range"]] : range(setup["day-range"][0], Math.min(longest_data, setup["day-range"][1]));
-        let labels = this.type === Figure.TYPE_LOG_DATASET ? null : (setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)].toDM()));
+        let r = Editor.setup["single-day"] ? [Editor.setup["day-range"]] : range(Editor.setup["day-range"][0], Math.min(longest_data, Editor.setup["day-range"][1]));
+        let labels = this.type === Figure.TYPE_LOG_DATASET ? null : (Editor.setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)].toDM()));
 
 
 
         // destroy current chart if needed
-        this.is_line = !setup["single-day"] && Object.values(datasets).some(d => d.type === "line");// ChartJS cannot dynamically change line type (dataset left align) to bar (centered). We have bar if single day (centered) and if there is no line equation.
+        this.is_line = !Editor.setup["single-day"] && Object.values(datasets).some(d => d.type === "line");// ChartJS cannot dynamically change line type (dataset left align) to bar (centered). We have bar if single day (centered) and if there is no line equation.
         let percentage = this.type === Figure.TYPE_PERCENT_TIME; // Stacked percentage if at least one equation has it
         if (this.chart && (
                 (this.chart.config.type === "line") !== this.is_line || // cannot change dynamically line to bar
@@ -679,15 +679,15 @@ class Figure {
     }
 
     axe_x_title() {
-        let axe_title = setup["single-day"] ? "Day: " + (setup["outbreak-on"] ? setup["day-range"] : Territory.header[setup["day-range"]].toDM()) + " " : "";
+        let axe_title = Editor.setup["single-day"] ? "Day: " + (Editor.setup["outbreak-on"] ? Editor.setup["day-range"] : Territory.header[Editor.setup["day-range"]].toDM()) + " " : "";
         if (this.type === Figure.TYPE_LOG_DATASET) {
             axe_title += "Confirmed cases";
-            if (setup["outbreak-on"]) {
-                axe_title += setup["outbreak-mode"] ? ` since >= (${setup["outbreak-value"]} * population/100 000)` : ` since >= ${setup["outbreak-value"]}`;
+            if (Editor.setup["outbreak-on"]) {
+                axe_title += Editor.setup["outbreak-mode"] ? ` since >= (${Editor.setup["outbreak-value"]} * population/100 000)` : ` since >= ${Editor.setup["outbreak-value"]}`;
             }
             ;
         } else {
-            axe_title += setup["outbreak-on"] ? (setup["outbreak-mode"] ? `Days count since confirmed cases >= (${setup["outbreak-value"]} * population/100 000)` : `Days count since confirmed cases >= ${setup["outbreak-value"]}`) : "";
+            axe_title += Editor.setup["outbreak-on"] ? (Editor.setup["outbreak-mode"] ? `Days count since confirmed cases >= (${Editor.setup["outbreak-value"]} * population/100 000)` : `Days count since confirmed cases >= ${Editor.setup["outbreak-value"]}`) : "";
         }
         return axe_title;
     }

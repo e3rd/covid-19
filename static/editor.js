@@ -1,6 +1,6 @@
 /**
  * Input field DOM
- *  * `dom_setup` method will register it to the `setup` variable
+ *  * `dom_setup` method will register it to the `Editor.setup` variable
  *  * rewritten in (Equation|Figure).focus()
  *
  *
@@ -8,6 +8,17 @@
  * Editor -> Figure -> Equation -> dataset -> Territory
  *
  */
+
+class Editor {
+
+}
+
+Editor.setup = {};
+Editor.$equation = $("#equation-expression");
+Editor.REFRESH_THUMBNAIL = '';
+Editor.chart_id = '';
+Editor.show_menu = true;
+
 // definitions
 var ready_to_refresh = false;
 //var url_pattern = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-';
@@ -17,8 +28,8 @@ var just_stored_hash = ""; // determine if hash change is in progress
 function show_menu_now() {
     // start plotting
     if (!Equation.current) {
-        console.debug("Equation.current -> creating new", setup["equation-expression"], setup);
-        (new Equation(setup["equation-expression"])).focus(); // initialize a equation and give it initial math expression from DOM
+        console.debug("Equation.current -> creating new", Editor.setup["equation-expression"], Editor.setup);
+        (new Equation(Editor.setup["equation-expression"])).focus(); // initialize a equation and give it initial math expression from DOM
         for (let country of ["Czechia", "Italy"]) { // X ["Czechia", "United Kingdom"] european_countries
             Territory.get_by_name(country, Territory.COUNTRY).set_active().show();
         }
@@ -28,19 +39,16 @@ function show_menu_now() {
 }
 
 function init_editor() {
-
-    $plot = $("#plot");
-
-    // Try load chart_id from the page content.
-    if (!chart_id) {
+    // Try load Editor.chart_id from the page content.
+    if (!Editor.chart_id) {
         let node = document.getElementById("chart");
         if (node && node.dataset.chart) {
-            chart_id = hashFnv32a(node.dataset.chart, true);
+            Editor.chart_id = hashFnv32a(node.dataset.chart, true);
         }
     }
     // Show show cases or editor
-    if (!chart_id) {
-        show_menu = false;
+    if (!Editor.chart_id && window.location.hostname.indexOf("edvard") > -1) { // showcases shown only if not deployed at nic.cz
+        Editor.show_menu = false;
         $("#showcases").fadeIn(500).on("click", "a", function () {
             $("#showcases").hide();
             show_menu_now();
@@ -70,7 +78,7 @@ function init_editor() {
         onChange: Figure.chart_size
     });
 
-    // display menu - define from:0 and min:0 as the initial values if `setup` is loadable and element is missing from `setup`
+    // display menu - define from:0 and min:0 as the initial values if `Editor.setup` is loadable and element is missing from `Editor.setup`
     $("#mouse-drag").ionRangeSlider({
         skin: "big", grid: false, from: 0, min: 0,
         values: Figure.MOUSE_DRAG
@@ -159,7 +167,7 @@ function init_editor() {
             $(this).siblings("span.irs").find(".irs-handle.from").focus(); // XXX clicking on the label does not focus IRS yet
             // console.log("HERE", $(this).siblings("span.irs").find(".irs-handle.from"));
             return false;
-        })
+        });
         // make labels focus the ion
 
         let opt = $(this).data("ionRangeSlider").options;
@@ -203,7 +211,7 @@ function init_editor() {
 
     });
     // refresh on equation change
-    $equation.keyup(function () {
+    Editor.$equation.keyup(function () {
         let v = $(this).val();
         if ($(this).data("last") !== v) {
             Equation.current.refresh_html(v);
@@ -234,16 +242,16 @@ function init_editor() {
         let cp = Equation.current;
         if (!cp.valid) {
             alert("This equation expression is invalid");
-            $equation.focus();
+            Editor.$equation.focus();
             return;
         }
         //Equation.current.assure_stack();
-        $equation.val("");
+        Editor.$equation.val("");
         let p = new Equation();
         p.checked = Object.assign(cp.checked);
         p.starred = Object.assign(cp.starred);
         p.focus().refresh_html();
-        $equation.focus();
+        Editor.$equation.focus();
     });
     // clicking on a equation stack curve label
     $("#equation-stack").on("click", "> div", function (event) {
@@ -303,6 +311,10 @@ function init_editor() {
     $("#share-menu-button").click(() => {
         export_thumbnail();
         $("#share-facebook").attr("href", "http://www.facebook.com/sharer.php?u=" + window.location.href);
+        let setup = Object.assign({}, Editor.setup);
+        setup["iframe"] = 1;
+        $("#share-iframe").val(`<iframe width="${600 * Figure.figures.length}" height="310" frameborder="0" src="${encodeURI(window.location.origin + window.location.pathname + serialize(setup))}"></iframe>`);
+        // $("#share-iframe").val(`<iframe width="${600 * Figure.figures.length}" height="300" src="${window.location.origin + window.location.pathname + serialize(setup)}"></iframe>`);
     });
     $("#share-facebook").click(function () {
         window.open(this.href, 'facebookwindow', 'left=20,top=20,width=600,height=700,toolbar=0,resizable=1');
@@ -310,7 +322,7 @@ function init_editor() {
     });
 
     // copy input
-    $("input.copyinput").prop("readonly", true).click(function () {
+    $(".copyinput").prop("readonly", true).click(function () {
         this.select();
     });
 
@@ -318,15 +330,15 @@ function init_editor() {
     // runtime
     let tests_czech;
     $.when(// we need to build Territory objects from CSV first
-            $.get(url_pattern + "confirmed_global.csv", data => Territory.build(data, "confirmed")),
-            $.get(url_pattern + "deaths_global.csv", data => Territory.build(data, "deaths")),
-            $.get(url_pattern + "recovered_global.csv", data => Territory.build(data, "recovered")),
-            $.getJSON("https://onemocneni-aktualne.mzcr.cz/api/v1/covid-19/testy.min.json", json => tests_czech = json)
-            ).then(() => {
+        $.get(url_pattern + "confirmed_global.csv", data => Territory.build(data, "confirmed")),
+        $.get(url_pattern + "deaths_global.csv", data => Territory.build(data, "deaths")),
+        $.get(url_pattern + "recovered_global.csv", data => Territory.build(data, "recovered")),
+        $.getJSON("https://onemocneni-aktualne.mzcr.cz/api/v1/covid-19/testy.min.json", json => tests_czech = json)
+    ).then(() => {
         Territory.build_json(tests_czech); // we have to be sure another built is completed => Territory.header is set and we know its beginning
         Territory.finalize();
 
-        // setup options according to data boundaries
+        // Editor.setup options according to data boundaries
         $("#day-range").data("ionRangeSlider").update({max: Territory.header.length});
 
         // build territories
@@ -397,18 +409,13 @@ function init_editor() {
             load_hash();
             //alert(`location: ${document.location}, state: ${JSON.stringify(event.state)}`);
         };
-        dom_setup(false); // store default values from DOM to setup
+        dom_setup(false); // store default values from DOM to Editor.setup
         load_hash();
 
 
-
-
-
         // loading effect
-        if (show_menu) { // show cases are shown instead of the editor
-
+        if (Editor.show_menu) { // show cases are shown instead of the editor
             show_menu_now();
-
             ready_to_refresh = false;
             $("#view-menu input").change(); // even though all input triggered change event in load_hash, if `main` is invisible, this had no effect (ex: #view-menu child is not displayed if off even though its parent is on)
             ready_to_refresh = true;
@@ -417,44 +424,58 @@ function init_editor() {
 }
 
 
-
 /**
- * window.hash -> `setup` -> DOM
+ * window.hash -> `Editor.setup` -> DOM
  * @returns {undefined}
  */
 function load_hash() {
     console.log("Load hash trying ...");
     try {
-        // Try load setup from the window hash or page content
+        // Try load Editor.setup from the window hash or page content
         let node = document.getElementById("chart");
         let hash = window.location.hash ? "{" + decodeURI(window.location.hash.substr(1)) + "}" : ((node && node.dataset.chart) ? node.dataset.chart : "{}");
-        console.log("Hash", /*hash, just_stored_hash, */" (having val: ", setup["outbreak-value"]);
+        console.log("Hash", /*hash, just_stored_hash, */" (having val: ", Editor.setup["outbreak-value"]);
+
+        console.log("Hasha", hash, just_stored_hash, " (having val: ", Editor.setup["outbreak-value"]);
+        //console.log('439:88 window.location.hash(): ', window.location.hash, document.location.hash, this.window.location.hash, window, top, document);
         if (hash === just_stored_hash || hash === "{}") {
             console.log("... nothing to load.");
             return;
         }
         just_stored_hash = hash;
-        setup = JSON.parse(hash);
+        Editor.setup = JSON.parse(hash);
     } catch (e) {
         console.warn("... cannot parse");
         return;
     }
-    console.log("Parse setup:", setup);
+    console.log("Parse Editor.setup:", Editor.setup);
     let original = ready_to_refresh; // block many refreshes issued by every $el.change call
     ready_to_refresh = false;
-    for (let key in setup) {
-        let val = setup[key];
+    for (let key in Editor.setup) {
+        let val = Editor.setup[key];
 
         // handle keys that `refresh` does not handle: equations and chart-size
         if (key === "equations" || key === "figures") {
             continue; // will be handled later since it is important figures are deserialized earlier
         } else if (key === "chart-size") {
             Figure.chart_size({"from": val});
+        } else if (key === "iframe") {
+            // we are in an iframe, hide all except figures
+            setTimeout(() => { // i don't know much why, this works better if hiding postponed
+                $("body > *").hide();
+                $("html").css("margin-top", "0");
+
+                // show just the #canvas-container in the main contents
+                let $container = $("body > .container, body > main").show().css("max-width", "unset");
+                $("> :not(#canvas-container)", $container).hide();
+                $("#canvas-container").css("width", "unset");
+            }, 0);
+            continue;
         }
 
         // key may be a DOM element too
         let $el = $("#" + key);
-        if (!key in setup || !$el.length) {
+        if (!key in Editor.setup || !$el.length) {
             continue;
         }
         if ((ion = $el.data("ionRangeSlider"))) {
@@ -490,10 +511,10 @@ function load_hash() {
 
     // process parameters whose order is important
     let val;
-    if ((val = setup["figures"])) {
+    if ((val = Editor.setup["figures"])) {
         Figure.deserialize(val);
     }
-    if ((val = setup["equations"])) {
+    if ((val = Editor.setup["equations"])) {
         Equation.deserialize(val);
     }
 
@@ -505,7 +526,7 @@ function load_hash() {
 
 
 /*
- * DOM -> `setup`
+ * DOM -> `Editor.setup`
  * @param {type} load_from_hash
  * @param {type} allow_window_hash_change
  * @returns {undefined}
@@ -513,7 +534,7 @@ function load_hash() {
 function dom_setup(allow_window_hash_change = true) {
     // read all DOM input fields
     $("#setup input:not(.nohash)").each(function () {
-        // Load value from the $el to setup.
+        // Load value from the $el to Editor.setup.
         $el = $(this);
         let key = $el.attr("id");
         let val;
@@ -533,7 +554,7 @@ function dom_setup(allow_window_hash_change = true) {
         } else {
             val = $el.val();
         }
-        setup[key] = val;
+        Editor.setup[key] = val;
     });
 
     // convert global input fields to equation attributes
@@ -549,26 +570,31 @@ function dom_setup(allow_window_hash_change = true) {
 
     if (allow_window_hash_change) {
         // save to hash
-        setup["equations"] = Equation.serialize();
-        setup["figures"] = Figure.serialize();
+        Editor.setup["equations"] = Equation.serialize();
+        Editor.setup["figures"] = Figure.serialize();
 
         // ignore day-range from unique hash -> day-range can very but thumbnail will stay the same
         // Default day-range (all days) is longer every day and the hash for the same chart would vary.
-        let day_range = setup["day-range"];
-        delete setup["day-range"];
-        chart_id = hashFnv32a(JSON.stringify(setup), true);
-        setup["day-range"] = day_range;
+        let day_range = Editor.setup["day-range"];
+        delete Editor.setup["day-range"];
+        Editor.chart_id = hashFnv32a(JSON.stringify(Editor.setup), true);
+        Editor.setup["day-range"] = day_range;
 
-        let s = just_stored_hash = JSON.stringify(setup);
-        let state = s.substring(1, s.length - 1);
-        history.pushState(null, "", "?chart=" + chart_id + "#" + state);
+
+        history.pushState(null, "", serialize(Editor.setup, true));
 //        window.location.hash = s.substring(1, s.length - 1); XX
-        //console.log("Hash stored with val: ", setup["outbreak-value"]);
+        //console.log("Hash stored with val: ", Editor.setup["outbreak-value"]);
+    }
 }
+
+function serialize(setup, store = false) {
+    let s = JSON.stringify(setup);
+    if (store) {
+        just_stored_hash = s;
+    }
+    let state = s.substring(1, s.length - 1);
+    return "?chart=" + Editor.chart_id + "#" + state;
 }
-
-
-
 
 
 /**
@@ -583,10 +609,10 @@ function refresh(event = null) {
     } else if (!ready_to_refresh) {
         return false;
     }
-    // assure `setup` is ready
+    // assure `Editor.setup` is ready
     let can_redraw_sliders = event !== false;
 //    console.log("REFRESH CALLED", event, can_redraw_sliders);
-    dom_setup(typeof (event) !== "boolean"); // refresh window.location.hash only if we came here through a DOM event, not through load (event === false || true). We want to conserve chart_id in the hash till the thumbnail can be exported if needed.
+    dom_setup(typeof (event) !== "boolean"); // refresh window.location.hash only if we came here through a DOM event, not through load (event === false || true). We want to conserve Editor.chart_id in the hash till the thumbnail can be exported if needed.
     $("#export-data").html(""); // reset export-data, will be refreshed in Figure.refresh/Figure.prepare_export
 
 
@@ -598,13 +624,13 @@ function refresh(event = null) {
     if (can_redraw_sliders) {
         let max = Math.max(...boundaries.map(i => i[1])); // boundary total max
 
-        if (setup["outbreak-mode"]) {
+        if (Editor.setup["outbreak-mode"]) {
             max = Math.min(max * 100000 / boundaries.map(i => i[2]).sum());
         }
         let values;
         if (!isFinite(max)) { // all values can be NaN, ex: when toggling outbreak mode to population
-            max = setup["outbreak-value"];
-            values = [1, 2, 3, 4, 5, 6, 7, 8, 9, setup["outbreak-value"]];
+            max = Editor.setup["outbreak-value"];
+            values = [1, 2, 3, 4, 5, 6, 7, 8, 9, Editor.setup["outbreak-value"]];
         } else {
             values = logslider(1, 100, 1, max);
         }
@@ -612,7 +638,7 @@ function refresh(event = null) {
         $("#outbreak-threshold").data("values", values).data("ionRangeSlider").update({
             values: values
         });
-        set_slider($("#outbreak-threshold"), setup["outbreak-value"]);
+        set_slider($("#outbreak-threshold"), Editor.setup["outbreak-value"]);
     }
 
     $("#export-link").val(window.location.href);

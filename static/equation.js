@@ -1,6 +1,3 @@
-setup = setup || {};
-$equation = $equation || {};
-
 /**
  *
  * @type type Used by Equation.express
@@ -67,7 +64,7 @@ class Equation {
     }
 
     static serialize() {
-        setup["equation"] = Equation.current.id;
+        Editor.setup["equation"] = Equation.current.id;
         return Equation.equations.map(p => {
             return [p.expression,
                 p.active,
@@ -86,7 +83,7 @@ class Equation {
         Equation.equations = [];
         data.forEach((d) => new Equation(...d));
         if (Equation.equations.length) {
-            Equation.equations[setup["equation"] - 1 || 0].focus();
+            Equation.equations[Editor.setup["equation"] - 1 || 0].focus();
         }
     }
 
@@ -123,7 +120,7 @@ class Equation {
             }
         }
         Territory.equation = Equation.current = this;
-        $equation.val(this.expression);
+        Editor.$equation.val(this.expression);
         $("#equation-type").data("ionRangeSlider").update({from: this.type});
         if (this.$element) {
             this.$element.addClass("edited");
@@ -137,14 +134,14 @@ class Equation {
 
     dom_setup() {
         Object.assign(Equation.current, {
-            type: setup["equation-type"],
-            aggregate: setup["sum-territories"]
-                    //percentage: setup["percentage"]
+            type: Editor.setup["equation-type"],
+            aggregate: Editor.setup["sum-territories"]
+                    //percentage: Editor.setup["percentage"]
         });
-        //$("#percentage").parent().toggle(setup["equation-type"] >= Equation.TYPE_STACKED_EQUATION); // show/hide percentage checkbox if the equation uses stacked bar
-        delete setup["equation-type"];
-        delete setup["sum-territories"];
-        //delete setup["percentage"];
+        //$("#percentage").parent().toggle(Editor.setup["equation-type"] >= Equation.TYPE_STACKED_EQUATION); // show/hide percentage checkbox if the equation uses stacked bar
+        delete Editor.setup["equation-type"];
+        delete Editor.setup["sum-territories"];
+        //delete Editor.setup["percentage"];
         this.refresh_html();
     }
 
@@ -158,7 +155,7 @@ class Equation {
                 }
             } else {
                 // we cannot remove the last equation, just clear the text
-                $equation.val("").focus();
+                Editor.$equation.val("").focus();
                 this.set_expression("");
                 this.refresh_html();
                 return;
@@ -236,9 +233,9 @@ class Equation {
         }
 
         // allow multiple figures
-        //console.log("SHOW EQUATION FIGURE?", setup["equation-figure"]);
-        $(".equation-figure", this.$element).toggle(Boolean(parseInt(setup["equation-figure-switch"])));
-        $(".y-axis", this.$element).toggle(Boolean(parseInt(setup["y-axis-independency-switch"])));
+        //console.log("SHOW EQUATION FIGURE?", Editor.setup["equation-figure"]);
+        $(".equation-figure", this.$element).toggle(Boolean(parseInt(Editor.setup["equation-figure-switch"])));
+        $(".y-axis", this.$element).toggle(Boolean(parseInt(Editor.setup["y-axis-independency-switch"])));
 
         // hide remove buttons if there is last equation
         $(".remove", $("#equation-stack")).toggle(Equation.equations.length > 1);
@@ -327,8 +324,8 @@ class Equation {
     static get_data(equations = []) {
         let title = [];
         let result = [];
-        let outbreak_population = setup["outbreak-mode"] ? 1 : 0;
-        let outbreak_threshold = setup["outbreak-on"] ? parseInt(setup["outbreak-value"]) : 0;
+        let outbreak_population = Editor.setup["outbreak-mode"] ? 1 : 0;
+        let outbreak_threshold = Editor.setup["outbreak-on"] ? parseInt(Editor.setup["outbreak-value"]) : 0;
         let boundaries = [Number.POSITIVE_INFINITY, 0, 0]; // min, max, outbreak population percentil
         for (let p of equations) {
             p.valid = null;
@@ -339,7 +336,7 @@ class Equation {
                 let ignore = true;
 
                 let averagable = (data) => {
-                    if (setup["average"]) {
+                    if (Editor.setup["average"]) {
                         return average_stream(data, 7);
                     } else {
                         return v => data[v];
