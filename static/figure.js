@@ -700,26 +700,24 @@ class Figure {
 }
 
 
-$(function () {
-    Figure.figures = [];
-    Figure.default_size = null;
+Figure.figures = [];
+Figure.default_size = null;
 
-    Figure.TYPE_LINEAR_TIME = 0;
-    Figure.TYPE_LOG_TIME = 1;
-    Figure.TYPE_PERCENT_TIME = 2;
-    Figure.TYPE_LOG_DATASET = 3;
+Figure.TYPE_LINEAR_TIME = 0;
+Figure.TYPE_LOG_TIME = 1;
+Figure.TYPE_PERCENT_TIME = 2;
+Figure.TYPE_LOG_DATASET = 3;
 
-    // constants
-    // Change everywhere before renaming a constant, however you can re-order freely. The first one becomes the default.
-    Figure.MOUSE_DRAG = ["off", "zoom", "pan", "pan + wheel zoom"];
-    Figure.TOOLTIP_SORTING = ["by value", "by expression", "by territory"];
-    Figure.COLOR_STYLE = ["territory + equation", "equation", "static"];
-    Figure.DATA_LABELS = ["default", "label", "values", "off"];
+// constants
+// Change everywhere before renaming a constant, however you can re-order freely. The first one becomes the default.
+Figure.MOUSE_DRAG = ["off", "zoom", "pan", "pan + wheel zoom"];
+Figure.TOOLTIP_SORTING = ["by value", "by expression", "by territory"];
+Figure.COLOR_STYLE = ["territory + equation", "equation", "static"];
+Figure.DATA_LABELS = ["default", "label", "values", "off"];
 
 
-    /**
-     *
-     * @type Figure
-     */
-    Figure.current = null;
-});
+/**
+ *
+ * @type Figure
+ */
+Figure.current = null;

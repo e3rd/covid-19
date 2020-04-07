@@ -48,13 +48,12 @@ function init_editor() {
     }
     // Show show cases or editor
     if (!Editor.chart_id && edvard_deployment) { // showcases shown only if not deployed at nic.cz
-        console.log("SHOW MENU NOW", Editor.chart_id);
         Editor.show_menu = false;
         $("#showcases").fadeIn(500).on("click", "a", function () {
             $("#showcases").hide();
-            show_menu_now();
             history.pushState(null, "", $(this).attr("href"));
             load_hash();
+            show_menu_now();
             refresh(set_ready = true);
             return false;
         });
@@ -405,10 +404,9 @@ function init_editor() {
             console.log("HASH change event");
             load_hash();
         }, false);
-        window.onpopstate = function () {
+        window.onpopstate = function () { // will probably trigger hashchange too
             console.log("POPSTATE change event");
             load_hash();
-            //alert(`location: ${document.location}, state: ${JSON.stringify(event.state)}`);
         };
         dom_setup(false); // store default values from DOM to Editor.setup
         load_hash();
@@ -435,7 +433,7 @@ function load_hash() {
         // Try load Editor.setup from the window hash or page content
         let node = document.getElementById("chart");
         let hash = window.location.hash ? "{" + decodeURI(window.location.hash.substr(1)) + "}" : ((node && node.dataset.chart) ? node.dataset.chart : "{}");
-        //        console.log("Hash", /*hash, just_stored_hash, */" (having val: ", Editor.setup["outbreak-value"]);
+        console.log("Hash:", hash); //," (having val: ", Editor.setup["outbreak-value"]);
         if (hash === just_stored_hash || hash === "{}") {
             console.log("... nothing to load.");
             return;
@@ -689,6 +687,4 @@ function export_thumbnail() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', $(function () {
-    init_editor(); // needed so that asynchronous loaded classes as Figure are ready
-}));
+document.addEventListener('DOMContentLoaded', init_editor); // Figure class must be ready
