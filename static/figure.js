@@ -125,6 +125,9 @@ class Figure {
      * @param {Object} e.from => value
      */
     static chart_size(e) {
+        if(Editor.iframe) {
+            return;
+        }
         if (e) {
             this.default_size = e.from;
         }

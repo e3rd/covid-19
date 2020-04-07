@@ -18,6 +18,7 @@ Editor.$equation = $("#equation-expression");
 Editor.REFRESH_THUMBNAIL = typeof REFRESH_THUMBNAIL !== 'undefined' ? REFRESH_THUMBNAIL : '';
 Editor.chart_id = typeof chart_id !== 'undefined' ? chart_id : ''; // XX CZ.NIC has chart_id as URL parameter if needed '?chart=CHART_ID'
 Editor.show_menu = true;
+Editor.iframe = false;
 
 // definitions
 var ready_to_refresh = false;
@@ -311,9 +312,10 @@ function init_editor() {
     $("#share-menu-button").click(() => {
         export_thumbnail();
         $("#share-facebook").attr("href", "http://www.facebook.com/sharer.php?u=" + window.location.href);
+        let width = 600 * Figure.figures.length;
         let setup = Object.assign({}, Editor.setup);
-        setup["iframe"] = 1;
-        $("#share-iframe").val(`<iframe width="${600 * Figure.figures.length}" height="310" frameborder="0" src="${encodeURI(window.location.origin + window.location.pathname + serialize(setup))}"></iframe>`);
+        setup["iframe"] = width;
+        $("#share-iframe").val(`<iframe width="${width}" height="310" frameborder="0" src="${encodeURI(window.location.origin + window.location.pathname + serialize(setup))}"></iframe>`);
         // $("#share-iframe").val(`<iframe width="${600 * Figure.figures.length}" height="300" src="${window.location.origin + window.location.pathname + serialize(setup)}"></iframe>`);
     });
     $("#share-facebook").click(function () {
@@ -456,15 +458,15 @@ function load_hash() {
         } else if (key === "chart-size") {
             Figure.chart_size({"from": val});
         } else if (key === "iframe") {
+            Editor.iframe = true;
             // we are in an iframe, hide all except figures
             setTimeout(() => { // i don't know much why, this works better if hiding postponed
                 $("body > *").hide();
                 $("html").css("margin-top", "0");
-
                 // show just the #canvas-container in the main contents
-                let $container = $("body > .container, body > main").show().css("max-width", "unset");
+                let $container = $("body > .container, body > main").show().css({"max-width": "unset", "min-width": "unset", "width": val + "px"});
                 $("> :not(#canvas-container)", $container).hide();
-                $("#canvas-container").css("width", "unset");
+                $("#canvas-container").css("width", val + "px");
             }, 0);
             continue;
         }
