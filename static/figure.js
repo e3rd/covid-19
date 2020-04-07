@@ -2,8 +2,6 @@ let DATASET_BORDER = {
     true: 6,
     false: 3
 };
-
-
 class Figure {
     constructor(type = Figure.TYPE_LOG_TIME, mouse_drag = null, tooltip_sorting = null, color_style = null, data_labels = null) {
         this.type = type;
@@ -130,7 +128,6 @@ class Figure {
         if (e) {
             this.default_size = e.from;
         }
-        console.log('133: "Settings char size",this.default_size(): ', "Settings char size",this.default_size);
         $("#canvas-container").css("width", this.default_size + "%");
         Object.values(Figure.figures).forEach(f => f.chart && f.chart.resize());
     }
@@ -514,13 +511,22 @@ class Figure {
                 highlightColor: adjust(color, +40)
             };
             y_axes.add(parseInt(equation.y_axis));
-//            console.log("Dataset color", id, label, color, adjust(color, 40), adjust(color, -40));
-//            console.log("Dataset", label, chosen_data);
+            //            console.log("Dataset color", id, label, color, adjust(color, 40), adjust(color, -40));
+//            console.log("Dataset", label, chosen_data.length, dataset.stack);
             //console.log("Push name", equation.get_name(), equation.id, territory);
         }
+
+        // Transform data according to Percent axes
+        if (this.type === Figure.TYPE_PERCENT_TIME) {
+            // lengthen all the datasets to the same, max length, fill with NaN
+            // stacked100.js plugin fails with dataset of different length
+            let max = Math.max(...Object.values(datasets).map(d => d.data.length));
+            Object.values(datasets).forEach(d => d.data.push(...Array(max - d.data.length).fill(NaN)));
+        }
+
+        // Axe X Labels
         let r = Editor.setup["single-day"] ? [Editor.setup["day-range"]] : range(Editor.setup["day-range"][0], Math.min(longest_data, Editor.setup["day-range"][1]));
         let labels = this.type === Figure.TYPE_LOG_DATASET ? null : (Editor.setup["outbreak-on"] ? r.map(String) : r.map(day => Territory.header[parseInt(day)].toDM()));
-
 
 
         // destroy current chart if needed

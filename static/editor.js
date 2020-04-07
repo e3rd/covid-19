@@ -435,10 +435,7 @@ function load_hash() {
         // Try load Editor.setup from the window hash or page content
         let node = document.getElementById("chart");
         let hash = window.location.hash ? "{" + decodeURI(window.location.hash.substr(1)) + "}" : ((node && node.dataset.chart) ? node.dataset.chart : "{}");
-        console.log("Hash", /*hash, just_stored_hash, */" (having val: ", Editor.setup["outbreak-value"]);
-
-        console.log("Hasha", hash, just_stored_hash, " (having val: ", Editor.setup["outbreak-value"]);
-        //console.log('439:88 window.location.hash(): ', window.location.hash, document.location.hash, this.window.location.hash, window, top, document);
+        //        console.log("Hash", /*hash, just_stored_hash, */" (having val: ", Editor.setup["outbreak-value"]);
         if (hash === just_stored_hash || hash === "{}") {
             console.log("... nothing to load.");
             return;
@@ -692,4 +689,6 @@ function export_thumbnail() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', init_editor);
+document.addEventListener('DOMContentLoaded', $(function () {
+    init_editor(); // needed so that asynchronous loaded classes as Figure are ready
+}));
