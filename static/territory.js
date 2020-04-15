@@ -2,12 +2,18 @@
  * Territory class
 
  */
+import { Equation } from './equation'
+import { territories } from './mappings'
+import { number_format, splitCsv } from './helper_functions'
+import { refresh } from './editor'
+
 let counter = 0;
-class Territory {
+export class Territory {
 
     constructor(name, type) {
         this.name = name;
         this.type = type;
+        this.label = name;
         this.toggled = false;
         this.shown = this.type === Territory.CONTINENT;  // by default, every countries are hidden
         this.is_starred = false;
@@ -58,17 +64,24 @@ class Territory {
     }
 
     /**
-     * @returns {String} Name of the territory. (Possible quotes around the name stripped.)
+     * @returns {String} Name of the territory.
      */
-    get_name(hightlightable = false) {
-        let s = this.name;
+    get_name() {
+        return this.name
+    }
+
+    /**
+     * @returns {String} Label of the territory. (Possible quotes around the name stripped.)
+     */
+    get_label(hightlightable = false) {
+        let label = this.label;
         if (this.type === Territory.REGION && this.mainland) {
-            s += " (Region)";
+            label += " (" + gettext("Region") + ")";
         }
         if (hightlightable && this.is_starred) {
-            s = " *** " + s + "***";
+            label = " *** " + label + "***";
         }
-        return s;
+        return label;
     }
 
     get is_active() {
@@ -223,10 +236,10 @@ class Territory {
 
     get_html() {
         let v = this.shown ? "" : " style='display:none'";
-        let disabled = Object.values(this.data).filter(d => d !== "0").length ? "" : " (zero)";
+        let disabled = Object.values(this.data).filter(d => d !== "0").length ? "" : " (" + gettext("zero") + ")";
         let s = "<div " + v + "id='" + this.dom_id + "' data-sort='" + this.get_name() + "'>";
         s += "<input type=checkbox />";
-        s += "<span>" + this.get_name() + "</span>" + disabled;
+        s += "<span>" + this.get_label() + "</span>" + disabled;
         s += " <span class='off'>☆</span> ";
         if (this.children.length) {
             s += "<span class='off'>👁</span>"; // XX save to hash
@@ -443,6 +456,7 @@ class Territory {
         // build continents
         territories.forEach(el => {
             let continent = Territory.get(el.continent, Territory.CONTINENT);
+            continent.label = el.label;
             el.countries.forEach(el => {
                 let region = Territory.regions[el.name];
                 let country = Territory.countries[el.name];
@@ -450,6 +464,7 @@ class Territory {
 
                 // check if country has been found in the datasheets
                 if (territory) {
+                    territory.label = el.label
                     if (el.pop !== "") {
                         // add population preferably to the country that will propagate it to its region if its mainland (UK)
                         // or to the region if no mainland (USA)
@@ -492,5 +507,5 @@ Territory.header = [];
 
 
 
-var world = Territory.get("World", Territory.CONTINENT);
-var default_territory = Territory.get("Other", Territory.CONTINENT); // here comes countries that are not stated in mapping.js
+export const world = Territory.get("World", Territory.CONTINENT);
+const default_territory = Territory.get("Other", Territory.CONTINENT); // here comes countries that are not stated in mapping.js

@@ -4,7 +4,7 @@
  * Thanks to https://stackoverflow.com/a/47761792/2036148
  * @type type
  */
-class Calculation {
+class Calculate {
     constructor() {
         this._symbols = {};
         this.defineOperator("!", this.factorial,      "postfix", 6);
@@ -113,4 +113,5 @@ class Calculation {
                 : values.pop() // All done!
     }
 }
-Calculation = new Calculation(); // Create a singleton
+
+export const Calculation = new Calculate(); // Create a singleton

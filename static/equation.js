@@ -2,21 +2,26 @@
  *
  * @type type Used by Equation.express
  */
+import { Figure } from './figure'
+import { Territory } from './territory'
+import { Calculation } from './calculation'
+import { average_stream, hashCode, intToRGB } from './helper_functions'
+
 let variables = {
-    "R": "recovered",
-    "D": "death",
-    "C": "confirmed",
-    "T": "confirmed",
-    "P": "population",
-    "NR": "newly recovered",
-    "ND": "newly deceased",
-    "NC": "newly confirmed",
-    "NT": "newly tested",
-    "dC": "confirmed derivation",
-    "dNC": "newly confirmed derivation",
-    "dNR": "newly recovered derivation",
-    "dND": "newly deceased derivation",
-    "dNT": "newly tested derivation",
+    "R": gettext("recovered"),
+    "D": gettext("death"),
+    "C": gettext("confirmed"),
+    "T": gettext("confirmed"),
+    "P": gettext("population"),
+    "NR": gettext("newly recovered"),
+    "ND": gettext("newly deceased"),
+    "NC": gettext("newly confirmed"),
+    "NT": gettext("newly tested"),
+    "dC": gettext("confirmed derivation"),
+    "dNC": gettext("newly confirmed derivation"),
+    "dNR": gettext("newly recovered derivation"),
+    "dND": gettext("newly deceased derivation"),
+    "dNT": gettext("newly tested derivation"),
     "%": "100",
     "k": "1 000",
     "M": "1 000 000"
@@ -31,7 +36,7 @@ let units = {// since calculate.js cannot parse two paranthesis `(C)(100)` as mu
     "T%": "T*10^2", "Tk": "T*10^3", "TM": "T*10^6"
 };
 
-class Equation {
+export class Equation {
     constructor(expression = "", active = true, figure_id = null, y_axis = 1, checked_names = [], starred_names = [], type = Equation.TYPE_LINE, aggregate = false) {
         /**
          * @property {Territory[]} chosen territories to be processed
@@ -195,8 +200,8 @@ class Equation {
      * Assure the equation is in the equation stack
      */
     build_html() {
-        let s = '<input type="number" min="1" class="equation-figure" value="' + this.figure.id + '" title="If you change the number, you place the equation on a different figure."/>';
-        let t = '<input type="number" min="1" max="5" class="y-axis" value="' + this.y_axis + '" title="Independent y-axis scale"/>';
+        let s = '<input type="number" min="1" class="equation-figure" value="' + this.figure.id + '" title="' + gettext("If you change the number, you place the equation on a different figure.") + '"/>';
+        let t = '<input type="number" min="1" max="5" class="y-axis" value="' + this.y_axis + '" title="' + gettext("Independent y-axis scale.") + '"/>';
         this.$element = $("<div><span class=name></span>" + s + t + "<span class='shown btn btn-light'>👁</span><span class='remove btn btn-light'>×</span></div>")
                 .data("equation", this)
                 .prependTo($("#equation-stack"));
@@ -223,7 +228,7 @@ class Equation {
 //            return;
 //        }
 
-        let name = this.expression + this.icon() + " (" + (this.aggregate ? "∑ " : "") + this.checked.length + " countries)";
+        let name = escape(this.expression) + this.icon() + " (" + (this.aggregate ? "∑ " : "") + this.checked.length + " " + gettext("countries") + ")";
         $("> .name", this.$element).html(name);
         if (this.active) {
             this.$element.addClass("active");
@@ -248,7 +253,7 @@ class Equation {
         if (n < 4) {
             s = this.checked.map(t => t.get_name()).join(", ");
         } else {
-            s = n + " territories";
+            s = n + " " + gettext("territories");
         }
         if (highlight) {
             s = " *** " + s + " ***";
@@ -268,7 +273,7 @@ class Equation {
         if (territory) {
             return [
                 territory.get_name(),
-                territory.get_name(true),
+                territory.get_label(true),
                 this.starred.indexOf(territory) > -1,
                 this.id + "" + territory.dom_id];
         } else {
@@ -460,7 +465,7 @@ class Equation {
                         $("#equation-alert").hide();
                         if (typeof (result) === "string") { // error encountered
                             if (p.expression.trim()) {
-                                $("#equation-alert").show().html("<b>Use one of the following variables: <code>C R D T NC NR ND NT dC dNC dNR dND dNT P M k</code></b> (" + result + ")");
+                                $("#equation-alert").show().html("<b>" + gettext("Use one of the following variables") + ": <code>C R D T NC NR ND NT dC dNC dNR dND dNT P M k</code></b> (" + escape(result) + ")");
                             }
                             p.valid = false;
                             break;
@@ -493,7 +498,7 @@ class Equation {
             }
             if (p.aggregate) {
                 result.push([p, null, aggregated, null]); // if aggregated, we do not tell outbreak_start since every agg. country has different
-                title.push("Sum of " + p.get_title());
+                title.push(gettext("Sum of") + " " + p.get_title());
             } else {
                 title.push(p.get_title());
             }

@@ -9,16 +9,21 @@
  *
  */
 
-class Editor {
+import { Figure } from './figure'
+import { Equation } from './equation'
+import { Territory, world } from './territory'
+import { logslider, hashFnv32a, make_thumbnail, exportCanvasAsPNG, downloadFile, range } from './helper_functions'
 
+const edvard_deployment = window.location.hostname.indexOf("edvard") > -1;
+
+window.Editor = {
+    setup: {},
+    $equation: null,
+    REFRESH_THUMBNAIL: typeof REFRESH_THUMBNAIL !== 'undefined' ? REFRESH_THUMBNAIL : '',
+    chart_id: typeof chart_id !== 'undefined' ? chart_id : '', // XX CZ.NIC has chart_id as URL parameter if needed '?chart=CHART_ID'
+    show_menu: true,
+    iframe: false
 }
-let edvard_deployment = window.location.hostname.indexOf("edvard") > -1;
-Editor.setup = {};
-Editor.$equation = $("#equation-expression");
-Editor.REFRESH_THUMBNAIL = typeof REFRESH_THUMBNAIL !== 'undefined' ? REFRESH_THUMBNAIL : '';
-Editor.chart_id = typeof chart_id !== 'undefined' ? chart_id : ''; // XX CZ.NIC has chart_id as URL parameter if needed '?chart=CHART_ID'
-Editor.show_menu = true;
-Editor.iframe = false;
 
 // definitions
 var ready_to_refresh = false;
@@ -35,11 +40,13 @@ function show_menu_now() {
             Territory.get_by_name(country, Territory.COUNTRY).set_active().show();
         }
     }
-    refresh(set_ready = true);
+    refresh(true);
     $("main").fadeIn(2000);
 }
 
 function init_editor() {
+    Editor.$equation = $("#equation-expression");
+
     // Try load Editor.chart_id from the page content.
     if (!Editor.chart_id) {
         let node = document.getElementById("chart");
@@ -49,6 +56,7 @@ function init_editor() {
     }
     // Show show cases or editor
     if (!Editor.chart_id && edvard_deployment) { // showcases shown only if not deployed at nic.cz
+        console.log("SHOW MENU NOW", Editor.chart_id);
         Editor.show_menu = false;
         $("#showcases").fadeIn(500).on("click", "a", function () {
             $("#showcases").hide();
@@ -100,11 +108,21 @@ function init_editor() {
     // axes menu
     $("#equation-type").ionRangeSlider({
         skin: "big", grid: false, from: 0, min: 0,
-        values: ["line", "bar", "stacked by equation", "stacked by territory"]
+        values: [
+            gettext("line"),
+            gettext("bar"),
+            gettext("stacked by equation"),
+            gettext("stacked by territory")
+        ]
     });
     $("#axes-type").ionRangeSlider({
         skin: "big", grid: false, from: 0, min: 0,
-        values: ["linear / time", "log / time", "percent / time", "log / dataset"]
+        values: [
+            gettext("linear / time"),
+            gettext("log / time"),
+            gettext("percent / time"),
+            gettext("log / dataset")
+        ]
     });
 
     $("#day-range").ionRangeSlider({
@@ -485,7 +503,8 @@ function load_hash() {
         if (!key in Editor.setup || !$el.length) {
             continue;
         }
-        if ((ion = $el.data("ionRangeSlider"))) {
+        const ion = $el.data("ionRangeSlider");
+        if (ion) {
             if (ion.options.type === "double") {
                 if (key === "day-range" && val[2] === val[1]) {
                     // if we shared day range till 10 and that was the maximum day, use current maximum day and shift the "from" day
@@ -542,10 +561,11 @@ function dom_setup(allow_window_hash_change = true) {
     // read all DOM input fields
     $("#setup input:not(.nohash)").each(function () {
         // Load value from the $el to Editor.setup.
-        $el = $(this);
+        const $el = $(this);
         let key = $el.attr("id");
         let val;
-        if ((ion = $el.data("ionRangeSlider"))) {
+        const ion = $el.data("ionRangeSlider");
+        if (ion) {
             if (ion.options.type === "double") {
                 if (key === "day-range") {
                     // add maximum day so that we are able to update maximum day when shared
@@ -609,7 +629,7 @@ function serialize(setup, store = false) {
  * @param {bool|Event} event True -> make refresh possible further on. False -> refresh but do not change window hash (would stop slider movement). Event -> callback from an input change, no special action.
  * @returns {Boolean}
  */
-function refresh(event = null) {
+export function refresh(event = null) {
     // pass only when ready
     if (event === true) {
         ready_to_refresh = true;
@@ -688,7 +708,10 @@ function set_slider($slider, val, init_position = null) {
     r.update(o);
 }
 
-function export_thumbnail() {
+export function export_thumbnail() {
+    /*
+     * No upload without authentication.
+     *
     // resize the canvas and upload to the server
     if (!edvard_deployment || !Figure.figures.length) {
         // $("#export input").change will trigger this when still loading and no refresh happenned (no canvas available)
@@ -700,9 +723,10 @@ function export_thumbnail() {
         method: "post",
         data: {"png": exportCanvasAsPNG(make_thumbnail($("canvas")[0]))}
     });
+    */
 }
 
-function refresh_export() {
+export function refresh_export() {
     export_thumbnail();
     $("#share-facebook").attr("href", "http://www.facebook.com/sharer.php?u=" + window.location.href);
     let width = Editor.setup["iframe-width"] * Figure.figures.length;

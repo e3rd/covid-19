@@ -1,8 +1,15 @@
+import { Equation } from './equation'
+import { Territory } from './territory'
+import { export_thumbnail } from './editor'
+import { adjust, intToRGB, hashCode, palette, range } from './helper_functions'
+
 let DATASET_BORDER = {
     true: 6,
     false: 3
 };
-class Figure {
+
+
+export class Figure {
     constructor(type = Figure.TYPE_LOG_TIME, mouse_drag = null, tooltip_sorting = null, color_style = null, data_labels = null) {
         this.type = type;
         this.last_type = null;
@@ -99,6 +106,7 @@ class Figure {
         this.equations.push(equation);
         return this;
     }
+
     remove_equation(equation) {
         this.equations = this.equations.filter(it => it !== equation);
         return this;
@@ -237,7 +245,7 @@ class Figure {
                         let star, label;
                         if (dst.territory) {
                             star = dst.equation.set_star(dst.territory);
-                            label = dst.territory.get_name(true);
+                            label = dst.territory.get_label(true);
                         } else { // this is not territory but another curve (aggregated sum of territories)
                             star = !dst.star;
                             label = dst.equation.get_name(star);
@@ -257,7 +265,7 @@ class Figure {
                 },
                 title: {
                     display: true,
-                    text: "Empty"
+                    text: gettext("Empty")
                 },
                 tooltips: {
                     mode: 'index', // mode: 'x' when scatter
@@ -267,16 +275,16 @@ class Figure {
                         title: function (el) {
                             if (Editor.setup["outbreak-on"]) {
                                 if (Editor.setup["outbreak-mode"]) {
-                                    return "Population outbreak day " + el[0].label;
+                                    return gettext("Population outbreak day") + " " + el[0].label;
                                 }
-                                return "Confirmed case outbreak day " + el[0].label;
+                                return gettext("Confirmed cases outbreak day") + " " + el[0].label;
                             } else {
                                 return el[0].label;
                             }
                         },
                         label: function (el, data) {
                             let label = data.datasets[el.datasetIndex].label || '';
-                            let v = isNaN(el.value) ? "no data" : Math.round(el.value * 10000) / 10000;
+                            let v = isNaN(el.value) ? gettext("no data") : Math.round(el.value * 10000) / 10000;
                             if (el.datasetIndex === figure.hovered_dataset) {
                                 label = "→ " + label;
                             }
@@ -293,7 +301,7 @@ class Figure {
                                     let start = figure.meta(el.datasetIndex).outbreak_start;
                                     if (start) { // if aggregating, outbreak_start is not known
                                         let day = Territory.header[parseInt(start) + parseInt(el.label)];
-                                        label += " (" + (day === undefined ? "for the given territory, this is a future date" : day.toYMD()) + ")";
+                                        label += " (" + (day === undefined ? gettext("for the given territory, this is a future date") : day.toYMD()) + ")";
                                     }
                                 }
                             }
@@ -325,7 +333,7 @@ class Figure {
                             id: i,
                             scaleLabel: {
                                 display: true,
-                                labelString: i === 1 ? "Cases" : 'Axe ' + i
+                                labelString: i === 1 ? gettext("Cases") : gettext("Axe") + i
                             },
                             ticks: {
 //                                min: 0,
@@ -412,9 +420,10 @@ class Figure {
                         formatter: function (value, item) {
                             try {
                                 return ({
-                                    "default": figure.is_line ? null : item.dataset.label, // by default shown on figure with bars only (no line chart)
-                                    "label": item.dataset.label,
-                                    "values": figure.type === Figure.TYPE_LOG_DATASET ? value.x + " " + value.y : value
+                                    [Figure.DATA_LABELS_DEFAULT]: figure.is_line ? null : item.dataset.label, // by default shown on figure with bars only (no line chart)
+                                    [Figure.DATA_LABELS_LABEL]: item.dataset.label,
+                                    [Figure.DATA_LABELS_VALUES]: figure.type === Figure.TYPE_LOG_DATASET ? value.x + " " + value.y : value,
+                                    [Figure.DATA_LABELS_BOTH]: item.dataset.label + " " + (figure.type === Figure.TYPE_LOG_DATASET ? value.x + " " + value.y : value)
                                 }[Figure.DATA_LABELS[figure.data_labels]]);
                             } catch (e) {// XX I forgot the case when an exception happens
                             }
@@ -483,9 +492,9 @@ class Figure {
             // prepare dataset options
             let [name, label, starred, id] = equation.territory_info(territory);
             let color = {
-                "territory + equation": adjust(intToRGB(hashCode(name)), equation.hash),
-                "equation": equation.color(),
-                "static": palette[static_color_i++]
+                [Figure.COLOR_STYLE_TERRITORY_EQUATION]: adjust(intToRGB(hashCode(name)), equation.hash),
+                [Figure.COLOR_STYLE_EQUATION]: equation.color(),
+                [Figure.COLOR_STYLE_STATIC]: palette[static_color_i++]
             }[Figure.COLOR_STYLE[this.color_style]];
             let border_color = (equation.type === Equation.TYPE_STACKED_TERRITORY && Figure.COLOR_STYLE[this.color_style] === "territory + expression") ? 'rgba(0,0,0,1)' : color; // colours of the same territory are hardly distinguishable
 
@@ -583,9 +592,9 @@ class Figure {
 
         // Set figure title
         if (!equation_data.length) { // error when processing equation function formula
-            opt.title.text = "Empty figure " + this.id;
+            opt.title.text = gettext("Empty figure") + " " + this.id;
         } else if (!this.chart.data.datasets.length) {
-            opt.title.text = "No data";
+            opt.title.text = gettext("No data");
         } else {
             opt.title.text = title.join(", ");
         }
@@ -593,6 +602,7 @@ class Figure {
         // Axis X label and type
         opt.scales.xAxes[0].scaleLabel.labelString = this.axe_x_title();
         opt.scales.xAxes[0].type = this.type === Figure.TYPE_LOG_DATASET ? "logarithmic" : "category";
+        opt.scales.xAxes[0].ticks.min = this.type === Figure.TYPE_LOG_DATASET ? 0 : null; // LOG_DATASET would implicitly start at higher number which looks bad
         opt.tooltips.mode = this.is_line ? (this.type === Figure.TYPE_LOG_DATASET ? "x" : "index") : "x";
 
         // Axis Y
@@ -618,30 +628,30 @@ class Figure {
         [z.zoom.enabled,
             z.zoom.drag,
             z.pan.enabled] = {
-            "off": [false, false, false],
-            "zoom": [true, true, false],
-            "pan": [false, false, true],
-            "pan + wheel zoom": [true, false, true]
+            [Figure.MOUSE_DRAG_OFF]: [false, false, false],
+            [Figure.MOUSE_DRAG_ZOOM]: [true, true, false],
+            [Figure.MOUSE_DRAG_PAN]: [false, false, true],
+            [Figure.MOUSE_DRAG_PAN_WHEEL]: [true, false, true]
         }[Figure.MOUSE_DRAG[this.mouse_drag]];
         //this.$element.toggleClass("grabbable", z.zoom.enabled || z.pan.enabled);
 
         // Tooltip sorting
         opt.tooltips.itemSort = {
-            "by value": (a, b, data) => b.value - a.value,
-            "by expression": (a, b, data) => { // sort by equation name, then by dataset name
+            [Figure.TOOLTIP_SORTING_VAL]: (a, b, data) => b.value - a.value,
+            [Figure.TOOLTIP_SORTING_EXPRESSION]: (a, b, data) => { // sort by equation name, then by dataset name
                 let [i, j] = [this.meta(b.datasetIndex).equation.expression, this.meta(a.datasetIndex).equation.expression];
                 if (i === j) {
                     return data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1;
                 }
                 return i > j ? -1 : 1;
             },
-            "by territory": (a, b, data) => data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1 // sort by dataset name
+            [Figure.TOOLTIP_SORTING_TERRITORY]: (a, b, data) => data.datasets[b.datasetIndex].label > data.datasets[a.datasetIndex].label ? -1 : 1 // sort by dataset name
         }[Figure.TOOLTIP_SORTING[this.tooltip_sorting]];
 
 
         // Data labels are off by default when TYPE_LOG_DATASET used
         let v = Figure.DATA_LABELS[this.data_labels];
-        opt.plugins.datalabels.display = v !== "off" && !(v === "default" && this.type === Figure.TYPE_LOG_DATASET);
+        opt.plugins.datalabels.display = v !== Figure.DATA_LABELS_OFF && !(v === Figure.DATA_LABELS_DEFAULT && this.type === Figure.TYPE_LOG_DATASET);
 
 
         // Submit changes
@@ -688,39 +698,60 @@ class Figure {
     }
 
     axe_x_title() {
-        let axe_title = Editor.setup["single-day"] ? "Day: " + (Editor.setup["outbreak-on"] ? Editor.setup["day-range"] : Territory.header[Editor.setup["day-range"]].toDM()) + " " : "";
+        let axe_title = Editor.setup["single-day"] ? gettext("Day") + ": " + (Editor.setup["outbreak-on"] ? Editor.setup["day-range"] : Territory.header[Editor.setup["day-range"]].toDM()) + " " : "";
+        const text_population = gettext("population")
         if (this.type === Figure.TYPE_LOG_DATASET) {
-            axe_title += "Confirmed cases";
+            axe_title += gettext("Confirmed cases");
             if (Editor.setup["outbreak-on"]) {
-                axe_title += Editor.setup["outbreak-mode"] ? ` since >= (${Editor.setup["outbreak-value"]} * population/100 000)` : ` since >= ${Editor.setup["outbreak-value"]}`;
+                const text_since = gettext("since")
+                axe_title += Editor.setup["outbreak-mode"] ? ` ${text_since} >= (${Editor.setup["outbreak-value"]} * ${text_population}/100 000)` : ` ${text_since} >= ${Editor.setup["outbreak-value"]}`;
             }
             ;
         } else {
-            axe_title += Editor.setup["outbreak-on"] ? (Editor.setup["outbreak-mode"] ? `Days count since confirmed cases >= (${Editor.setup["outbreak-value"]} * population/100 000)` : `Days count since confirmed cases >= ${Editor.setup["outbreak-value"]}`) : "";
+            const text_days = gettext("Days count since confirmed cases")
+            axe_title += Editor.setup["outbreak-on"] ? (Editor.setup["outbreak-mode"] ? `${text_days} >= (${Editor.setup["outbreak-value"]} * ${text_population}/100 000)` : `${text_days} >= ${Editor.setup["outbreak-value"]}`) : "";
         }
         return axe_title;
     }
 }
 
 
-Figure.figures = [];
-Figure.default_size = null;
+    Figure.figures = [];
+    Figure.default_size = null;
 
-Figure.TYPE_LINEAR_TIME = 0;
-Figure.TYPE_LOG_TIME = 1;
-Figure.TYPE_PERCENT_TIME = 2;
-Figure.TYPE_LOG_DATASET = 3;
+    Figure.TYPE_LINEAR_TIME = 0;
+    Figure.TYPE_LOG_TIME = 1;
+    Figure.TYPE_PERCENT_TIME = 2;
+    Figure.TYPE_LOG_DATASET = 3;
 
-// constants
-// Change everywhere before renaming a constant, however you can re-order freely. The first one becomes the default.
-Figure.MOUSE_DRAG = ["off", "zoom", "pan", "pan + wheel zoom"];
-Figure.TOOLTIP_SORTING = ["by value", "by expression", "by territory"];
-Figure.COLOR_STYLE = ["territory + equation", "equation", "static"];
-Figure.DATA_LABELS = ["default", "label", "values", "off"];
+    // constants
+    // Change everywhere before renaming a constant, however you can re-order freely. The first one becomes the default.
+    Figure.MOUSE_DRAG_OFF = gettext("off");
+    Figure.MOUSE_DRAG_ZOOM = gettext("zoom");
+    Figure.MOUSE_DRAG_PAN = gettext("pan");
+    Figure.MOUSE_DRAG_PAN_WHEEL = gettext("pan + wheel zoom");
+    Figure.MOUSE_DRAG = [Figure.MOUSE_DRAG_OFF, Figure.MOUSE_DRAG_ZOOM, Figure.MOUSE_DRAG_PAN, Figure.MOUSE_DRAG_PAN_WHEEL];
+
+    Figure.TOOLTIP_SORTING_VAL = gettext("by value");
+    Figure.TOOLTIP_SORTING_EXPRESSION = gettext("by expression");
+    Figure.TOOLTIP_SORTING_TERRITORY = gettext("by territory");
+    Figure.TOOLTIP_SORTING = [Figure.TOOLTIP_SORTING_VAL, Figure.TOOLTIP_SORTING_EXPRESSION, Figure.TOOLTIP_SORTING_TERRITORY];
+
+    Figure.COLOR_STYLE_TERRITORY_EQUATION = gettext("territory + equation");
+    Figure.COLOR_STYLE_EQUATION = gettext("equation");
+    Figure.COLOR_STYLE_STATIC = gettext("static");
+    Figure.COLOR_STYLE = [Figure.COLOR_STYLE_TERRITORY_EQUATION, Figure.COLOR_STYLE_EQUATION, Figure.COLOR_STYLE_STATIC];
+
+    Figure.DATA_LABELS_DEFAULT = gettext("default");
+    Figure.DATA_LABELS_LABEL = gettext("label");
+    Figure.DATA_LABELS_VALUES = gettext("values");
+    Figure.DATA_LABELS_BOTH = gettext("both");
+    Figure.DATA_LABELS_OFF = gettext("off");
+    Figure.DATA_LABELS = [Figure.DATA_LABELS_DEFAULT, Figure.DATA_LABELS_LABEL, Figure.DATA_LABELS_VALUES, Figure.DATA_LABELS_BOTH, Figure.DATA_LABELS_OFF];
 
 
-/**
- *
- * @type Figure
- */
-Figure.current = null;
+    /**
+     *
+     * @type Figure
+     */
+    Figure.current = null;

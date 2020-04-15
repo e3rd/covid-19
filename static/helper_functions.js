@@ -4,7 +4,7 @@
 /**
  * thanks to https://stackoverflow.com/a/3426956/2036148
  */
-function hashCode(str) { // java String#hashCode
+export function hashCode(str) { // java String#hashCode
     var hash = 0;
     for (var i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -15,7 +15,7 @@ function hashCode(str) { // java String#hashCode
 /**
  * thanks to https://stackoverflow.com/a/3426956/2036148
  */
-function intToRGB(i) {
+export function intToRGB(i) {
     var c = (i & 0x00FFFFFF)
             .toString(16)
             .toUpperCase();
@@ -29,7 +29,7 @@ function intToRGB(i) {
  * @param {type} amount
  * @returns {String}
  */
-function adjust(color, amount) {
+export function adjust(color, amount) {
     return '#' + color.replace(/^#/, '').replace(/../g, color => ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
 }
 
@@ -40,7 +40,7 @@ function adjust(color, amount) {
  * @param {type} step
  * @returns {Array}
  */
-function range(start, stop, step) {
+export function range(start, stop, step) {
     if (typeof stop == 'undefined') {
         // one param defined
         stop = start;
@@ -67,7 +67,7 @@ function range(start, stop, step) {
  * Splits the line thanks to https://stackoverflow.com/a/26156806/2036148
  * Better solution than other regexes.
  */
-function splitCsv(str) {
+export function splitCsv(str) {
     return str.split(',').reduce((accum, curr) => {
         if (accum.isConcatting) {
             accum.soFar[accum.soFar.length - 1] += ',' + curr
@@ -113,7 +113,7 @@ Object.defineProperty(Array.prototype, "sumTo", {
     }});
 
 
-function number_format(s) {
+export function number_format(s) {
     let n = String(s);
     let len = n;
     let postfix;
@@ -157,7 +157,7 @@ jQuery.fn.sorting = function sorting(selector, attribute = "id") {
  * @param {type} position
  * @returns {Number}
  */
-function logslider(minp = 0, maxp = 100, minv = 100, max_v = 10000000) {
+export function logslider(minp = 0, maxp = 100, minv = 100, max_v = 10000000) {
 //    // position will be between 0 and 100
 //    var minp = 0;
 //    var maxp = 100;
@@ -231,7 +231,7 @@ Date.from_dmy = function (date) {
  * @param {type} fileName If null, contents is returned.
  * @returns {undefined}
  */
-function exportCanvasAsPNG(canvasElement, fileName = null) {
+export function exportCanvasAsPNG(canvasElement, fileName = null) {
 
     //var canvasElement = document.getElementById(id);
 
@@ -258,7 +258,7 @@ function exportCanvasAsPNG(canvasElement, fileName = null) {
  * @param {type} text
  * @returns {undefined}
  */
-function downloadFile(filename, text) {
+export function downloadFile(filename, text) {
     var element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
     element.setAttribute('download', filename);
@@ -285,7 +285,7 @@ function downloadFile(filename, text) {
  * @param {integer} [seed] optionally pass the hash of the previous chunk
  * @returns {integer | string}
  */
-function hashFnv32a(str, asString, seed) {
+export function hashFnv32a(str, asString, seed) {
     /*jshint bitwise:false */
     var i, l,
             hval = (seed === undefined) ? 0x811c9dc5 : seed;
@@ -307,7 +307,7 @@ function hashFnv32a(str, asString, seed) {
  * @param {type} oldCanvas
  * @returns {Element}
  */
-function make_thumbnail(oldCanvas) {
+export function make_thumbnail(oldCanvas) {
     $("#canvas-exporter").children().remove();
     var newCanvas = $("<canvas />").appendTo($("#canvas-exporter"))[0];
     var context = newCanvas.getContext('2d');
@@ -347,11 +347,11 @@ function make_thumbnail(oldCanvas) {
  * @param {int} len Number of items the result is averaged from.
  * @returns {Function} When called, yields averaged value for the given position.
  */
-function average_stream(d, len = 7) {
+export function average_stream(d, len = 7) {
     return i => {
         return Math.round(d.slice(i - len + 1, i + 1).sum() / len);
     };
 }
 
 // distinct color palette
-var palette = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac", "#b77322", "#16d620", "#b91383", "#f4359e", "#9c5935", "#a9c413", "#2a778d", "#668d1c", "#bea413", "#0c5922", "#743411"];
+export const palette = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac", "#b77322", "#16d620", "#b91383", "#f4359e", "#9c5935", "#a9c413", "#2a778d", "#668d1c", "#bea413", "#0c5922", "#743411"];
