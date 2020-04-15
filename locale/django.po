@@ -1,0 +1,270 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-04-08 15:06+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+
+#, python-format
+msgid "%(from)s – %(until)s of %(count)s %(obj_string)s are displayed"
+msgstr "jsou zobrazeny %(from)s – %(until)s z %(count)s %(obj_string)s"
+
+#, python-format
+msgid ""
+"(derivation of cumulative confirmed cases = <code>NC-ND-NR</code>), or "
+"<code>P</code> (population) while <code>%%</code>=10^2, <code>k</code>=10^3 "
+"and <code>M</code>=10^6."
+msgstr ""
+
+msgid "Average"
+msgstr "Průměrovat"
+
+msgid "Axes"
+msgstr "Osy"
+
+msgid "By default, labels are shown in bar chart only figures"
+msgstr "Implicitně jsou štítky zobrazeny pouze v grafech tvořených ze sloupců"
+
+msgid "Close"
+msgstr "Zavřít"
+
+msgid "Colours"
+msgstr "Barvy"
+
+msgid "Computation"
+msgstr "Výpočet"
+
+msgid "Continent"
+msgstr "Kontinent"
+
+msgid "Country"
+msgstr "Země"
+
+msgid "Covid-19 Worldwide Correlation Modeling"
+msgstr "Covid-19 celosvětové korelační modelování"
+
+msgid "Credits"
+msgstr "Poděkování"
+
+msgid "Data labels"
+msgstr "Štítky dat"
+
+msgid "Data table"
+msgstr "Tabulka dat"
+
+msgid "Day range"
+msgstr "Rozsah dnů"
+
+msgid "Days visible"
+msgstr "Viditelné dny"
+
+msgid ""
+"Disclaimer: The chart is based only on cases of infection confirmed by "
+"testing. Due to the varying amounts of testing done in different countries, "
+"real numbers of cases may be very different."
+msgstr ""
+"Dementi: Graf je založen pouze na případech nakažení potvrzených "
+"testováním. Vzhledem k rozdílnému počtu provedených testů v jednotlivých zemí "
+"se počet reálně nakažených může značně lišit."
+
+msgid "Display menu"
+msgstr "Zobrazení"
+
+msgid "Download image"
+msgstr "Stáhnout obrázek"
+
+msgid "Download json"
+msgstr "Stáhnout json"
+
+msgid "Download table"
+msgstr "Stáhnout tabulku"
+
+msgid "Equation"
+msgstr "Rovnice"
+
+msgid "Every n-th person is confirmed."
+msgstr "Každý n-tý člověk je potvrzeným."
+
+msgid "Ex"
+msgstr "Např"
+
+msgid "Export"
+msgstr ""
+
+msgid "Export buttons"
+msgstr "Exportovaná tlačítka"
+
+msgid "Figure size"
+msgstr "Velikost"
+
+msgid "Go to home page."
+msgstr "Jít na domovskou stránku."
+
+msgid "Login failed. The database is in recovery mode."
+msgstr "Přihlášení selhalo. Databáze je v režimu obnovení."
+
+msgid "Mouse drag"
+msgstr "Tažení myši"
+
+msgid "Multiple equations"
+msgstr "Více rovnice"
+
+msgid "Multiple figures"
+msgstr "Více schémat"
+
+msgid "Multiple y-axis"
+msgstr "Více os Y"
+
+msgid "N people is confirmed in every million of citizens."
+msgstr "N lidí je potvrzených v každém milionu obyvatel."
+
+msgid "Newly closed cases."
+msgstr "Nově uzavřené případy"
+
+msgid "No results found for"
+msgstr "Nebyly nalezeny žádné výsledky pro"
+
+msgid "Note that `tested` are available for Czechia only."
+msgstr "Počty `otestovaných` jsou dostupné pouze pro Česko."
+
+msgid "Nth part of the population is confirmed."
+msgstr "N-tá část populace je potvrzeně nakažena."
+
+msgid "Nth-percent of the population is confirmed."
+msgstr "N procent populace je potvrzeně nakaženo."
+
+msgid "O (Only html body) – Without design"
+msgstr "O (Only html body) – Bez designu"
+
+msgid "O+HF (Header and Footer) – Basic design"
+msgstr "O+HF (Header and Footer) – Základní design"
+
+msgid "O+HF+A (Article) – Article"
+msgstr "O+HF+A (Article) – Článek"
+
+msgid "O+HF+A+C (Article with chart editor) – Article with chart editor"
+msgstr "O+HF+A+C (Article with chart) – Článek s editorem grafu"
+
+msgid "O+HF+A+N (Article with News) – Article with News"
+msgstr "O+HF+A (Article with News) – Článek s novinkou"
+
+msgid "Outbreak"
+msgstr "Vypuknutí"
+
+msgid "Put any arithmetic expression using"
+msgstr "Zadej aritmetický výraz za pomoci"
+
+msgid "Reset zoom"
+msgstr "Resetuje přiblížení"
+
+msgid "Search"
+msgstr "Hledat"
+
+msgid "Share"
+msgstr "Sdílet"
+
+msgid "Share by link"
+msgstr "Sdílet odkazem"
+
+msgid "Share on Facebook"
+msgstr "Sdílet na Facebooku"
+
+msgid "Share on the webpage"
+msgstr "Sdílet na webu"
+
+msgid "Single day"
+msgstr "Jediný den"
+
+msgid "Source"
+msgstr "Zdroj"
+
+msgid "State"
+msgstr "Stát"
+
+msgid "Sum territories into single curve"
+msgstr "Sečíst teritoria do jediné křivky"
+
+msgid "Territory options"
+msgstr "Možnosti teritoria"
+
+msgid "The database is in recovery mode. Unable to login. Try it later."
+msgstr "Databáze je v režimu obnovení. Nelze se přihlásit. Zkuste to později."
+
+msgid "Toggle using absolute values / last 7 days averaged values"
+msgstr "Přepnout absolutní hodnoty / hodnoty vyprůměrované za 7 posledních dnů"
+
+msgid "Toggle using single day / day range"
+msgstr "Přepnout jediný den / rozsah dnů"
+
+msgid "Tooltip sorting"
+msgstr "Řazení popisků"
+
+msgid "Total recovered ratio."
+msgstr "Poměr celkově uzdravených."
+
+msgid ""
+"Turn on outbreak shift -&gt; dataset will start the day when confirmed cases "
+"in the given territory reaches certain the number"
+msgstr ""
+"Posunout na vypuknutí -&gt; dataset začne den, kdy potvrzené případy "
+"v daném teritoriu dosáhne určitého počtu"
+
+msgid "Uncheck all"
+msgstr "Odškrtnout vše"
+
+msgid "Width"
+msgstr "Šířka"
+
+msgid "activate all sub-territories curves"
+msgstr "zaškrtnout křivky závislých území"
+
+msgid "aggregate"
+msgstr "agregovat"
+
+msgid "aldryn search"
+msgstr "aldryn vyhledávání"
+
+msgid "and"
+msgstr "a"
+
+msgid "confirmed/recovered/death/tested"
+msgstr "potvrzeno/uzdraveno/úmrtí/otestováno"
+
+msgid "data updated once a day"
+msgstr "data aktualizována denně"
+
+msgid "derivation of newly added cases"
+msgstr "derivace nově přibytých případů"
+
+msgid "enter your search term"
+msgstr "zadejte hledaný výraz"
+
+msgid "hightlight curve"
+msgstr "zvýraznit křivku"
+
+msgid "newly confirmed/recovered/death/tested cases"
+msgstr "nově potvrzeno/uzdraveno/úmrtí/otestováno"
+
+msgid "next"
+msgstr "následující"
+
+msgid "population"
+msgstr "populace"
+
+msgid "previous"
+msgstr "předchozí"
+
+msgid "results"
+msgstr "výsledků"
