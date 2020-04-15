@@ -7,7 +7,8 @@ export const territories = [
             {
                 "name": "Egypt",
                 "label": gettext("Egypt"),
-                "pop": "95688681"
+                "pop": "95688681",
+"death_past": 2859
             },
             {
                 "name": "Algeria",
@@ -22,7 +23,8 @@ export const territories = [
             {
                 "name": "Morocco",
                 "label": gettext("Morocco"),
-                "pop": "35276786"
+                "pop": "35276786",
+"death_past": 271
             },
             {
                 "name": "Senegal",
@@ -32,12 +34,14 @@ export const territories = [
             {
                 "name": "Tunisia",
                 "label": gettext("Tunisia"),
-                "pop": "11403248"
+                "pop": "11403248",
+"death_past": 120
             },
             {
                 "name": "South Africa",
                 "label": gettext("South Africa"),
-                "pop": "55908865"
+                "pop": "55908865",
+"death_past": 2668
             },
             {
                 "name": "Cameroon",
@@ -82,7 +86,8 @@ export const territories = [
             {
                 "name": "Seychelles",
                 "label": gettext("Seychelles"),
-                "pop": "94677"
+                "pop": "94677",
+"death_past": 6
             },
             {
                 "name": "Gabon",
@@ -147,7 +152,8 @@ export const territories = [
             {
                 "name": "Reunion",
                 "label": gettext("Reunion"),
-                "pop": ""
+                "pop": "",
+"death_past": 24
             },
             {
                 "name": "Eswatini",
@@ -162,7 +168,8 @@ export const territories = [
             {
                 "name": "Mayotte",
                 "label": gettext("Mayotte"),
-                "pop": ""
+                "pop": "",
+"death_past": 3
             },
             {
                 "name": "Republic of the Congo",
@@ -178,17 +185,20 @@ export const territories = [
             {
                 "name": "Thailand",
                 "label": gettext("Thailand"),
-                "pop": "68863514"
+                "pop": "68863514",
+"death_past": 2381
             },
             {
                 "name": "Japan",
                 "label": gettext("Japan"),
-                "pop": "126994511"
+                "pop": "126994511",
+"death_past": 6977
             },
             {
                 "name": "Singapore",
                 "label": gettext("Singapore"),
-                "pop": "5607283"
+                "pop": "5607283",
+"death_past": 101
             },
             {
                 "name": "Nepal",
@@ -198,7 +208,8 @@ export const territories = [
             {
                 "name": "Malaysia",
                 "label": gettext("Malaysia"),
-                "pop": "31187265"
+                "pop": "31187265",
+"death_past": 397
             },
             {
                 "name": "Cambodia",
@@ -218,7 +229,8 @@ export const territories = [
             {
                 "name": "Philippines",
                 "label": gettext("Philippines"),
-                "pop": "103320222"
+                "pop": "103320222",
+"death_past": 2783
             },
             {
                 "name": "India",
@@ -228,17 +240,20 @@ export const territories = [
             {
                 "name": "Lebanon",
                 "label": gettext("Lebanon"),
-                "pop": "6006668"
+                "pop": "6006668",
+"death_past": 85
             },
             {
                 "name": "Iraq",
                 "label": gettext("Iraq"),
-                "pop": "37202572"
+                "pop": "37202572",
+"death_past": 649
             },
             {
                 "name": "Oman",
                 "label": gettext("Oman"),
-                "pop": "4424762"
+                "pop": "4424762",
+"death_past": 43
             },
             {
                 "name": "Afghanistan",
@@ -248,17 +263,20 @@ export const territories = [
             {
                 "name": "Bahrain",
                 "label": gettext("Bahrain"),
-                "pop": "1425171"
+                "pop": "1425171",
+"death_past": 14
             },
             {
                 "name": "Kuwait",
                 "label": gettext("Kuwait"),
-                "pop": "4052584"
+                "pop": "4052584",
+"death_past": 33
             },
             {
                 "name": "Israel",
                 "label": gettext("Israel"),
-                "pop": "8547100"
+                "pop": "8547100",
+"death_past": 232
             },
             {
                 "name": "Pakistan",
@@ -268,7 +286,8 @@ export const territories = [
             {
                 "name": "Qatar",
                 "label": gettext("Qatar"),
-                "pop": "2569804"
+                "pop": "2569804",
+"death_past": 12
             },
             {
                 "name": "Indonesia",
@@ -278,12 +297,14 @@ export const territories = [
             {
                 "name": "Saudi Arabia",
                 "label": gettext("Saudi Arabia"),
-                "pop": "32275687"
+                "pop": "32275687",
+"death_past": 250
             },
             {
                 "name": "Jordan",
                 "label": gettext("Jordan"),
-                "pop": "9455802"
+                "pop": "9455802",
+"death_past": 95
             },
             {
                 "name": "Bhutan",
@@ -293,7 +314,8 @@ export const territories = [
             {
                 "name": "Maldives",
                 "label": gettext("Maldives"),
-                "pop": "417492"
+                "pop": "417492",
+"death_past": 6
             },
             {
                 "name": "Bangladesh",
@@ -308,7 +330,8 @@ export const territories = [
             {
                 "name": "Mongolia",
                 "label": gettext("Mongolia"),
-                "pop": "3027398"
+                "pop": "3027398",
+"death_past": 89
             },
             {
                 "name": "China",
@@ -328,17 +351,20 @@ export const territories = [
             {
                 "name": "Turkey",
                 "label": gettext("Turkey"),
-                "pop": "79512426"
+                "pop": "79512426",
+"death_past": 1946
             },
             {
                 "name": "Kazakhstan",
                 "label": gettext("Kazakhstan"),
-                "pop": "17797032"
+                "pop": "17797032",
+"death_past": 886
             },
             {
                 "name": "Uzbekistan",
                 "label": gettext("Uzbekistan"),
-                "pop": "31848200"
+                "pop": "31848200",
+"death_past": 806
             },
             {
                 "name": "Korea, South",
@@ -364,102 +390,122 @@ export const territories = [
             {
                 "name": "Germany",
                 "label": gettext("Germany"),
-                "pop": "82667685"
+                "pop": "82667685",
+"death_past": 4871
             },
             {
                 "name": "Finland",
                 "label": gettext("Finland"),
-                "pop": "5495096"
+                "pop": "5495096",
+"death_past": 286
             },
             {
                 "name": "Italy",
                 "label": gettext("Italy"),
-                "pop": "60600590"
+                "pop": "60600590",
+"death_past": 3331
             },
             {
                 "name": "Sweden",
                 "label": gettext("Sweden"),
-                "pop": "9903122"
+                "pop": "9903122",
+"death_past": 497
             },
             {
                 "name": "Spain",
                 "label": gettext("Spain"),
-                "pop": "46443959"
+                "pop": "46443959",
+"death_past": 2203
             },
             {
                 "name": "Belgium",
                 "label": gettext("Belgium"),
-                "pop": "11348159"
+                "pop": "11348159",
+"death_past": 588
             },
             {
                 "name": "Croatia",
                 "label": gettext("Croatia"),
-                "pop": "4170600"
+                "pop": "4170600",
+"death_past": 284
             },
             {
                 "name": "Switzerland",
                 "label": gettext("Switzerland"),
-                "pop": "8372098"
+                "pop": "8372098",
+"death_past": 352
             },
             {
                 "name": "Austria",
                 "label": gettext("Austria"),
-                "pop": "8747358"
+                "pop": "8747358",
+"death_past": 437
             },
             {
                 "name": "Georgia",
                 "label": gettext("Georgia"),
-                "pop": "3719300"
+                "pop": "3719300",
+"death_past": 267
             },
             {
                 "name": "Greece",
                 "label": gettext("Greece"),
-                "pop": "10746740"
+                "pop": "10746740",
+"death_past": 647
             },
             {
                 "name": "Norway",
                 "label": gettext("Norway"),
-                "pop": "5232929"
+                "pop": "5232929",
+"death_past": 225
             },
             {
                 "name": "Romania",
                 "label": gettext("Romania"),
-                "pop": "19705301"
+                "pop": "19705301",
+"death_past": 1404
             },
             {
                 "name": "Estonia",
                 "label": gettext("Estonia"),
-                "pop": "1316481"
+                "pop": "1316481",
+"death_past": 85
             },
             {
                 "name": "San Marino",
                 "label": gettext("San Marino"),
-                "pop": "33203"
+                "pop": "33203",
+"death_past": 2
             },
             {
                 "name": "Belarus",
                 "label": gettext("Belarus"),
-                "pop": "9507120"
+                "pop": "9507120",
+"death_past": 947
             },
             {
                 "name": "Iceland",
                 "label": gettext("Iceland"),
-                "pop": "334252"
+                "pop": "334252",
+"death_past": 12
             },
             {
                 "name": "Lithuania",
                 "label": gettext("Lithuania"),
-                "pop": "2872298"
+                "pop": "2872298",
+"death_past": 224
             },
             {
                 "name": "Ireland",
                 "label": gettext("Ireland"),
-                "pop": "4773095"
+                "pop": "4773095",
+"death_past": 159
             },
             {
                 "name": "Luxembourg",
                 "label": gettext("Luxembourg"),
-                "pop": "582972"
+                "pop": "582972",
+"death_past": 20
             },
             {
                 "name": "Monaco",
@@ -474,32 +520,38 @@ export const territories = [
             {
                 "name": "Armenia",
                 "label": gettext("Armenia"),
-                "pop": "2924816"
+                "pop": "2924816",
+"death_past": 152
             },
             {
                 "name": "Portugal",
                 "label": gettext("Portugal"),
-                "pop": "10324611"
+                "pop": "10324611",
+"death_past": 589
             },
             {
                 "name": "Andorra",
                 "label": gettext("Andorra"),
-                "pop": "77281"
+                "pop": "77281",
+"death_past": 2
             },
             {
                 "name": "Latvia",
                 "label": gettext("Latvia"),
-                "pop": "1960424"
+                "pop": "1960424",
+"death_past": 158
             },
             {
                 "name": "Ukraine",
                 "label": gettext("Ukraine"),
-                "pop": "45004645"
+                "pop": "45004645",
+"death_past": 5183
             },
             {
                 "name": "Hungary",
                 "label": gettext("Hungary"),
-                "pop": "9817958"
+                "pop": "9817958",
+"death_past": 707
             },
             {
                 "name": "Liechtenstein",
@@ -509,37 +561,44 @@ export const territories = [
             {
                 "name": "Poland",
                 "label": gettext("Poland"),
-                "pop": "37948016"
+                "pop": "37948016",
+"death_past": 2115
             },
             {
                 "name": "Bosnia and Herzegovina",
                 "label": gettext("Bosnia and Herzegovina"),
-                "pop": "3516816"
+                "pop": "3516816",
+"death_past": 196
             },
             {
                 "name": "Slovenia",
                 "label": gettext("Slovenia"),
-                "pop": "2064845"
+                "pop": "2064845",
+"death_past": 106
             },
             {
                 "name": "Serbia",
                 "label": gettext("Serbia"),
-                "pop": "7057412"
+                "pop": "7057412",
+"death_past": 560
             },
             {
                 "name": "Slovakia",
                 "label": gettext("Slovakia"),
-                "pop": "5428704"
+                "pop": "5428704",
+"death_past": 287
             },
             {
                 "name": "Malta",
                 "label": gettext("Malta"),
-                "pop": "436947"
+                "pop": "436947",
+"death_past": 18
             },
             {
                 "name": "Bulgaria",
                 "label": gettext("Bulgaria"),
-                "pop": "7127822"
+                "pop": "7127822",
+"death_past": 595
             },
             {
                 "name": "Albania",
@@ -549,17 +608,20 @@ export const territories = [
             {
                 "name": "Cyprus",
                 "label": gettext("Cyprus"),
-                "pop": "1170125"
+                "pop": "1170125",
+"death_past": 30
             },
             {
                 "name": "France",
                 "label": gettext("France"),
-                "pop": "66896109"
+                "pop": "66896109",
+"death_past": 3050
             },
             {
                 "name": "Denmark",
                 "label": gettext("Denmark"),
-                "pop": "5731118"
+                "pop": "5731118",
+"death_past": 286
             },
             {
                 "name": "Moldova",
@@ -569,12 +631,14 @@ export const territories = [
             {
                 "name": "United Kingdom",
                 "label": gettext("United Kingdom"),
-                "pop": "65637239"
+                "pop": "65637239",
+"death_past": 3154
             },
             {
                 "name": "Netherlands",
                 "label": gettext("Netherlands"),
-                "pop": "17018408"
+                "pop": "17018408",
+"death_past": 780
             },
             {
                 "name": "North Macedonia",
@@ -584,12 +648,14 @@ export const territories = [
             {
                 "name": "Czechia",
                 "label": gettext("Czechia"),
-                "pop": "10561633"
+                "pop": "10561633",
+"death_past": 594
             },
             {
                 "name": "Russia",
                 "label": gettext("Russia"),
-                "pop": "144342396"
+                "pop": "144342396",
+"death_past": 15432
             },
             {
                 "name": "Jersey",
@@ -615,67 +681,80 @@ export const territories = [
             {
                 "name": "Canada",
                 "label": gettext("Canada"),
-                "pop": "36286425"
+                "pop": "36286425",
+"death_past": 1403
             },
             {
                 "name": "Mexico",
                 "label": gettext("Mexico"),
-                "pop": "127540423"
+                "pop": "127540423",
+"death_past": 3396
             },
             {
                 "name": "Dominican Republic",
                 "label": gettext("Dominican Republic"),
-                "pop": "10648791"
+                "pop": "10648791",
+"death_past": 185
             },
             {
                 "name": "Costa Rica",
                 "label": gettext("Costa Rica"),
-                "pop": "4857274"
+                "pop": "4857274",
+"death_past": 111
             },
             {
                 "name": "US",
                 "label": gettext("US"),
-                "pop": "323127513"
+                "pop": "323127513",
+"death_past": 14399
             },
             {
                 "name": "Panama",
                 "label": gettext("Panama"),
-                "pop": "4034119"
+                "pop": "4034119",
+"death_past": 98
             },
             {
                 "name": "Honduras",
                 "label": gettext("Honduras"),
-                "pop": "9112867"
+                "pop": "9112867",
+"death_past": 33
             },
             {
                 "name": "Jamaica",
                 "label": gettext("Jamaica"),
-                "pop": "2881355"
+                "pop": "2881355",
+"death_past": 90
             },
             {
                 "name": "Cuba",
                 "label": gettext("Cuba"),
-                "pop": "11475982"
+                "pop": "11475982",
+"death_past": 522
             },
             {
                 "name": "Antigua and Barbuda",
                 "label": gettext("Antigua and Barbuda"),
-                "pop": "100963"
+                "pop": "100963",
+"death_past": 3
             },
             {
                 "name": "Trinidad and Tobago",
                 "label": gettext("Trinidad and Tobago"),
-                "pop": "1364962"
+                "pop": "1364962",
+"death_past": 53
             },
             {
                 "name": "Guatemala",
                 "label": gettext("Guatemala"),
-                "pop": "16582469"
+                "pop": "16582469",
+"death_past": 416
             },
             {
                 "name": "Saint Lucia",
                 "label": gettext("Saint Lucia"),
-                "pop": ""
+                "pop": "",
+"death_past": 6
             },
             {
                 "name": "Saint Vincent and the Grenadines",
@@ -685,7 +764,8 @@ export const territories = [
             {
                 "name": "Puerto Rico",
                 "label": gettext("Puerto Rico"),
-                "pop": "3411307"
+                "pop": "3411307",
+"death_past": 162
             },
             {
                 "name": "Greenland",
@@ -706,12 +786,14 @@ export const territories = [
             {
                 "name": "Australia",
                 "label": gettext("Australia"),
-                "pop": "24127159"
+                "pop": "24127159",
+"death_past": 834
             },
             {
                 "name": "New Zealand",
                 "label": gettext("New Zealand"),
-                "pop": "4692700"
+                "pop": "4692700",
+"death_past": 166
             },
             {
                 "name": "Guam",
@@ -727,37 +809,44 @@ export const territories = [
             {
                 "name": "Brazil",
                 "label": gettext("Brazil"),
-                "pop": "207652865"
+                "pop": "207652865",
+"death_past": 6721
             },
             {
                 "name": "Ecuador",
                 "label": gettext("Ecuador"),
-                "pop": "16385068"
+                "pop": "16385068",
+"death_past": 353
             },
             {
                 "name": "Argentina",
                 "label": gettext("Argentina"),
-                "pop": "43847430"
+                "pop": "43847430",
+"death_past": 1793
             },
             {
                 "name": "Chile",
                 "label": gettext("Chile"),
-                "pop": "17909754"
+                "pop": "17909754",
+"death_past": 553
             },
             {
                 "name": "Colombia",
                 "label": gettext("Colombia"),
-                "pop": "48653419"
+                "pop": "48653419",
+"death_past": 1150
             },
             {
                 "name": "Peru",
                 "label": gettext("Peru"),
-                "pop": "31773839"
+                "pop": "31773839",
+"death_past": 551
             },
             {
                 "name": "Paraguay",
                 "label": gettext("Paraguay"),
-                "pop": "6725308"
+                "pop": "6725308",
+"death_past": 151
             },
             {
                 "name": "Bolivia",
@@ -767,42 +856,50 @@ export const territories = [
             {
                 "name": "Guyana",
                 "label": gettext("Guyana"),
-                "pop": "773303"
+                "pop": "773303",
+"death_past": 30
             },
             {
                 "name": "Uruguay",
                 "label": gettext("Uruguay"),
-                "pop": "3444006"
+                "pop": "3444006",
+"death_past": 181
             },
             {
                 "name": "Venezuela",
                 "label": gettext("Venezuela"),
-                "pop": "31568179"
+                "pop": "31568179",
+"death_past": 813
             },
             {
                 "name": "Suriname",
                 "label": gettext("Suriname"),
-                "pop": "558368"
+                "pop": "558368",
+"death_past": 17
             },
             {
                 "name": "Martinique",
                 "label": gettext("Martinique"),
-                "pop": ""
+                "pop": "",
+"death_past": 17
             },
             {
                 "name": "Guadeloupe",
                 "label": gettext("Guadeloupe"),
-                "pop": ""
+                "pop": "",
+"death_past": 17
             },
             {
                 "name": "Aruba",
                 "label": gettext("Aruba"),
-                "pop": "104822"
+                "pop": "104822",
+"death_past": 4
             },
             {
                 "name": "French Guiana",
                 "label": gettext("French Guiana"),
-                "pop": ""
+                "pop": "",
+"death_past": 4
             }
         ]
     },
